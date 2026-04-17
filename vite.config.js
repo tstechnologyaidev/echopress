@@ -27,6 +27,7 @@ export default defineConfig({
         about: path.resolve(__dirname, 'about.html'),
         admin: path.resolve(__dirname, 'admin.html'),
         article: path.resolve(__dirname, 'article.html'),
+        login: path.resolve(__dirname, 'login.html'),
         journalist: path.resolve(__dirname, 'journalist.html'),
         'journalist-editor': path.resolve(__dirname, 'journalist-editor.html'),
       }
