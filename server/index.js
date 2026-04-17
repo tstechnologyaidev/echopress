@@ -3,7 +3,7 @@ import cors from 'cors';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getUsers, getUserByUsername, createUser, getArticles, getArticleById, createArticle, updateArticle, deleteArticle, incrementArticleViews, getPopularArticles, getSetting, upsertSetting } from './db.js';
+import { getUsers, getUserByUsername, createUser, getArticles, getArticleById, createArticle, updateArticle, deleteArticle, incrementArticleViews, getPopularArticles, getSetting, upsertSetting, supabase } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,16 +26,8 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, '../dist')));
 
-// Configure Multer
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, 'uploads/'))
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    cb(null, uniqueSuffix + path.extname(file.originalname))
-  }
-});
+// Configure Multer for memory storage
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // Users API
@@ -98,11 +90,39 @@ app.get('/api/popular', async (req, res) => {
   }
 });
 
-app.post('/api/upload', upload.single('image'), (req, res) => {
+app.post('/api/upload', upload.single('image'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
-  res.json({ url: `/uploads/${req.file.filename}` });
+
+  try {
+    const file = req.file;
+    const fileExt = path.extname(file.originalname);
+    const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
+    
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('article-images')
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Supabase storage error:', error);
+      return res.status(500).json({ error: 'Failed to upload image to Supabase. Make sure the "article-images" bucket exists and is public.' });
+    }
+
+    // Get the public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('article-images')
+      .getPublicUrl(fileName);
+
+    res.json({ url: publicUrl });
+  } catch (err) {
+    console.error('Upload catch error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/articles', async (req, res) => {
