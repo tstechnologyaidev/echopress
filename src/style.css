@@ -8,8 +8,8 @@
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'PT Serif', serif;
   
-  --sunset-gradient: linear-gradient(45deg, #FF512F, #DD2476, #FF9068);
-  --blue-gradient: linear-gradient(135deg, #00c6ff, #0072ff);
+  --sunset-gradient: linear-gradient(to right, #FF512F, #DD2476, #FF9068);
+  --blue-gradient: linear-gradient(to bottom right, #00c6ff, #0072ff);
 }
 
 * {
@@ -79,20 +79,34 @@ ul {
 
 .btn-soutien {
   background: var(--sunset-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  border: 1px solid transparent;
-  background-image: var(--sunset-gradient), var(--sunset-gradient);
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  padding: 6px 16px;
-  font-weight: 600;
+  color: #fff !important;
+  border: none;
+  padding: 8px 18px;
+  font-weight: 700;
   border-radius: 4px;
   transition: all 0.2s;
+  display: inline-block;
 }
 
 .btn-soutien:hover {
-  opacity: 0.8;
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn {
+  background: var(--sunset-gradient);
+  color: #fff !important;
+  border: none;
+  padding: 10px 20px;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-block;
+}
+
+.btn:hover {
+  opacity: 0.9;
   transform: translateY(-1px);
 }
 

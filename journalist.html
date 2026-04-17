@@ -20,21 +20,26 @@
       .welcome-card h1 { font-family: var(--font-serif); font-size: 36px; margin-bottom: 20px; }
       .journalist-actions { margin-top: 30px; display: flex; justify-content: center; gap: 20px; }
       .btn-large {
-        padding: 15px 30px;
-        font-size: 18px;
-        background-color: var(--lp-red);
+        padding: 15px 40px;
+        font-size: 20px;
+        background: var(--sunset-gradient);
         color: white;
         text-decoration: none;
-        border-radius: 6px;
-        font-weight: 600;
-        transition: background 0.2s;
+        border-radius: 8px;
+        font-weight: 700;
+        transition: transform 0.2s, opacity 0.2s;
+        display: inline-block;
+        box-shadow: 0 4px 15px rgba(255, 81, 47, 0.3);
       }
-      .btn-large:hover { background-color: #b00; }
+      .btn-large:hover { 
+        opacity: 0.9;
+        transform: translateY(-2px);
+      }
       .btn-secondary {
         padding: 15px 30px;
         font-size: 18px;
-        background-color: var(--lp-black);
-        color: white;
+        background-color: var(--lp-gray-mid);
+        color: var(--lp-black);
         text-decoration: none;
         border-radius: 6px;
         font-weight: 600;
