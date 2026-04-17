@@ -8,6 +8,7 @@
     "backend": "node server/index.js",
     "dev:full": "concurrently \"npm run dev\" \"npm run backend\"",
     "build": "tsc && vite build",
+    "seed": "node server/seed-users.js",
     "start": "node server/index.js",
     "preview": "vite preview"
   },
