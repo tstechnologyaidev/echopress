@@ -1,12 +1,15 @@
 :root {
-  --lp-red: #E11A22;
-  --lp-black: #000000;
-  --lp-white: #FFFFFF;
-  --lp-gray-light: #F2F2F2;
-  --lp-gray-mid: #CCCCCC;
-  --lp-gray-dark: #333333;
+  --lp-red: #FF512F; /* Sunset Red */
+  --lp-black: #f5f5f5; /* Theme Foreground */
+  --lp-white: #000000; /* Theme Background */
+  --lp-gray-light: #111111; /* Card backgrounds */
+  --lp-gray-mid: #222222; /* Borders */
+  --lp-gray-dark: #bbbbbb; /* Secondary text */
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'PT Serif', serif;
+  
+  --sunset-gradient: linear-gradient(45deg, #FF512F, #DD2476, #FF9068);
+  --blue-gradient: linear-gradient(135deg, #00c6ff, #0072ff);
 }
 
 * {
@@ -39,7 +42,7 @@ ul {
 
 /* HEADER */
 .header {
-  border-bottom: 2px solid var(--lp-black);
+  border-bottom: 2px solid var(--lp-gray-mid);
   padding: 20px 0;
 }
 
@@ -51,12 +54,13 @@ ul {
 
 .header-logo a {
   display: inline-block;
-  background-color: var(--lp-red);
-  color: var(--lp-white);
+  background: var(--sunset-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: 28px;
-  padding: 8px 12px;
+  font-size: 32px;
+  padding: 4px 0;
   letter-spacing: -1px;
 }
 
@@ -74,17 +78,22 @@ ul {
 }
 
 .btn-soutien {
-  border: 1px solid var(--lp-red);
-  color: var(--lp-red);
-  padding: 6px 12px;
+  background: var(--sunset-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  border: 1px solid transparent;
+  background-image: var(--sunset-gradient), var(--sunset-gradient);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  padding: 6px 16px;
   font-weight: 600;
   border-radius: 4px;
   transition: all 0.2s;
 }
 
 .btn-soutien:hover {
-  background-color: var(--lp-red);
-  color: var(--lp-white);
+  opacity: 0.8;
+  transform: translateY(-1px);
 }
 
 .auth-links {
@@ -99,8 +108,9 @@ ul {
 
 /* NAVIGATION */
 .main-nav {
-  background-color: var(--lp-black);
-  color: var(--lp-white);
+  background-color: var(--lp-gray-light);
+  color: var(--lp-black);
+  border-bottom: 1px solid var(--lp-gray-mid);
 }
 
 .main-nav ul {
@@ -117,7 +127,9 @@ ul {
 }
 
 .main-nav a:hover {
-  color: var(--lp-red);
+  background: var(--sunset-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* MAIN LAYOUT */
@@ -156,6 +168,10 @@ ul {
 .hero-content {
   background-color: var(--lp-gray-light);
   padding: 30px;
+  border: 1px solid transparent;
+  background: linear-gradient(var(--lp-gray-light), var(--lp-gray-light)) padding-box,
+              var(--blue-gradient) border-box;
+  border-radius: 0 0 8px 8px;
 }
 
 .surtitle {
@@ -196,6 +212,16 @@ ul {
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  border: 1px solid transparent;
+  background: linear-gradient(var(--lp-white), var(--lp-white)) padding-box,
+              var(--blue-gradient) border-box;
+  border-radius: 8px;
+  padding: 15px;
+  transition: transform 0.2s ease;
+}
+
+.card-article:hover {
+  transform: translateY(-5px);
 }
 
 .card-image {
@@ -203,6 +229,7 @@ ul {
   aspect-ratio: 16/9;
   object-fit: cover;
   margin-bottom: 15px;
+  border-radius: 4px;
   background-color: var(--lp-gray-light);
 }
 
@@ -228,7 +255,7 @@ ul {
 /* SIDEBAR */
 .sidebar-widget {
   margin-bottom: 40px;
-  border-top: 4px solid var(--lp-black);
+  border-top: 4px solid var(--lp-gray-mid);
   padding-top: 15px;
 }
 
@@ -254,10 +281,12 @@ ul {
 }
 
 .pop-rank {
-  color: var(--lp-red);
+  background: var(--sunset-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   font-weight: 700;
-  font-size: 24px;
-  width: 20px;
+  font-size: 28px;
+  width: 30px;
 }
 
 .pop-title {
@@ -285,8 +314,8 @@ ul {
 }
 
 .promo-box button {
-  background-color: var(--lp-black);
-  color: var(--lp-white);
+  background: var(--sunset-gradient);
+  color: var(--lp-gray-dark);
   border: none;
   padding: 10px 20px;
   font-weight: 600;
@@ -295,7 +324,7 @@ ul {
 }
 
 .promo-box button:hover {
-  background-color: var(--lp-red);
+  opacity: 0.9;
 }
 
 /* ARTICLE VIEW */
@@ -328,8 +357,8 @@ ul {
 
 /* FOOTER */
 .footer {
-  background-color: var(--lp-black);
-  color: var(--lp-white);
+  background-color: var(--lp-gray-light);
+  color: var(--lp-gray-dark);
   padding: 40px 0;
   text-align: center;
   font-size: 14px;
