@@ -235,7 +235,7 @@
         document.getElementById("form-title-display").textContent = "Éditer l'article";
         
         if (art.image) {
-          const imgSrc = art.image.startsWith("/") ? art.image : "/" + art.image;
+          const imgSrc = art.image.startsWith("http") ? art.image : (art.image.startsWith("/") ? art.image : "/" + art.image);
           document.getElementById("image-preview").src = imgSrc;
           document.getElementById("image-preview-container").style.display = "block";
         } else {

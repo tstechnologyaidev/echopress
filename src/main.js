@@ -39,7 +39,7 @@ const initMain = async () => {
         const heroData = displayArticles[0];
         heroContainer.innerHTML = `
             <a href="article.html?id=${heroData.id}" style="display:block;">
-                ${heroData.image ? `<img src="${heroData.image.startsWith('/') ? heroData.image : '/' + heroData.image}" alt="Hero Image" class="hero-image">` : ''}
+                ${heroData.image ? `<img src="${heroData.image.startsWith('http') ? heroData.image : (heroData.image.startsWith('/') ? heroData.image : '/' + heroData.image)}" alt="Hero Image" class="hero-image">` : ''}
                 <div class="hero-content">
                     <span class="surtitle">${heroData.surtitle}</span>
                     <h2 class="hero-title">${heroData.title}</h2>
@@ -59,7 +59,7 @@ const initMain = async () => {
             card.href = `article.html?id=${art.id}`;
             card.className = 'card-article';
             card.innerHTML = `
-                ${art.image ? `<img src="${art.image.startsWith('/') ? art.image : '/' + art.image}" alt="${art.title}" class="card-image">` : `<div class="card-image" style="display:flex;align-items:center;justify-content:center;">Pas d'image</div>`}
+                ${art.image ? `<img src="${art.image.startsWith('http') ? art.image : (art.image.startsWith('/') ? art.image : '/' + art.image)}" alt="${art.title}" class="card-image">` : `<div class="card-image" style="display:flex;align-items:center;justify-content:center;">Pas d'image</div>`}
                 <span class="surtitle">${art.surtitle}</span>
                 <h3 class="card-title">${art.title}</h3>
                 <span class="published-time">${art.publishedTime}</span>
