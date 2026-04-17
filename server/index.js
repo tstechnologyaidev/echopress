@@ -158,7 +158,7 @@ app.post('/api/settings', async (req, res) => {
 });
 
 // Catch-all route to serve the built index.html for any direct URL access
-app.get('*', (req, res, next) => {
+app.get('(.*)', (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
     return next();
   }
