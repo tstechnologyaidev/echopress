@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Administration | EchoPress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/style.css" />
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <style>
+      .admin-layout {
+        margin-top: 40px;
+        margin-bottom: 60px;
+      }
+      .admin-header {
+        margin-bottom: 30px;
+        border-bottom: 2px solid var(--lp-black);
+        padding-bottom: 10px;
+      }
+      .admin-panel {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+      }
+      .form-section {
+        background-color: var(--lp-gray-light);
+        padding: 30px;
+        border-radius: 8px;
+      }
+      .form-group { margin-bottom: 15px; }
+      .form-group label { display: block; font-weight: 600; margin-bottom: 5px; }
+      .form-group input, .form-group textarea, .form-group select {
+        width: 100%; padding: 10px; font-family: var(--font-sans); border: 1px solid var(--lp-gray-mid); border-radius: 4px;
+      }
+      .form-group textarea { resize: vertical; min-height: 100px; }
+      .btn {
+        background-color: var(--lp-black); color: var(--lp-white); border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: 600;
+      }
+      .btn-danger { background-color: var(--lp-red); }
+      .article-row {
+        display: flex; justify-content: space-between; align-items: center; padding: 15px; background: white; border: 1px solid var(--lp-gray-mid); margin-bottom: 10px; border-radius: 4px;
+      }
+      .article-row h4 { font-family: var(--font-serif); margin-bottom: 5px; }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div class="header-top container">
+        <div class="header-logo"><a href="/">ECHOPRESS</a></div>
+        <div class="header-actions">
+           <a href="/" class="btn-soutien" style="background:#555; border-color:#555;">Voir le site</a>
+           <div class="auth-links"></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container admin-layout">
+      <div class="admin-header">
+        <h1>Panneau d'administration</h1>
+      </div>
+      
+      <div class="admin-panel">
+        <div class="form-section">
+          <h3 id="form-title-display">Créer ou Éditer un article</h3>
+          <form id="create-article-form" style="margin-top:20px;">
+            <input type="hidden" id="art-id">
+            <div class="form-group">
+              <label>Journaliste (Prénom et Nom)</label>
+              <input type="text" id="art-author" required placeholder="ex: John Smith">
+            </div>
+            <div class="form-group">
+              <label>Surtitre (ex: Police, Succès)</label>
+              <input type="text" id="art-surtitle" required>
+            </div>
+            <div class="form-group">
+              <label>Titre de l'article</label>
+              <input type="text" id="art-title" required>
+            </div>
+            <div class="form-group">
+              <label>Catégorie</label>
+              <select id="art-category" required>
+                <option value="actualites">Actualités</option>
+                <option value="international">International</option>
+                <option value="dialogue">Dialogue</option>
+                <option value="contexte">Contexte</option>
+                <option value="affaires">Affaires</option>
+                <option value="sports">Sports</option>
+                <option value="auto">Auto</option>
+                <option value="arts">Arts</option>
+                <option value="cinema">Cinéma</option>
+                <option value="societe">Société</option>
+                <option value="gourmand">Gourmand</option>
+                <option value="voyage">Voyage</option>
+                <option value="maison">Maison</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Sous-catégorie</label>
+              <select id="art-sub-category" required disabled>
+                <option value="">-- Sélectionner une catégorie d'abord --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Image (fichier uploader)</label>
+              <input type="file" id="art-image-file" accept="image/*">
+              <input type="hidden" id="art-existing-image">
+              <div id="image-preview-container" style="margin-top: 10px; display: none;">
+                <img id="image-preview" src="" style="max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid var(--lp-gray-mid);">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Crédit photo (optionnel)</label>
+              <input type="text" id="art-image-credit" placeholder="ex: Agence QMI">
+            </div>
+            <div class="form-group">
+              <label>Résumé / Contenu initial</label>
+              <div id="quill-editor" style="height: 200px; background-color: var(--lp-white);"></div>
+            </div>
+            <button type="submit" id="submit-btn-form" class="btn" style="margin-top: 20px;">Publier l'article</button>
+          </form>
+        </div>
+
+        <div id="manage-section">
+          <h3>Gérer les articles existants</h3>
+          <div id="articles-list" style="margin-top:20px;">
+            <!-- Rendered via JS -->
+          </div>
+
+          <div id="about-edit-section" style="margin-top: 40px; border-top: 2px solid var(--lp-black); padding-top: 20px; display: none;">
+            <h3>Modifier la page "À Propos"</h3>
+            <div id="quill-about-editor" style="height: 200px; background-color: var(--lp-white); margin-top: 15px;"></div>
+            <button id="save-about-btn" class="btn" style="margin-top: 15px; background-color: var(--lp-red);">Sauvegarder À Propos</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script type="module" src="/src/auth-ui.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script type="module">
+      import { categories } from "/src/data.js";
+      
+      const userStr = localStorage.getItem("echopress_user");
+      const user = userStr ? JSON.parse(userStr) : null;
+      if (!user || (user.role !== "owner" && user.role !== "journalist")) {
+        alert("Accès refusé. Vous devez être le propriétaire ou un journaliste.");
+        window.location.href = "/";
+      }
+
+      const isJournalist = user.role === "journalist";
+      if (isJournalist) {
+        window.location.href = "/journalist.html";
+      }
+      
+      const isOwner = user.role === "owner";
+      if (isOwner) {
+        document.getElementById("about-edit-section").style.display = "block";
+      }
+
+      const categorySelect = document.getElementById("art-category");
+      const subCategorySelect = document.getElementById("art-sub-category");
+
+      function updateSubCategories(selectedCatId, selectedSubCatValue = "") {
+        const cat = categories.find(c => c.id === selectedCatId);
+        subCategorySelect.innerHTML = "<option value=''>-- Sélectionner une sous-catégorie --</option>";
+        if (cat && cat.subCategories) {
+          cat.subCategories.forEach(sub => {
+            const opt = document.createElement("option");
+            opt.value = sub;
+            opt.textContent = sub;
+            if (sub === selectedSubCatValue) opt.selected = true;
+            subCategorySelect.appendChild(opt);
+          });
+          subCategorySelect.disabled = false;
+        } else {
+          subCategorySelect.disabled = true;
+        }
+      }
+
+      categorySelect.addEventListener("change", (e) => {
+        updateSubCategories(e.target.value);
+      });
+
+      let allArticles = [];
+      async function fetchArticlesAdmin() {
+        const res = await fetch("/api/articles");
+        allArticles = await res.json();
+        const list = document.getElementById("articles-list");
+        list.innerHTML = "";
+        allArticles.forEach(a => {
+          const div = document.createElement("div");
+          div.className = "article-row";
+          div.innerHTML = `
+            <div>
+              <h4>${a.title}</h4>
+              <span style="font-size:12px; color:#666;">${a.category} (${a.subCategory || "N/A"}) - Par ${a.author || "Inconnu"}</span>
+            </div>
+            <div style="display: flex; gap: 5px;">
+              <button class="btn" style="background:#555;" onclick="window.editArticle('${a.id}')">Éditer</button>
+              <button class="btn btn-danger" onclick="window.deleteArticle('${a.id}')">Supprimer</button>
+            </div>
+          `;
+          list.appendChild(div);
+        });
+      }
+
+      window.deleteArticle = async (id) => {
+        if(confirm("Êtes-vous sûr de vouloir supprimer cet article ?")) {
+          await fetch("/api/articles/" + id, { method: "DELETE" });
+          fetchArticlesAdmin();
+        }
+      };
+
+      const quill = new Quill("#quill-editor", {
+        theme: "snow"
+      });
+
+      window.editArticle = (id) => {
+        const art = allArticles.find(a => a.id === id);
+        if(!art) return;
+        document.getElementById("art-id").value = art.id;
+        document.getElementById("art-author").value = art.author || "";
+        document.getElementById("art-surtitle").value = art.surtitle || "";
+        document.getElementById("art-title").value = art.title || "";
+        document.getElementById("art-category").value = art.category || "";
+        
+        updateSubCategories(art.category, art.subCategory);
+        
+        document.getElementById("art-image-credit").value = art.imageCredit || "";
+        document.getElementById("art-existing-image").value = art.image || "";
+        quill.root.innerHTML = art.summary || "";
+        document.getElementById("submit-btn-form").textContent = "Mettre à jour l'article";
+        document.getElementById("form-title-display").textContent = "Éditer l'article";
+        
+        if (art.image) {
+          const imgSrc = art.image.startsWith("/") ? art.image : "/" + art.image;
+          document.getElementById("image-preview").src = imgSrc;
+          document.getElementById("image-preview-container").style.display = "block";
+        } else {
+          document.getElementById("image-preview-container").style.display = "none";
+        }
+        
+        window.scrollTo(0, 0);
+      };
+
+      document.getElementById("art-image-file").addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) {
+          document.getElementById("image-preview").src = URL.createObjectURL(e.target.files[0]);
+          document.getElementById("image-preview-container").style.display = "block";
+        } else if (!document.getElementById("art-existing-image").value) {
+          document.getElementById("image-preview-container").style.display = "none";
+        }
+      });
+
+      function getFormattedTimestamp() {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, "0");
+        return `Publié à ${hours} h ${minutes}`;
+      }
+
+      document.getElementById("create-article-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        let imageUrl = document.getElementById("art-existing-image").value;
+        const fileInput = document.getElementById("art-image-file");
+        if (fileInput.files.length > 0) {
+          const formData = new FormData();
+          formData.append("image", fileInput.files[0]);
+          const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+          if(uploadRes.ok) {
+            const data = await uploadRes.json();
+            imageUrl = data.url;
+          }
+        }
+
+        const payload = {
+          author: document.getElementById("art-author").value,
+          surtitle: document.getElementById("art-surtitle").value,
+          title: document.getElementById("art-title").value,
+          category: document.getElementById("art-category").value,
+          subCategory: document.getElementById("art-sub-category").value,
+          image: imageUrl,
+          imageCredit: document.getElementById("art-image-credit").value,
+          summary: quill.root.innerHTML,
+          publishedTime: getFormattedTimestamp()
+        };
+        
+        const editingId = document.getElementById("art-id").value;
+        const method = editingId ? "PUT" : "POST";
+        const url = editingId ? "/api/articles/" + editingId : "/api/articles";
+
+        const res = await fetch(url, {
+          method: method,
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(payload)
+        });
+        if(res.ok) {
+          alert("Succès !");
+          e.target.reset();
+          document.getElementById("art-id").value = "";
+          document.getElementById("art-existing-image").value = "";
+          document.getElementById("submit-btn-form").textContent = "Publier l'article";
+          document.getElementById("form-title-display").textContent = "Créer un nouvel article";
+          document.getElementById("image-preview-container").style.display = "none";
+          subCategorySelect.innerHTML = '<option value="">-- Sélectionner une catégorie d\'abord --</option>';
+          subCategorySelect.disabled = true;
+          quill.setContents([]);
+          fetchArticlesAdmin();
+        }
+      });
+
+      fetchArticlesAdmin();
+
+      // About Content Logic
+      const quillAbout = new Quill("#quill-about-editor", { theme: "snow" });
+      
+      async function loadAboutAdmin() {
+        const res = await fetch('/api/settings/about_content');
+        const data = await res.json();
+        quillAbout.root.innerHTML = data.value || '';
+      }
+
+      document.getElementById("save-about-btn").addEventListener("click", async () => {
+        try {
+          const res = await fetch('/api/settings', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ key: 'about_content', value: quillAbout.root.innerHTML })
+          });
+          if (res.ok) {
+            alert("Page À Propos mise à jour !");
+          } else {
+            const errData = await res.json();
+            alert("Erreur lors de la sauvegarde : " + (errData.error || res.statusText));
+          }
+        } catch (e) {
+          alert("Erreur de connexion : " + e.message);
+        }
+      });
+
+      if (isOwner) loadAboutAdmin();
+    </script>
+  </body>
+</html>

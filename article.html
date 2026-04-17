@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Article | EchoPress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-top container">
+        <div class="header-logo">
+          <a href="/">ECHOPRESS</a>
+        </div>
+        <div class="header-meta">
+        </div>
+        <div class="header-actions">
+          <a href="about.html" class="btn-soutien">À Propos</a>
+          <div class="auth-links">
+            <a href="login.html">Se connecter</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- NAVIGATION -->
+    <nav class="main-nav">
+      <div class="container">
+        <ul id="nav-categories">
+          <!-- Populated by JS -->
+        </ul>
+      </div>
+    </nav>
+
+    <!-- ARTICLE FULL VIEW -->
+    <main class="container article-layout">
+      <article class="full-article" id="article-content">
+         <!-- Populated via JS -->
+      </article>
+
+      <!-- RIGHT SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-widget">
+          <h3>Les plus consultés</h3>
+          <ul class="popular-list" id="popular-list">
+             <!-- Populated by JS -->
+          </ul>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <p>© 2026 EchoPress Inc. Tous droits réservés.</p>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/article.js"></script>
+    <script type="module" src="/src/auth-ui.js"></script>
+  </body>
+</html>

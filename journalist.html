@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Espace Journaliste | EchoPress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/style.css" />
+    <style>
+      .journalist-layout { margin-top: 60px; margin-bottom: 60px; }
+      .welcome-card {
+        background: var(--lp-gray-light);
+        padding: 40px;
+        border-radius: 12px;
+        text-align: center;
+        border: 1px solid var(--lp-gray-mid);
+      }
+      .welcome-card h1 { font-family: var(--font-serif); font-size: 36px; margin-bottom: 20px; }
+      .journalist-actions { margin-top: 30px; display: flex; justify-content: center; gap: 20px; }
+      .btn-large {
+        padding: 15px 30px;
+        font-size: 18px;
+        background-color: var(--lp-red);
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      .btn-large:hover { background-color: #b00; }
+      .btn-secondary {
+        padding: 15px 30px;
+        font-size: 18px;
+        background-color: var(--lp-black);
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div class="header-top container">
+        <div class="header-logo"><a href="/">ECHOPRESS</a></div>
+        <div class="header-actions">
+           <a href="/" class="btn-soutien" style="background:#555; border-color:#555;">Voir le site</a>
+           <div class="auth-links"></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container journalist-layout">
+      <div class="welcome-card">
+        <h1>Bienvenue dans votre espace, <span id="journalist-name">Journaliste</span></h1>
+        <p>Utilisez les outils ci-dessous pour rédiger et publier vos articles sur EchoPress.</p>
+        
+        <div class="journalist-actions">
+          <a href="journalist-editor.html" class="btn-large">Publier un nouvel article</a>
+        </div>
+      </div>
+    </main>
+
+    <script type="module" src="/src/auth-ui.js"></script>
+    <script type="module">
+      const userStr = localStorage.getItem("echopress_user");
+      const user = userStr ? JSON.parse(userStr) : null;
+      if (!user || user.role !== "journalist") {
+        window.location.href = "/";
+      }
+      document.getElementById("journalist-name").textContent = user.username;
+    </script>
+  </body>
+</html>

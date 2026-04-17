@@ -1,0 +1,25 @@
+{
+  "name": "echopress",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "backend": "node server/index.js",
+    "dev:full": "concurrently \"npm run dev\" \"npm run backend\"",
+    "build": "tsc && vite build",
+    "start": "node server/index.js",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2",
+    "vite": "^8.0.4"
+  },
+  "dependencies": {
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "multer": "^2.1.1",
+    "sqlite3": "^6.0.1"
+  }
+}

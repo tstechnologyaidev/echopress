@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>À Propos | EchoPress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/style.css" />
+    <style>
+      .about-content {
+        max-width: 800px;
+        margin: 60px auto;
+        padding: 0 20px;
+        line-height: 1.6;
+      }
+      .about-content h2 {
+        font-family: var(--font-serif);
+        font-size: 32px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--lp-red);
+        display: inline-block;
+      }
+      .about-content {
+        font-size: 18px;
+        color: var(--lp-gray-dark);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-top container">
+        <div class="header-logo">
+          <a href="/">ECHOPRESS</a>
+        </div>
+        <div class="header-actions">
+           <a href="about.html" class="btn-soutien">À Propos</a>
+           <div class="auth-links">
+             <a href="login.html">Se connecter</a>
+           </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="about-content" id="about-container">
+        <!-- Content from API -->
+        Chargement...
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <p>© 2026 EchoPress Inc. Tous droits réservés.</p>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/auth-ui.js"></script>
+    <script type="module">
+      async function loadAbout() {
+        try {
+          const res = await fetch('/api/settings/about_content');
+          const data = await res.json();
+          document.getElementById('about-container').innerHTML = data.value || 'Contenu à venir.';
+        } catch (e) {
+          document.getElementById('about-container').innerHTML = 'Erreur lors du chargement du contenu.';
+        }
+      }
+      loadAbout();
+    </script>
+  </body>
+</html>

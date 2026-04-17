@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Éditeur d'article | EchoPress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/style.css" />
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <style>
+      .editor-layout { margin-top: 40px; margin-bottom: 60px; max-width: 900px; margin-left: auto; margin-right: auto; }
+      .form-section { background-color: var(--lp-gray-light); padding: 30px; border-radius: 8px; border: 1px solid var(--lp-gray-mid); }
+      .form-group { margin-bottom: 15px; }
+      .form-group label { display: block; font-weight: 600; margin-bottom: 5px; }
+      .form-group input, .form-group select { width: 100%; padding: 10px; font-family: var(--font-sans); border: 1px solid var(--lp-gray-mid); border-radius: 4px; }
+      .btn { background-color: var(--lp-red); color: var(--lp-white); border: none; padding: 12px 20px; cursor: pointer; border-radius: 4px; font-weight: 600; font-size: 16px; }
+      .btn-back { background-color: var(--lp-black); margin-right: 10px; text-decoration: none; display: inline-block; padding: 12px 20px; color: white; border-radius: 4px; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div class="header-top container">
+        <div class="header-logo"><a href="/">ECHOPRESS</a></div>
+        <div class="header-actions">
+           <a href="/" class="btn-soutien" style="background:#555; border-color:#555;">Voir le site</a>
+           <div class="auth-links"></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container editor-layout">
+      <div class="form-section">
+        <h1>Publier un nouvel article</h1>
+        <form id="journalist-article-form" style="margin-top:20px;">
+          <input type="hidden" id="art-id">
+          <div class="form-group">
+            <label>Surtitre (ex: Police, Succès)</label>
+            <input type="text" id="art-surtitle" required>
+          </div>
+          <div class="form-group">
+            <label>Titre de l'article</label>
+            <input type="text" id="art-title" required>
+          </div>
+          <div class="form-group">
+            <label>Catégorie</label>
+            <select id="art-category" required>
+              <option value="actualites">Actualités</option>
+              <option value="international">International</option>
+              <option value="dialogue">Dialogue</option>
+              <option value="contexte">Contexte</option>
+              <option value="affaires">Affaires</option>
+              <option value="sports">Sports</option>
+              <option value="auto">Auto</option>
+              <option value="arts">Arts</option>
+              <option value="cinema">Cinéma</option>
+              <option value="societe">Société</option>
+              <option value="gourmand">Gourmand</option>
+              <option value="voyage">Voyage</option>
+              <option value="maison">Maison</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sous-catégorie</label>
+            <select id="art-sub-category" required disabled>
+              <option value="">-- Sélectionner une catégorie d'abord --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Image (fichier uploader)</label>
+            <input type="file" id="art-image-file" accept="image/*">
+            <div id="image-preview-container" style="margin-top: 10px; display: none;">
+              <img id="image-preview" src="" style="max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid var(--lp-gray-mid);">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Crédit photo (optionnel)</label>
+            <input type="text" id="art-image-credit" placeholder="ex: Agence QMI">
+          </div>
+          <div class="form-group">
+            <label>Contenu de l'article</label>
+            <div id="quill-editor" style="height: 300px; background-color: var(--lp-white);"></div>
+          </div>
+          <div style="margin-top: 30px;">
+            <a href="journalist.html" class="btn-back">Annuler</a>
+            <button type="submit" class="btn">Publier l'article</button>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <script type="module" src="/src/auth-ui.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script type="module">
+      import { categories } from "/src/data.js";
+      
+      const userStr = localStorage.getItem("echopress_user");
+      const user = userStr ? JSON.parse(userStr) : null;
+      if (!user || user.role !== "journalist") {
+        window.location.href = "/";
+      }
+
+      const categorySelect = document.getElementById("art-category");
+      const subCategorySelect = document.getElementById("art-sub-category");
+
+      categorySelect.addEventListener("change", (e) => {
+        const cat = categories.find(c => c.id === e.target.value);
+        subCategorySelect.innerHTML = "<option value=''>-- Sélectionner une sous-catégorie --</option>";
+        if (cat && cat.subCategories) {
+          cat.subCategories.forEach(sub => {
+            const opt = document.createElement("option");
+            opt.value = sub;
+            opt.textContent = sub;
+            subCategorySelect.appendChild(opt);
+          });
+          subCategorySelect.disabled = false;
+        } else {
+          subCategorySelect.disabled = true;
+        }
+      });
+
+      const quill = new Quill("#quill-editor", { theme: "snow" });
+
+      document.getElementById("art-image-file").addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) {
+          document.getElementById("image-preview").src = URL.createObjectURL(e.target.files[0]);
+          document.getElementById("image-preview-container").style.display = "block";
+        }
+      });
+
+      function getFormattedTimestamp() {
+        const now = new Date();
+        return `Publié à ${now.getHours()} h ${now.getMinutes().toString().padStart(2, "0")}`;
+      }
+
+      document.getElementById("journalist-article-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        let imageUrl = "";
+        const fileInput = document.getElementById("art-image-file");
+        if (fileInput.files.length > 0) {
+          const formData = new FormData();
+          formData.append("image", fileInput.files[0]);
+          const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+          if(uploadRes.ok) {
+            const data = await uploadRes.json();
+            imageUrl = data.url;
+          }
+        }
+
+        const payload = {
+          author: user.username,
+          surtitle: document.getElementById("art-surtitle").value,
+          title: document.getElementById("art-title").value,
+          category: document.getElementById("art-category").value,
+          subCategory: document.getElementById("art-sub-category").value,
+          image: imageUrl,
+          imageCredit: document.getElementById("art-image-credit").value,
+          summary: quill.root.innerHTML,
+          publishedTime: getFormattedTimestamp()
+        };
+        
+        const res = await fetch("/api/articles", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(payload)
+        });
+
+        if(res.ok) {
+          alert("Article publié avec succès !");
+          window.location.href = "journalist.html";
+        }
+      });
+    </script>
+  </body>
+</html>

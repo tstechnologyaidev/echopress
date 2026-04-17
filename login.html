@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Connexion | EchoPress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/style.css" />
+    <style>
+      .login-container {
+        max-width: 400px;
+        margin: 80px auto;
+        padding: 40px;
+        background-color: var(--lp-white);
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--lp-gray-mid);
+      }
+      .login-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .login-header h1 {
+        font-family: var(--font-serif);
+        font-size: 32px;
+        color: var(--lp-black);
+        margin-bottom: 10px;
+      }
+      .login-header p {
+        color: var(--lp-gray-dark);
+        font-size: 14px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--lp-black);
+      }
+      .form-group input {
+        width: 100%;
+        padding: 12px 15px;
+        font-family: var(--font-sans);
+        font-size: 16px;
+        border: 1px solid var(--lp-gray-mid);
+        border-radius: 4px;
+        transition: border-color 0.2s;
+      }
+      .form-group input:focus {
+        outline: none;
+        border-color: var(--lp-red);
+      }
+      .btn-submit {
+        display: block;
+        width: 100%;
+        padding: 14px;
+        background-color: var(--lp-red);
+        color: var(--lp-white);
+        border: none;
+        border-radius: 4px;
+        font-family: var(--font-sans);
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .btn-submit:hover {
+        background-color: #C0141C;
+      }
+      .login-footer {
+        text-align: center;
+        margin-top: 25px;
+        font-size: 14px;
+        color: var(--lp-gray-dark);
+      }
+      .login-footer a {
+        color: var(--lp-red);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-top container">
+        <div class="header-logo">
+          <a href="/">ECHOPRESS</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="container">
+      <div class="login-container">
+        <div class="login-header">
+          <h1 id="form-title">Connexion</h1>
+          <p id="form-desc">Accédez à votre compte EchoPress</p>
+        </div>
+        <form id="auth-form">
+          <div class="form-group">
+            <label for="username">Nom d'utilisateur</label>
+            <input type="text" id="username" name="username" required placeholder="Votre nom d'utilisateur">
+          </div>
+          <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <input type="password" id="password" name="password" required placeholder="Votre mot de passe">
+          </div>
+          <p id="error-message" style="color: red; font-size: 14px; margin-bottom: 10px; display: none;"></p>
+          <button type="submit" class="btn-submit" id="submit-btn">Se connecter</button>
+        </form>
+        <div class="login-footer">
+          <span id="toggle-text">Nouveau sur EchoPress?</span> <a href="#" id="toggle-btn">Créer un compte</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <p>© 2026 EchoPress Inc. Tous droits réservés.</p>
+      </div>
+    </footer>
+
+    <script>
+      let isLoginMode = true;
+
+      document.getElementById('toggle-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        isLoginMode = !isLoginMode;
+        document.getElementById('form-title').innerText = isLoginMode ? 'Connexion' : 'Inscription';
+        document.getElementById('form-desc').innerText = isLoginMode ? 'Accédez à votre compte EchoPress' : 'Créez votre compte EchoPress';
+        document.getElementById('submit-btn').innerText = isLoginMode ? 'Se connecter' : 'S\'inscrire';
+        document.getElementById('toggle-text').innerText = isLoginMode ? 'Nouveau sur EchoPress?' : 'Déjà un compte?';
+        document.getElementById('toggle-btn').innerText = isLoginMode ? 'Créer un compte' : 'Se connecter';
+        document.getElementById('error-message').style.display = 'none';
+      });
+
+      document.getElementById('auth-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorMsg = document.getElementById('error-message');
+        
+        try {
+          const endpoint = isLoginMode ? '/api/login' : '/api/register';
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+          });
+          
+          const data = await response.json();
+          if (response.ok) {
+            // Save token
+            localStorage.setItem('echopress_user', JSON.stringify(data.token));
+            window.location.href = '/';
+          } else {
+            errorMsg.innerText = data.error || "Erreur lors de l'authentification";
+            errorMsg.style.display = 'block';
+          }
+        } catch (err) {
+          errorMsg.innerText = 'Impossible de se connecter au serveur backend.';
+          errorMsg.style.display = 'block';
+        }
+      });
+    </script>
+  </body>
+</html>
