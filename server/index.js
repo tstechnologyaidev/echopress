@@ -29,60 +29,63 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Users API
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-  getUserByUsername(username, (err, user) => {
-    if (err) return res.status(500).json({ error: err.message });
+  try {
+    const user = await getUserByUsername(username);
     if (!user || user.password !== password) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
-    // Simple mock token (username and role)
     const token = { username: user.username, role: user.role };
     res.json({ token });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.post('/api/register', (req, res) => {
+app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
-  getUserByUsername(username, (err, user) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (user) return res.status(400).json({ error: 'Username already exists' });
+  try {
+    const existingUser = await getUserByUsername(username);
+    if (existingUser) return res.status(400).json({ error: 'Username already exists' });
     
-    // Assign role based on special password
     const role = (password === 'EchoPressJournalist!') ? 'journalist' : 'user';
-    
-    createUser(username, password, role, (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.status(201).json({ token: { username, role: role } });
-    });
-  });
+    await createUser(username, password, role);
+    res.status(201).json({ token: { username, role: role } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Articles API
-app.get('/api/articles', (req, res) => {
-  getArticles((err, articles) => {
-    if (err) return res.status(500).json({ error: err.message });
+app.get('/api/articles', async (req, res) => {
+  try {
+    const articles = await getArticles();
     res.json(articles);
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.get('/api/articles/:id', (req, res) => {
+app.get('/api/articles/:id', async (req, res) => {
   const id = req.params.id;
-  incrementArticleViews(id, (err) => {
-    if (err) console.error("Failed to increment views:", err);
-    getArticleById(id, (err, article) => {
-      if (err) return res.status(500).json({ error: err.message });
-      if (!article) return res.status(404).json({ error: 'Article not found' });
-      res.json(article);
-    });
-  });
+  try {
+    await incrementArticleViews(id);
+    const article = await getArticleById(id);
+    if (!article) return res.status(404).json({ error: 'Article not found' });
+    res.json(article);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.get('/api/popular', (req, res) => {
-  getPopularArticles(3, (err, articles) => {
-    if (err) return res.status(500).json({ error: err.message });
+app.get('/api/popular', async (req, res) => {
+  try {
+    const articles = await getPopularArticles(3);
     res.json(articles);
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/upload', upload.single('image'), (req, res) => {
@@ -92,46 +95,56 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
   res.json({ url: `/uploads/${req.file.filename}` });
 });
 
-app.post('/api/articles', (req, res) => {
+app.post('/api/articles', async (req, res) => {
   const { title, summary, category, subCategory, author, surtitle, image, imageCredit, publishedTime } = req.body;
   const id = Date.now().toString(); // unique string ID
   
-  createArticle(id, category, subCategory, author, surtitle, title, summary, publishedTime, image, imageCredit, (err) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.status(201).json({ id, title, category, subCategory, author, summary, surtitle, publishedTime, image, imageCredit });
-  });
+  try {
+    const article = await createArticle(id, category, subCategory, author, surtitle, title, summary, publishedTime, image, imageCredit);
+    res.status(201).json(article);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.put('/api/articles/:id', (req, res) => {
+app.put('/api/articles/:id', async (req, res) => {
   const { title, summary, category, subCategory, author, surtitle, image, imageCredit, publishedTime } = req.body;
   
-  updateArticle(req.params.id, category, subCategory, author, surtitle, title, summary, image, imageCredit, publishedTime, (err) => {
-    if (err) return res.status(500).json({ error: err.message });
+  try {
+    await updateArticle(req.params.id, category, subCategory, author, surtitle, title, summary, image, imageCredit, publishedTime);
     res.json({ success: true });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.delete('/api/articles/:id', (req, res) => {
-  deleteArticle(req.params.id, (err) => {
-    if (err) return res.status(500).json({ error: err.message });
+app.delete('/api/articles/:id', async (req, res) => {
+  try {
+    await deleteArticle(req.params.id);
     res.json({ success: true });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Settings API
-app.get('/api/settings/:key', (req, res) => {
-  getSetting(req.params.key, (err, row) => {
-    if (err) return res.status(500).json({ error: err.message });
+app.get('/api/settings/:key', async (req, res) => {
+  try {
+    const row = await getSetting(req.params.key);
     res.json(row || { key: req.params.key, value: '' });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.post('/api/settings', (req, res) => {
+app.post('/api/settings', async (req, res) => {
   const { key, value } = req.body;
-  upsertSetting(key, value, (err) => {
-    if (err) return res.status(500).json({ error: err.message });
+  try {
+    await upsertSetting(key, value);
     res.json({ success: true });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Catch-all route to serve the built index.html for any direct URL access
