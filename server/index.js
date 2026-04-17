@@ -157,11 +157,13 @@ app.post('/api/settings', async (req, res) => {
   }
 });
 
-// Catch-all route to serve the built index.html for any direct URL access
-app.get('(.*)', (req, res, next) => {
+// Handle all other routes by serving the frontend (SPA support)
+app.use((req, res, next) => {
+  // If it's an API or Uploads request that wasn't handled, return 404
   if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
-    return next();
+    return res.status(404).json({ error: 'Not found' });
   }
+  // Otherwise, serve the main index.html
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
