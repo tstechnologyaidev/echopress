@@ -91,6 +91,7 @@ ul {
   display: flex;
   align-items: center;
 }
+
 .auth-links a {
   font-weight: 600;
   font-size: 14px;
@@ -120,7 +121,8 @@ ul {
 }
 
 /* MAIN LAYOUT */
-.main-layout, .article-layout {
+.main-layout,
+.article-layout {
   display: grid;
   grid-template-columns: 8fr 4fr;
   gap: 40px;
@@ -129,7 +131,9 @@ ul {
 }
 
 @media (max-width: 900px) {
-  .main-layout, .article-layout {
+
+  .main-layout,
+  .article-layout {
     grid-template-columns: 1fr;
   }
 }
