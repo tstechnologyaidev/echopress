@@ -163,7 +163,16 @@ app.use((req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
     return res.status(404).json({ error: 'Not found' });
   }
-  // Otherwise, serve the main index.html
+
+  // Check if a specific file exists in the build (e.g., /about or /about.html)
+  const filename = req.path.endsWith('.html') ? req.path : `${req.path}.html`;
+  const filePath = path.join(__dirname, '../dist', filename);
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  // Otherwise, fallback to the main index.html
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
