@@ -46,6 +46,38 @@ body {
   border-color: var(--lp-gray-mid) !important;
 }
 
+/* Fix Input Visibility in Dark Mode */
+input, select, textarea {
+  background-color: var(--lp-gray-mid) !important;
+  color: var(--lp-black) !important;
+  border-color: var(--lp-gray-mid) !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--lp-red) !important;
+  outline: none;
+}
+
+/* Fix Quill toolbar visibility */
+.ql-snow.ql-toolbar button:hover,
+.ql-snow.ql-toolbar button.ql-active,
+.ql-snow.ql-toolbar .ql-picker-label:hover,
+.ql-snow.ql-toolbar .ql-picker-label.ql-active,
+.ql-snow.ql-toolbar .ql-picker-item:hover,
+.ql-snow.ql-toolbar .ql-picker-item.ql-selected {
+  color: var(--lp-red) !important;
+}
+
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke {
+  stroke: var(--lp-red) !important;
+}
+
+.ql-snow.ql-toolbar button:hover .ql-fill,
+.ql-snow.ql-toolbar button.ql-active .ql-fill {
+  fill: var(--lp-red) !important;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -423,17 +455,48 @@ ul {
   color: var(--lp-black);
 }
 
-.full-article .content blockquote {
+.full-article .content blockquote,
+.ql-editor blockquote {
   border-left: 6px solid transparent;
   background: linear-gradient(var(--lp-white), var(--lp-white)) padding-box,
               linear-gradient(to bottom, #ffffff, #888888) border-box;
   padding-left: 25px;
-  margin: 40px 0;
+  margin: 0 !important;
   font-style: italic;
   font-family: var(--font-serif);
   font-size: 1.25em;
   color: #cccccc !important;
   line-height: 1.6;
+}
+
+/* Continuous Blockquote spacing */
+.full-article .content blockquote,
+.ql-editor blockquote {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.full-article .content blockquote:first-of-type,
+.ql-editor blockquote:first-child {
+  margin-top: 40px !important;
+  padding-top: 15px;
+}
+
+.full-article .content blockquote:last-of-type,
+.ql-editor blockquote:last-child {
+  margin-bottom: 40px !important;
+  padding-bottom: 15px;
+}
+
+/* Spacing before and after blockquote groups */
+.full-article .content *:not(blockquote) + blockquote,
+.ql-editor *:not(blockquote) + blockquote {
+  margin-top: 40px !important;
+}
+
+.full-article .content blockquote + *:not(blockquote),
+.ql-editor blockquote + *:not(blockquote) {
+  margin-top: 40px !important;
 }
 
 /* FOOTER */

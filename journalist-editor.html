@@ -122,7 +122,24 @@
         }
       });
 
-      const quill = new Quill("#quill-editor", { theme: "snow" });
+      const quill = new Quill("#quill-editor", { 
+        theme: "snow",
+        modules: {
+          keyboard: {
+            bindings: {
+              'exit-blockquote': {
+                key: 13, // Enter
+                shiftKey: true,
+                format: ['blockquote'],
+                handler: function(range, context) {
+                  this.quill.format('blockquote', false);
+                  return false;
+                }
+              }
+            }
+          }
+        }
+      });
 
       // Citation shortcut: typing '>' at the start of a line
       quill.on('text-change', (delta, oldDelta, source) => {
