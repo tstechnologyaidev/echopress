@@ -50,18 +50,18 @@ const initArticle = async () => {
 
     if (contentContainer && articleData) {
         contentContainer.innerHTML = `
-            <span class="surtitle" style="font-size:16px;">${articleData.surtitle}${articleData.subCategory ? ` | ${articleData.subCategory}` : ''}</span>
+            <span class="surtitle" style="font-size:16px;">${articleData.surtitle}${articleData.sub_category ? ` | ${articleData.sub_category}` : ''}</span>
             <h1>${articleData.title}</h1>
             <div class="meta">
                ${articleData.author ? `<strong>${articleData.author}</strong> | ` : ''} 
-               ${articleData.publishedTime}
-               ${articleData.modifiedAt && articleData.modifiedBy ? `
+               ${articleData.published_time}
+               ${articleData.modified_at && articleData.modified_by ? `
                  <br><span style="font-size:12px; color: var(--lp-gray-dark); margin-top: 4px; display: block;">
-                   Modifié le ${articleData.modifiedAt} par <strong>${getDisplayName(articleData.modifiedBy)}</strong>
+                   Modifié le ${articleData.modified_at} par <strong>${getDisplayName(articleData.modified_by)}</strong>
                  </span>` : ''}
             </div>
             ${articleData.image ? `<img src="${articleData.image.startsWith('http') ? articleData.image : '/' + articleData.image}" alt="${articleData.title}" class="main-img">` : ''}
-            ${articleData.imageCredit ? `<p style="font-size: 13px; color: var(--lp-gray-dark); margin-top: 5px; text-align: right;">Photo: ${articleData.imageCredit}</p>` : ''}
+            ${articleData.image_credit ? `<p style="font-size: 13px; color: var(--lp-gray-dark); margin-top: 5px; text-align: right;">Photo: ${articleData.image_credit}</p>` : ''}
             <div class="content">
                 <div style="font-weight: 500; font-size: 1.1em; color: var(--lp-gray-dark); margin-bottom: 20px;">
                    ${articleData.summary}

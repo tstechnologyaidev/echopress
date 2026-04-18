@@ -192,14 +192,14 @@
           if (!art) { console.error('Article not found with id:', id); return; }
 
           // Store originals to preserve on save
-          originalPublishedTime = art.publishedTime || '';
+          originalPublishedTime = art.published_time || '';
           originalAuthor = art.author || '';
           existingImageUrl = art.image || '';
 
           document.getElementById('art-surtitle').value = art.surtitle || '';
           document.getElementById('art-title').value = art.title || '';
           document.getElementById('art-category').value = art.category || '';
-          document.getElementById('art-image-credit').value = art.imageCredit || '';
+          document.getElementById('art-image-credit').value = art.image_credit || '';
 
           // Trigger sub-category population
           const cat = categories.find(c => c.id === art.category);
@@ -210,7 +210,7 @@
               const opt = document.createElement('option');
               opt.value = sub;
               opt.textContent = sub;
-              if (sub === art.subCategory) opt.selected = true;
+              if (sub === art.sub_category) opt.selected = true;
               subCategorySelect.appendChild(opt);
             });
             subCategorySelect.disabled = false;

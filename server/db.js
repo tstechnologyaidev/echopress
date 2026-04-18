@@ -57,7 +57,17 @@ export const getArticleById = async (id) => {
 // authorUsername: raw account username of the publisher (used for permission checks)
 export const createArticle = async (id, category, subCategory, author, surtitle, title, summary, publishedTime, image, imageCredit, authorUsername) => {
   const { data, error } = await supabase.from('articles').insert([{
-    id, category, subCategory, author, surtitle, title, summary, publishedTime, image, imageCredit, authorUsername
+    id, 
+    category, 
+    sub_category: subCategory, 
+    author, 
+    surtitle, 
+    title, 
+    summary, 
+    published_time: publishedTime, 
+    image, 
+    image_credit: imageCredit, 
+    author_username: authorUsername
   }]).select().single();
   if (error) throw error;
   return data;
@@ -66,9 +76,19 @@ export const createArticle = async (id, category, subCategory, author, surtitle,
 // modifiedBy: raw account username of whoever last edited
 export const updateArticle = async (id, category, subCategory, author, surtitle, title, summary, image, imageCredit, publishedTime, modifiedBy) => {
   const now = new Date();
-  const modifiedAt = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()} à ${now.getHours()} h ${String(now.getMinutes()).padStart(2, '0')}`;
+  const modified_at = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()} à ${now.getHours()} h ${String(now.getMinutes()).padStart(2, '0')}`;
   const { data, error } = await supabase.from('articles').update({
-    category, subCategory, author, surtitle, title, summary, image, imageCredit, publishedTime, modifiedAt, modifiedBy
+    category, 
+    sub_category: subCategory, 
+    author, 
+    surtitle, 
+    title, 
+    summary, 
+    image, 
+    image_credit: imageCredit, 
+    published_time: publishedTime, 
+    modified_at, 
+    modified_by: modifiedBy
   }).eq('id', id).select().single();
   if (error) throw error;
   return data;
@@ -106,7 +126,7 @@ export const upsertSetting = async (key, value) => {
 
 // Edit Requests API
 export const getEditRequests = async (status = null) => {
-  let query = supabase.from('edit_requests').select('*').order('createdAt', { ascending: false });
+  let query = supabase.from('edit_requests').select('*').order('created_at', { ascending: false });
   if (status) query = query.eq('status', status);
   const { data, error } = await query;
   if (error) throw error;
@@ -114,15 +134,20 @@ export const getEditRequests = async (status = null) => {
 };
 
 export const getEditRequestsForUser = async (requestedBy) => {
-  const { data, error } = await supabase.from('edit_requests').select('*').eq('requestedBy', requestedBy);
+  const { data, error } = await supabase.from('edit_requests').select('*').eq('requested_by', requestedBy);
   if (error) throw error;
   return data;
 };
 
 export const createEditRequest = async (articleId, articleTitle, requestedBy, description) => {
-  const createdAt = new Date().toISOString();
+  const created_at = new Date().toISOString();
   const { data, error } = await supabase.from('edit_requests').insert([{
-    articleId, articleTitle, requestedBy, description, status: 'pending', createdAt
+    article_id: articleId, 
+    article_title: articleTitle, 
+    requested_by: requestedBy, 
+    description, 
+    status: 'pending', 
+    created_at
   }]).select().single();
   if (error) throw error;
   return data;

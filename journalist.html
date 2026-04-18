@@ -237,7 +237,7 @@
         }
 
         articles.forEach(art => {
-          const isOwn = art.authorUsername === user.username;
+          const isOwn = art.author_username === user.username;
           const reqStatus = requestMap[art.id];
 
           let actionHtml = '';
@@ -256,7 +256,7 @@
           div.innerHTML = `
             <div class="art-info">
               <h4>${art.title}</h4>
-              <span>${art.category} — Par ${art.author || art.authorUsername || 'Inconnu'} — ${art.publishedTime}</span>
+              <span>${art.category} — Par ${art.author || art.author_username || 'Inconnu'} — ${art.published_time}</span>
             </div>
             <div class="art-actions">${actionHtml}</div>
           `;
@@ -270,7 +270,7 @@
         const filtered = allArticlesCached.filter(a =>
           (a.title || '').toLowerCase().includes(q) ||
           (a.author || '').toLowerCase().includes(q) ||
-          (a.authorUsername || '').toLowerCase().includes(q)
+          (a.author_username || '').toLowerCase().includes(q)
         );
         renderList(filtered);
       };
@@ -289,12 +289,12 @@
           // edit_requests table may not exist yet — articles still load
         }
 
-        // Build a map: articleId -> request status
+        // Build a map: article_id -> request status
         requestMap = {};
         myRequests.forEach(r => {
           // Keep the most recent meaningful status per article
-          if (!requestMap[r.articleId] || r.status === 'approved') {
-            requestMap[r.articleId] = r.status;
+          if (!requestMap[r.article_id] || r.status === 'approved') {
+            requestMap[r.article_id] = r.status;
           }
         });
 

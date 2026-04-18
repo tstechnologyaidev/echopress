@@ -62,7 +62,7 @@ const initMain = async () => {
                 ${art.image ? `<img src="${art.image.startsWith('http') ? art.image : '/' + art.image}" alt="${art.title}" class="card-image">` : `<div class="card-image" style="display:flex;align-items:center;justify-content:center;">Pas d'image</div>`}
                 <span class="surtitle">${art.surtitle}</span>
                 <h3 class="card-title">${art.title}</h3>
-                <span class="published-time">${art.publishedTime}</span>
+                <span class="published-time">${art.published_time}</span>
             `;
             gridContainer.appendChild(card);
         });

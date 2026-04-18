@@ -214,7 +214,7 @@
           div.innerHTML = `
             <div>
               <h4>${a.title}</h4>
-              <span style="font-size:12px; color:#666;">${a.category}${a.subCategory ? ' / ' + a.subCategory : ''} &mdash; Par ${a.author || a.authorUsername || 'Inconnu'}</span>
+              <span style="font-size:12px; color:#666;">${a.category}${a.sub_category ? ' / ' + a.sub_category : ''} &mdash; Par ${a.author || a.author_username || 'Inconnu'}</span>
             </div>
             <div style="display: flex; gap: 5px;">
               <button class="btn" style="padding: 6px 12px; font-size: 14px;" onclick="window.editArticle('${a.id}')">&#9998; Éditer</button>
@@ -231,7 +231,7 @@
         const filtered = allArticles.filter(a =>
           (a.title || '').toLowerCase().includes(q) ||
           (a.author || '').toLowerCase().includes(q) ||
-          (a.authorUsername || '').toLowerCase().includes(q)
+          (a.author_username || '').toLowerCase().includes(q)
         );
         renderArticleList(filtered);
       };
@@ -292,16 +292,16 @@
       window.editArticle = (id) => {
         const art = allArticles.find(a => String(a.id) === String(id));
         if(!art) return;
-        editingOriginalPublishedTime = art.publishedTime || '';
+        editingOriginalPublishedTime = art.published_time || '';
         document.getElementById("art-id").value = art.id;
         document.getElementById("art-author").value = art.author || "";
         document.getElementById("art-surtitle").value = art.surtitle || "";
         document.getElementById("art-title").value = art.title || "";
         document.getElementById("art-category").value = art.category || "";
         
-        updateSubCategories(art.category, art.subCategory);
+        updateSubCategories(art.category, art.sub_category);
         
-        document.getElementById("art-image-credit").value = art.imageCredit || "";
+        document.getElementById("art-image-credit").value = art.image_credit || "";
         document.getElementById("art-existing-image").value = art.image || "";
         quill.root.innerHTML = art.summary || "";
         document.getElementById("submit-btn-form").textContent = "Mettre à jour l'article";
@@ -465,8 +465,8 @@
           div.style.cssText = 'background:var(--lp-gray-light);border:1px solid var(--lp-gray-mid);border-left:4px solid #FF512F;padding:15px;margin-bottom:10px;border-radius:4px;';
           div.innerHTML = `
             <div style="margin-bottom:8px;">
-              <strong>${req.requestedBy}</strong> souhaite modifier :
-              <em style="color:var(--lp-red);">${req.articleTitle}</em>
+              <strong>${req.requested_by}</strong> souhaite modifier :
+              <em style="color:var(--lp-red);">${req.article_title}</em>
             </div>
             <div style="font-size:13px;color:var(--lp-gray-dark);margin-bottom:12px;">Raison : ${req.description}</div>
             <div style="display:flex;gap:8px;">
