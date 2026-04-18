@@ -75,8 +75,14 @@ export const createArticle = async (id, category, subCategory, author, surtitle,
 
 // modifiedBy: raw account username of whoever last edited
 export const updateArticle = async (id, category, subCategory, author, surtitle, title, summary, image, imageCredit, publishedTime, modifiedBy) => {
-  const now = new Date();
-  const modified_at = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()} à ${String(now.getHours()).padStart(2, '0')} h ${String(now.getMinutes()).padStart(2, '0')}`;
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Toronto',
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: 'numeric', hourCycle: 'h23'
+  }).formatToParts(new Date());
+  const p = {};
+  parts.forEach(x => p[x.type] = x.value);
+  const modified_at = `${p.day.padStart(2, '0')}/${p.month.padStart(2, '0')}/${p.year} à ${p.hour.padStart(2, '0')} h ${p.minute.padStart(2, '0')}`;
   const { data, error } = await supabase.from('articles').update({
     category, 
     sub_category: subCategory, 
