@@ -56,6 +56,7 @@ ul {
   display: inline-block;
   background: var(--sunset-gradient);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   font-family: var(--font-sans);
   font-weight: 700;
@@ -143,6 +144,7 @@ ul {
 .main-nav a:hover {
   background: var(--sunset-gradient);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -260,6 +262,14 @@ ul {
   margin-bottom: 10px;
 }
 
+.card-summary ul, .card-summary ol {
+  padding-left: 20px;
+  margin-bottom: 10px;
+}
+
+.card-summary ul { list-style: disc; }
+.card-summary ol { list-style: decimal; }
+
 .published-time {
   font-size: 12px;
   color: #777;
@@ -297,6 +307,7 @@ ul {
 .pop-rank {
   background: var(--sunset-gradient);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 700;
   font-size: 28px;
@@ -329,10 +340,10 @@ ul {
 
 .promo-box button {
   background: var(--sunset-gradient);
-  color: var(--lp-gray-dark);
+  color: #ffffff;
   border: none;
   padding: 10px 20px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   border-radius: 4px;
 }
@@ -369,6 +380,28 @@ ul {
   margin-bottom: 25px;
 }
 
+.full-article .content ul,
+.full-article .content ol {
+  padding-left: 30px;
+  margin-bottom: 25px;
+}
+
+.full-article .content ul {
+  list-style: disc;
+}
+
+.full-article .content ol {
+  list-style: decimal;
+}
+
+.full-article .content li {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  color: var(--lp-black);
+}
+
 /* FOOTER */
 .footer {
   background-color: var(--lp-gray-light);
@@ -376,4 +409,5 @@ ul {
   padding: 40px 0;
   text-align: center;
   font-size: 14px;
+  border-top: 1px solid var(--lp-gray-mid);
 }
