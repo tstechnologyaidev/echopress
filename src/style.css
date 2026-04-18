@@ -25,6 +25,27 @@ body {
   line-height: 1.5;
 }
 
+/* Fix Quill editor text color in Dark Mode */
+.ql-editor {
+  color: var(--lp-black) !important;
+}
+.ql-snow .ql-stroke {
+  stroke: var(--lp-black) !important;
+}
+.ql-snow .ql-fill {
+  fill: var(--lp-black) !important;
+}
+.ql-snow .ql-picker {
+  color: var(--lp-black) !important;
+}
+.ql-toolbar.ql-snow {
+  background-color: var(--lp-gray-light);
+  border-color: var(--lp-gray-mid) !important;
+}
+.ql-container.ql-snow {
+  border-color: var(--lp-gray-mid) !important;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -400,6 +421,19 @@ ul {
   line-height: 1.6;
   margin-bottom: 10px;
   color: var(--lp-black);
+}
+
+.full-article .content blockquote {
+  border-left: 6px solid transparent;
+  background: linear-gradient(var(--lp-white), var(--lp-white)) padding-box,
+              linear-gradient(to bottom, #ffffff, #888888) border-box;
+  padding-left: 25px;
+  margin: 40px 0;
+  font-style: italic;
+  font-family: var(--font-serif);
+  font-size: 1.25em;
+  color: #cccccc !important;
+  line-height: 1.6;
 }
 
 /* FOOTER */
