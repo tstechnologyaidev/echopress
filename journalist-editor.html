@@ -263,15 +263,15 @@
           surtitle: document.getElementById("art-surtitle").value,
           title: document.getElementById("art-title").value,
           category: document.getElementById("art-category").value,
-          subCategory: document.getElementById("art-sub-category").value,
+          sub_category: document.getElementById("art-sub-category").value,
           image: imageUrl,
-          imageCredit: document.getElementById("art-image-credit").value,
+          image_credit: document.getElementById("art-image-credit").value,
           summary: quill.root.innerHTML,
-          publishedTime: editingId ? originalPublishedTime : getFormattedTimestamp()
+          published_time: editingId ? originalPublishedTime : getFormattedTimestamp()
         };
 
         if (editingId) {
-          payload.modifiedBy = user.username;
+          payload.modified_by = user.username;
           const res = await fetch(`/api/articles/${editingId}`, {
             method: "PUT",
             headers: {"Content-Type": "application/json"},
@@ -290,7 +290,7 @@
             alert('Erreur lors de la mise à jour: ' + errMsg);
           }
         } else {
-          payload.authorUsername = user.username;
+          payload.author_username = user.username;
           const res = await fetch("/api/articles", {
             method: "POST",
             headers: {"Content-Type": "application/json"},

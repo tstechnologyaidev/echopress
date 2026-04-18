@@ -415,9 +415,9 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            articleId: currentRequestArticleId,
-            articleTitle: currentRequestArticleTitle,
-            requestedBy: user.username,
+            article_id: currentRequestArticleId,
+            article_title: currentRequestArticleTitle,
+            requested_by: user.username,
             description: fullDescription
           })
         });

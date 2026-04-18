@@ -114,10 +114,10 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 });
 
 app.post('/api/articles', async (req, res) => {
-  const { title, summary, category, subCategory, author, surtitle, image, imageCredit, publishedTime, authorUsername } = req.body;
+  const { title, summary, category, sub_category, author, surtitle, image, image_credit, published_time, author_username } = req.body;
   const id = Date.now().toString();
   try {
-    const article = await createArticle(id, category, subCategory, author, surtitle, title, summary, publishedTime, image, imageCredit, authorUsername);
+    const article = await createArticle(id, category, sub_category, author, surtitle, title, summary, published_time, image, image_credit, author_username);
     res.status(201).json(article);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -125,9 +125,9 @@ app.post('/api/articles', async (req, res) => {
 });
 
 app.put('/api/articles/:id', async (req, res) => {
-  const { title, summary, category, subCategory, author, surtitle, image, imageCredit, publishedTime, modifiedBy } = req.body;
+  const { title, summary, category, sub_category, author, surtitle, image, image_credit, published_time, modified_by } = req.body;
   try {
-    await updateArticle(req.params.id, category, subCategory, author, surtitle, title, summary, image, imageCredit, publishedTime, modifiedBy);
+    await updateArticle(req.params.id, category, sub_category, author, surtitle, title, summary, image, image_credit, published_time, modified_by);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -184,9 +184,9 @@ app.get('/api/edit-requests/user/:username', async (req, res) => {
 });
 
 app.post('/api/edit-requests', async (req, res) => {
-  const { articleId, articleTitle, requestedBy, description } = req.body;
+  const { article_id, article_title, requested_by, description } = req.body;
   try {
-    const request = await createEditRequest(articleId, articleTitle, requestedBy, description);
+    const request = await createEditRequest(article_id, article_title, requested_by, description);
     res.status(201).json(request);
   } catch (err) {
     res.status(500).json({ error: err.message });

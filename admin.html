@@ -366,17 +366,17 @@
           surtitle: document.getElementById("art-surtitle").value,
           title: document.getElementById("art-title").value,
           category: document.getElementById("art-category").value,
-          subCategory: document.getElementById("art-sub-category").value,
+          sub_category: document.getElementById("art-sub-category").value,
           image: imageUrl,
-          imageCredit: document.getElementById("art-image-credit").value,
+          image_credit: document.getElementById("art-image-credit").value,
           summary: quill.root.innerHTML,
-          publishedTime: editingId ? editingOriginalPublishedTime : getFormattedTimestamp()
+          published_time: editingId ? editingOriginalPublishedTime : getFormattedTimestamp()
         };
 
         if (editingId) {
-          payload.modifiedBy = user.username;
+          payload.modified_by = user.username;
         } else {
-          payload.authorUsername = user.username;
+          payload.author_username = user.username;
         }
 
         const res = await fetch(url, {
@@ -454,16 +454,27 @@
       });
 
       if (isOwner) {
-        loadAboutAdmin();
-        loadEditRequests();
+        if (typeof loadAboutAdmin === 'function') loadAboutAdmin();
+        loadAllRequests();
       }
 
       async function loadAllRequests() {
-        const res = await fetch('/api/edit-requests');
-        const requests = await res.json();
-        
-        renderPendingRequests(requests.filter(r => r.status === 'pending'));
-        renderActiveApprovals(requests.filter(r => r.status === 'approved'));
+        try {
+          const res = await fetch('/api/edit-requests');
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Erreur serveur (${res.status})`);
+          }
+          const requests = await res.json();
+          if (!Array.isArray(requests)) throw new Error("Les données reçues ne sont pas une liste.");
+          
+          renderPendingRequests(requests.filter(r => r.status === 'pending'));
+          renderActiveApprovals(requests.filter(r => r.status === 'approved'));
+        } catch (err) {
+          console.error("Erreur lors du chargement des demandes:", err);
+          document.getElementById('edit-requests-list').innerHTML = `<p style="color:var(--lp-red);">Erreur: ${err.message}</p>`;
+          document.getElementById('active-approvals-list').innerHTML = `<p style="color:var(--lp-red);">${err.message}</p>`;
+        }
       }
 
       function renderPendingRequests(pending) {
