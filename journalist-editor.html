@@ -34,7 +34,7 @@
 
     <main class="container editor-layout">
       <div class="form-section">
-        <h1>Publier un nouvel article</h1>
+        <h1 id="editor-page-title">Publier un nouvel article</h1>
         <form id="journalist-article-form" style="margin-top:20px;">
           <input type="hidden" id="art-id">
           <div class="form-group">
@@ -86,7 +86,7 @@
           </div>
           <div style="margin-top: 30px;">
             <a href="journalist.html" class="btn-back">Annuler</a>
-            <button type="submit" class="btn">Publier l'article</button>
+            <button type="submit" class="btn" id="submit-btn">Publier l'article</button>
           </div>
         </form>
       </div>
@@ -101,6 +101,16 @@
       const user = userStr ? JSON.parse(userStr) : null;
       if (!user || user.role !== "journalist") {
         window.location.href = "/";
+      }
+
+      // Check if we're in edit mode
+      const urlParams = new URLSearchParams(window.location.search);
+      const editingId = urlParams.get('id');
+      let existingImageUrl = '';
+
+      if (editingId) {
+        document.getElementById('editor-page-title').textContent = 'Modifier l\'article';
+        document.getElementById('submit-btn').textContent = 'Mettre à jour l\'article';
       }
 
       const categorySelect = document.getElementById("art-category");
@@ -169,10 +179,49 @@
         return `Publié à ${now.getHours()} h ${now.getMinutes().toString().padStart(2, "0")}`;
       }
 
+      async function loadArticleForEdit(id) {
+        const res = await fetch(`/api/articles/${id}`);
+        if (!res.ok) return;
+        const art = await res.json();
+
+        document.getElementById('art-surtitle').value = art.surtitle || '';
+        document.getElementById('art-title').value = art.title || '';
+        document.getElementById('art-category').value = art.category || '';
+        document.getElementById('art-image-credit').value = art.imageCredit || '';
+        existingImageUrl = art.image || '';
+
+        // Trigger sub-category population
+        const cat = categories.find(c => c.id === art.category);
+        const subCategorySelect = document.getElementById('art-sub-category');
+        subCategorySelect.innerHTML = "<option value=''>-- Sélectionner une sous-catégorie --</option>";
+        if (cat && cat.subCategories) {
+          cat.subCategories.forEach(sub => {
+            const opt = document.createElement('option');
+            opt.value = sub;
+            opt.textContent = sub;
+            if (sub === art.subCategory) opt.selected = true;
+            subCategorySelect.appendChild(opt);
+          });
+          subCategorySelect.disabled = false;
+        }
+
+        quill.root.innerHTML = art.summary || '';
+
+        if (art.image) {
+          const imgSrc = art.image.startsWith('http') ? art.image : '/' + art.image;
+          document.getElementById('image-preview').src = imgSrc;
+          document.getElementById('image-preview-container').style.display = 'block';
+        }
+      }
+
+      if (editingId) {
+        loadArticleForEdit(editingId);
+      }
+
       document.getElementById("journalist-article-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         
-        let imageUrl = "";
+        let imageUrl = existingImageUrl;
         const fileInput = document.getElementById("art-image-file");
         if (fileInput.files.length > 0) {
           const formData = new FormData();
@@ -195,16 +244,29 @@
           summary: quill.root.innerHTML,
           publishedTime: getFormattedTimestamp()
         };
-        
-        const res = await fetch("/api/articles", {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify(payload)
-        });
 
-        if(res.ok) {
-          alert("Article publié avec succès !");
-          window.location.href = "journalist.html";
+        if (editingId) {
+          payload.modifiedBy = user.username;
+          const res = await fetch(`/api/articles/${editingId}`, {
+            method: "PUT",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            alert("Article mis à jour avec succès !");
+            window.location.href = "journalist.html";
+          }
+        } else {
+          payload.authorUsername = user.username;
+          const res = await fetch("/api/articles", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            alert("Article publié avec succès !");
+            window.location.href = "journalist.html";
+          }
         }
       });
     </script>

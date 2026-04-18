@@ -11,9 +11,16 @@ if (!supabaseUrl || !supabaseKey) {
   console.error("Please add them in the Render Dashboard -> Environment tab.");
 }
 
-export const supabase = (supabaseUrl && supabaseKey) 
-  ? createClient(supabaseUrl, supabaseKey) 
+export const supabase = (supabaseUrl && supabaseKey)
+  ? createClient(supabaseUrl, supabaseKey)
   : null;
+
+// Display name helper (shared logic — used in article display)
+export const getDisplayName = (username) => {
+  if (username === 'EchoPressOwner') return 'Théo Forest Tran';
+  if (username === 'BountyHunter') return 'Sacha Wrzeszcz Bossé';
+  return username;
+};
 
 // Users API
 export const getUsers = async () => {
@@ -24,7 +31,7 @@ export const getUsers = async () => {
 
 export const getUserByUsername = async (username) => {
   const { data, error } = await supabase.from('users').select('*').eq('username', username).single();
-  if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows returned"
+  if (error && error.code !== 'PGRST116') throw error;
   return data;
 };
 
@@ -47,17 +54,21 @@ export const getArticleById = async (id) => {
   return data;
 };
 
-export const createArticle = async (id, category, subCategory, author, surtitle, title, summary, publishedTime, image, imageCredit) => {
+// authorUsername: raw account username of the publisher (used for permission checks)
+export const createArticle = async (id, category, subCategory, author, surtitle, title, summary, publishedTime, image, imageCredit, authorUsername) => {
   const { data, error } = await supabase.from('articles').insert([{
-    id, category, subCategory, author, surtitle, title, summary, publishedTime, image, imageCredit
+    id, category, subCategory, author, surtitle, title, summary, publishedTime, image, imageCredit, authorUsername
   }]).select().single();
   if (error) throw error;
   return data;
 };
 
-export const updateArticle = async (id, category, subCategory, author, surtitle, title, summary, image, imageCredit, publishedTime) => {
+// modifiedBy: raw account username of whoever last edited
+export const updateArticle = async (id, category, subCategory, author, surtitle, title, summary, image, imageCredit, publishedTime, modifiedBy) => {
+  const now = new Date();
+  const modifiedAt = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()} à ${now.getHours()} h ${String(now.getMinutes()).padStart(2, '0')}`;
   const { data, error } = await supabase.from('articles').update({
-    category, subCategory, author, surtitle, title, summary, image, imageCredit, publishedTime
+    category, subCategory, author, surtitle, title, summary, image, imageCredit, publishedTime, modifiedAt, modifiedBy
   }).eq('id', id).select().single();
   if (error) throw error;
   return data;
@@ -90,5 +101,34 @@ export const getSetting = async (key) => {
 
 export const upsertSetting = async (key, value) => {
   const { error } = await supabase.from('settings').upsert({ key, value });
+  if (error) throw error;
+};
+
+// Edit Requests API
+export const getEditRequests = async (status = null) => {
+  let query = supabase.from('edit_requests').select('*').order('createdAt', { ascending: false });
+  if (status) query = query.eq('status', status);
+  const { data, error } = await query;
+  if (error) throw error;
+  return data;
+};
+
+export const getEditRequestsForUser = async (requestedBy) => {
+  const { data, error } = await supabase.from('edit_requests').select('*').eq('requestedBy', requestedBy);
+  if (error) throw error;
+  return data;
+};
+
+export const createEditRequest = async (articleId, articleTitle, requestedBy, description) => {
+  const createdAt = new Date().toISOString();
+  const { data, error } = await supabase.from('edit_requests').insert([{
+    articleId, articleTitle, requestedBy, description, status: 'pending', createdAt
+  }]).select().single();
+  if (error) throw error;
+  return data;
+};
+
+export const updateEditRequestStatus = async (id, status) => {
+  const { error } = await supabase.from('edit_requests').update({ status }).eq('id', id);
   if (error) throw error;
 };

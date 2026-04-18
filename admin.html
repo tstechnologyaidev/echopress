@@ -134,6 +134,11 @@
             <div id="quill-about-editor" style="height: 200px; background-color: var(--lp-white); margin-top: 15px;"></div>
             <button id="save-about-btn" class="btn" style="margin-top: 15px; background-color: var(--lp-red);">Sauvegarder À Propos</button>
           </div>
+
+          <div id="edit-requests-section" style="margin-top: 40px; border-top: 2px solid var(--lp-black); padding-top: 20px; display: none;">
+            <h3>📥 Demandes de modification des journalistes</h3>
+            <div id="edit-requests-list" style="margin-top: 20px;"></div>
+          </div>
         </div>
       </div>
     </main>
@@ -158,6 +163,7 @@
       const isOwner = user.role === "owner";
       if (isOwner) {
         document.getElementById("about-edit-section").style.display = "block";
+        document.getElementById("edit-requests-section").style.display = "block";
       }
 
       const categorySelect = document.getElementById("art-category");
@@ -311,6 +317,10 @@
           }
         }
 
+        const editingId = document.getElementById("art-id").value;
+        const method = editingId ? "PUT" : "POST";
+        const url = editingId ? "/api/articles/" + editingId : "/api/articles";
+
         const payload = {
           author: document.getElementById("art-author").value,
           surtitle: document.getElementById("art-surtitle").value,
@@ -322,10 +332,12 @@
           summary: quill.root.innerHTML,
           publishedTime: getFormattedTimestamp()
         };
-        
-        const editingId = document.getElementById("art-id").value;
-        const method = editingId ? "PUT" : "POST";
-        const url = editingId ? "/api/articles/" + editingId : "/api/articles";
+
+        if (editingId) {
+          payload.modifiedBy = user.username;
+        } else {
+          payload.authorUsername = user.username;
+        }
 
         const res = await fetch(url, {
           method: method,
@@ -395,7 +407,56 @@
         }
       });
 
-      if (isOwner) loadAboutAdmin();
+      if (isOwner) {
+        loadAboutAdmin();
+        loadEditRequests();
+      }
+
+      async function loadEditRequests() {
+        const res = await fetch('/api/edit-requests');
+        const requests = await res.json();
+        const list = document.getElementById('edit-requests-list');
+        const pending = requests.filter(r => r.status === 'pending');
+        if (pending.length === 0) {
+          list.innerHTML = '<p style="color: var(--lp-gray-dark);">Aucune demande en attente.</p>';
+          return;
+        }
+        list.innerHTML = '';
+        pending.forEach(req => {
+          const div = document.createElement('div');
+          div.style.cssText = 'background:var(--lp-gray-light);border:1px solid var(--lp-gray-mid);border-left:4px solid #FF512F;padding:15px;margin-bottom:10px;border-radius:4px;';
+          div.innerHTML = `
+            <div style="margin-bottom:8px;">
+              <strong>${req.requestedBy}</strong> souhaite modifier :
+              <em style="color:var(--lp-red);">${req.articleTitle}</em>
+            </div>
+            <div style="font-size:13px;color:var(--lp-gray-dark);margin-bottom:12px;">Raison : ${req.description}</div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn" style="padding:6px 14px;font-size:13px;" onclick="approveRequest(${req.id})">✅ Approuver</button>
+              <button class="btn btn-danger" style="padding:6px 14px;font-size:13px;" onclick="denyRequest(${req.id})">❌ Refuser</button>
+            </div>
+          `;
+          list.appendChild(div);
+        });
+      }
+
+      window.approveRequest = async (id) => {
+        await fetch('/api/edit-requests/' + id, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ status: 'approved' })
+        });
+        loadEditRequests();
+      };
+
+      window.denyRequest = async (id) => {
+        await fetch('/api/edit-requests/' + id, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ status: 'denied' })
+        });
+        loadEditRequests();
+      };
     </script>
   </body>
 </html>

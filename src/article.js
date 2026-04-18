@@ -1,5 +1,11 @@
 import { categories } from './data.js';
 
+function getDisplayName(username) {
+  if (username === 'EchoPressOwner') return 'Théo Forest Tran';
+  if (username === 'BountyHunter') return 'Sacha Wrzeszcz Bossé';
+  return username;
+}
+
 const initArticle = async () => {
     // 0. Fetch articles from Database API
     let articles = [];
@@ -49,6 +55,10 @@ const initArticle = async () => {
             <div class="meta">
                ${articleData.author ? `<strong>${articleData.author}</strong> | ` : ''} 
                ${articleData.publishedTime}
+               ${articleData.modifiedAt && articleData.modifiedBy ? `
+                 <br><span style="font-size:12px; color: var(--lp-gray-dark); margin-top: 4px; display: block;">
+                   Modifié le ${articleData.modifiedAt} par <strong>${getDisplayName(articleData.modifiedBy)}</strong>
+                 </span>` : ''}
             </div>
             ${articleData.image ? `<img src="${articleData.image.startsWith('http') ? articleData.image : '/' + articleData.image}" alt="${articleData.title}" class="main-img">` : ''}
             ${articleData.imageCredit ? `<p style="font-size: 13px; color: var(--lp-gray-dark); margin-top: 5px; text-align: right;">Photo: ${articleData.imageCredit}</p>` : ''}
