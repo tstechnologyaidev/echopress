@@ -153,7 +153,29 @@ export const createEditRequest = async (articleId, articleTitle, requestedBy, de
   return data;
 };
 
-export const updateEditRequestStatus = async (id, status) => {
-  const { error } = await supabase.from('edit_requests').update({ status }).eq('id', id);
+export const updateEditRequestStatus = async (id, status, expires_at = null, is_one_time = false) => {
+  const { error } = await supabase.from('edit_requests').update({ 
+    status, 
+    expires_at, 
+    is_one_time 
+  }).eq('id', id);
   if (error) throw error;
+};
+
+// Helper for journalist-editor to find if they have a currently valid approval
+export const getValidApprovalForArticle = async (articleId, requestedBy) => {
+  const { data, error } = await supabase.from('edit_requests')
+    .select('*')
+    .eq('article_id', articleId)
+    .eq('requested_by', requestedBy)
+    .eq('status', 'approved');
+  
+  if (error) throw error;
+  
+  // Filter for non-expired
+  const now = new Date();
+  return data.find(r => {
+    if (!r.expires_at) return true;
+    return new Date(r.expires_at) > now;
+  });
 };

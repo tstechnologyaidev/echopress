@@ -238,14 +238,31 @@
 
         articles.forEach(art => {
           const isOwn = art.author_username === user.username;
-          const reqStatus = requestMap[art.id];
+          const req = requestMap[art.id];
+          const status = req ? (typeof req === 'string' ? req : req.status) : null;
+          
+          let isApproved = status === 'approved';
+          let expiryLabel = '';
+          
+          // Check for temporal expiration if req is the full object
+          if (isApproved && req && typeof req === 'object' && req.expires_at) {
+             const expDate = new Date(req.expires_at);
+             const now = new Date();
+             if (expDate <= now) {
+               isApproved = false;
+             } else {
+               const diffMs = expDate - now;
+               const diffMin = Math.round(diffMs / 60000);
+               expiryLabel = ` (Expire dans ${diffMin} min)`;
+             }
+          }
 
           let actionHtml = '';
           if (isOwn) {
             actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit">Modifier</a>`;
-          } else if (reqStatus === 'approved') {
-            actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit">Modifier</a>`;
-          } else if (reqStatus === 'pending') {
+          } else if (isApproved) {
+            actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit">Modifier</a><div style="font-size:10px; color:var(--lp-red); margin-top:4px;">${expiryLabel || (req.is_one_time ? 'Une seule fois' : 'Approuvé')}</div>`;
+          } else if (status === 'pending') {
             actionHtml = `<button class="btn-pending" disabled>⏳ Demande en attente</button>`;
           } else {
             actionHtml = `<button class="btn-request" data-action="open-modal" data-id="${art.id}" data-title="${(art.title || '').replace(/"/g, '&quot;')}">Demander une modification</button>`;
@@ -289,12 +306,13 @@
           // edit_requests table may not exist yet — articles still load
         }
 
-        // Build a map: article_id -> request status
+        // Build a map: article_id -> request object
         requestMap = {};
         myRequests.forEach(r => {
-          // Keep the most recent meaningful status per article
+          // Keep the most recent/meaningful request per article
+          // prioritizing 'approved' status
           if (!requestMap[r.article_id] || r.status === 'approved') {
-            requestMap[r.article_id] = r.status;
+            requestMap[r.article_id] = r;
           }
         });
 

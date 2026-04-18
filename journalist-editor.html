@@ -106,9 +106,10 @@
       // Check if we're in edit mode
       const urlParams = new URLSearchParams(window.location.search);
       const editingId = urlParams.get('id');
-      let existingImageUrl = '';
       let originalPublishedTime = '';
       let originalAuthor = '';
+      let existingImageUrl = '';
+      let currentApproval = null;
 
       if (editingId) {
         document.getElementById('editor-page-title').textContent = 'Modifier l\'article';
@@ -223,6 +224,16 @@
             document.getElementById('image-preview').src = imgSrc;
             document.getElementById('image-preview-container').style.display = 'block';
           }
+
+          // Check if this edit is via an approval request
+          if (art.author_username !== user.username) {
+            const checkRes = await fetch(`/api/edit-requests/check-valid?article_id=${id}&requested_by=${encodeURIComponent(user.username)}`);
+            if (checkRes.ok) {
+              const data = await checkRes.json();
+              currentApproval = data.approval;
+              console.log('Active approval:', currentApproval);
+            }
+          }
         } catch(err) {
           console.error('Error loading article for edit:', err);
         }
@@ -267,6 +278,10 @@
             body: JSON.stringify(payload)
           });
           if (res.ok) {
+            // Fulfill one-time approval if it exists
+            if (currentApproval && currentApproval.is_one_time) {
+              await fetch(`/api/edit-requests/${currentApproval.id}/fulfill`, { method: 'POST' });
+            }
             alert("Article mis à jour avec succès !");
             window.location.href = "journalist.html";
           } else {

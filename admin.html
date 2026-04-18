@@ -145,9 +145,16 @@
           </div>
 
           <div id="edit-requests-section" style="margin-top: 40px; border-top: 2px solid var(--lp-black); padding-top: 20px; display: none;">
-            <h3>📥 Demandes de modification des journalistes</h3>
+            <h3>📥 Demandes de modification (En attente)</h3>
             <div id="edit-requests-list" style="margin-top: 20px;"></div>
           </div>
+
+          <div id="active-approvals-section" style="margin-top: 40px; border-top: 2px solid var(--lp-black); padding-top: 20px; display: none;">
+            <h3>✅ Permissions Actives</h3>
+            <p style="font-size: 13px; color: var(--lp-gray-dark); margin-bottom: 15px;">Révoquez les permissions ici pour forcer le journaliste à redemander l'accès.</p>
+            <div id="active-approvals-list"></div>
+          </div>
+        </div>
         </div>
       </div>
     </main>
@@ -173,6 +180,7 @@
       if (isOwner) {
         document.getElementById("about-edit-section").style.display = "block";
         document.getElementById("edit-requests-section").style.display = "block";
+        document.getElementById("active-approvals-section").style.display = "block";
       }
 
       const categorySelect = document.getElementById("art-category");
@@ -450,11 +458,16 @@
         loadEditRequests();
       }
 
-      async function loadEditRequests() {
+      async function loadAllRequests() {
         const res = await fetch('/api/edit-requests');
         const requests = await res.json();
+        
+        renderPendingRequests(requests.filter(r => r.status === 'pending'));
+        renderActiveApprovals(requests.filter(r => r.status === 'approved'));
+      }
+
+      function renderPendingRequests(pending) {
         const list = document.getElementById('edit-requests-list');
-        const pending = requests.filter(r => r.status === 'pending');
         if (pending.length === 0) {
           list.innerHTML = '<p style="color: var(--lp-gray-dark);">Aucune demande en attente.</p>';
           return;
@@ -462,39 +475,108 @@
         list.innerHTML = '';
         pending.forEach(req => {
           const div = document.createElement('div');
-          div.style.cssText = 'background:var(--lp-gray-light);border:1px solid var(--lp-gray-mid);border-left:4px solid #FF512F;padding:15px;margin-bottom:10px;border-radius:4px;';
+          div.style.cssText = 'background:var(--lp-gray-light);border:1px solid var(--lp-gray-mid);border-left:4px solid #FF512F;padding:15px;margin-bottom:15px;border-radius:4px;';
           div.innerHTML = `
             <div style="margin-bottom:8px;">
               <strong>${req.requested_by}</strong> souhaite modifier :
               <em style="color:var(--lp-red);">${req.article_title}</em>
             </div>
             <div style="font-size:13px;color:var(--lp-gray-dark);margin-bottom:12px;">Raison : ${req.description}</div>
-            <div style="display:flex;gap:8px;">
-              <button class="btn" style="padding:6px 14px;font-size:13px;" onclick="approveRequest(${req.id})">✅ Approuver</button>
-              <button class="btn btn-danger" style="padding:6px 14px;font-size:13px;" onclick="denyRequest(${req.id})">❌ Refuser</button>
+            <div style="display:flex; flex-wrap: wrap; gap:8px;">
+              <button class="btn" style="padding:6px 14px;font-size:12px;" onclick="approveRequest(${req.id}, 'once')">✅ Une fois</button>
+              <button class="btn" style="padding:6px 14px;font-size:12px;" onclick="approveRequest(${req.id}, '1h')">✅ 1 Heure</button>
+              <button class="btn" style="padding:6px 14px;font-size:12px;" onclick="approveRequest(${req.id}, '24h')">✅ 24 Heures</button>
+              <button class="btn" style="padding:6px 14px;font-size:12px;" onclick="approveRequest(${req.id}, 'permanent')">✅ Permanent</button>
+              <button class="btn btn-danger" style="padding:6px 14px;font-size:12px; margin-left: auto;" onclick="denyRequest(${req.id})">❌ Refuser</button>
             </div>
           `;
           list.appendChild(div);
         });
       }
 
-      window.approveRequest = async (id) => {
-        await fetch('/api/edit-requests/' + id, {
+      function renderActiveApprovals(approved) {
+        const list = document.getElementById('active-approvals-list');
+        // Filter out expired ones on client side for immediate UI feedback
+        const now = new Date();
+        const active = approved.filter(r => {
+          if (!r.expires_at) return true;
+          return new Date(r.expires_at) > now;
+        });
+
+        if (active.length === 0) {
+          list.innerHTML = '<p style="color: var(--lp-gray-dark); font-size: 14px;">Aucune permission active.</p>';
+          return;
+        }
+        list.innerHTML = '';
+        active.forEach(req => {
+          let typeLabel = "Permanent";
+          if (req.is_one_time) typeLabel = "Une seule fois";
+          else if (req.expires_at) {
+            const exp = new Date(req.expires_at);
+            const diffMin = Math.round((exp - now) / 60000);
+            typeLabel = `Expire dans ${diffMin} min`;
+          }
+
+          const div = document.createElement('div');
+          div.style.cssText = 'background:var(--lp-white);border:1px solid var(--lp-gray-mid);padding:12px;margin-bottom:10px;border-radius:4px;display:flex;justify-content:space-between;align-items:center;';
+          div.innerHTML = `
+            <div>
+              <div style="font-weight:600; font-size: 14px;">${req.requested_by}</div>
+              <div style="font-size:12px; color:var(--lp-gray-dark);">${req.article_title} — <span style="color:var(--lp-red);">${typeLabel}</span></div>
+            </div>
+            <button class="btn btn-danger" style="padding:5px 10px; font-size:12px;" onclick="revokeRequest(${req.id})">Révoquer</button>
+          `;
+          list.appendChild(div);
+        });
+      }
+
+      window.approveRequest = async (id, type) => {
+        let expires_at = null;
+        let is_one_time = false;
+
+        const now = new Date();
+        if (type === '1h') {
+          expires_at = new Date(now.getTime() + 60 * 60 * 1000).toISOString();
+        } else if (type === '24h') {
+          expires_at = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+        } else if (type === 'once') {
+          is_one_time = true;
+        }
+
+        const res = await fetch('/api/edit-requests/' + id, {
           method: 'PUT',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ status: 'approved' })
+          body: JSON.stringify({ 
+            status: 'approved',
+            expires_at,
+            is_one_time
+          })
         });
-        loadEditRequests();
+        if (res.ok) loadAllRequests();
       };
 
       window.denyRequest = async (id) => {
-        await fetch('/api/edit-requests/' + id, {
+        const res = await fetch('/api/edit-requests/' + id, {
           method: 'PUT',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ status: 'denied' })
         });
-        loadEditRequests();
+        if (res.ok) loadAllRequests();
       };
+
+      window.revokeRequest = async (id) => {
+        const res = await fetch('/api/edit-requests/' + id, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ status: 'revoked' })
+        });
+        if (res.ok) loadAllRequests();
+      };
+
+      // Initial load
+      loadAllRequests();
+      // Refresh active status every minute
+      setInterval(loadAllRequests, 60000);
     </script>
   </body>
 </html>

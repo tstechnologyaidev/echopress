@@ -194,9 +194,30 @@ app.post('/api/edit-requests', async (req, res) => {
 });
 
 app.put('/api/edit-requests/:id', async (req, res) => {
-  const { status } = req.body;
+  const { status, expires_at, is_one_time } = req.body;
   try {
-    await updateEditRequestStatus(req.params.id, status);
+    await updateEditRequestStatus(req.params.id, status, expires_at, is_one_time);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// For journalist-editor: Check if an approval exists
+app.get('/api/edit-requests/check-valid', async (req, res) => {
+  const { article_id, requested_by } = req.query;
+  try {
+    const approval = await getValidApprovalForArticle(article_id, requested_by);
+    res.json({ approval });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// For journalist-editor: Mark as used
+app.post('/api/edit-requests/:id/fulfill', async (req, res) => {
+  try {
+    await updateEditRequestStatus(req.params.id, 'fulfilled');
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
