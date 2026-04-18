@@ -224,7 +224,12 @@
                 shiftKey: true,
                 format: ['blockquote'],
                 handler: function(range, context) {
-                  this.quill.format('blockquote', false);
+                  // Insert a newline after current cursor
+                  this.quill.insertText(range.index, '\n', 'user');
+                  // Move cursor to the new line
+                  this.quill.setSelection(range.index + 1, 0, 'silent');
+                  // Remove blockquote format from the new line only
+                  this.quill.format('blockquote', false, 'user');
                   return false;
                 }
               }
@@ -355,7 +360,9 @@
                 shiftKey: true,
                 format: ['blockquote'],
                 handler: function(range, context) {
-                  this.quill.format('blockquote', false);
+                  this.quill.insertText(range.index, '\n', 'user');
+                  this.quill.setSelection(range.index + 1, 0, 'silent');
+                  this.quill.format('blockquote', false, 'user');
                   return false;
                 }
               }

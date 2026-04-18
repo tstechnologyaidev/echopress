@@ -3,7 +3,7 @@ import cors from 'cors';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getUsers, getUserByUsername, createUser, getArticles, getArticleById, createArticle, updateArticle, deleteArticle, incrementArticleViews, getPopularArticles, getSetting, upsertSetting } from './db.js';
+import { supabase, getUserByUsername, createUser, getArticles, getArticleById, createArticle, updateArticle, deleteArticle, incrementArticleViews, getPopularArticles, getSetting, upsertSetting } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,31 +12,15 @@ import fs from 'fs';
 
 console.log("Process started. Initializing server...");
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, '../dist')));
 
-// Configure Multer
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, 'uploads/'))
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    cb(null, uniqueSuffix + path.extname(file.originalname))
-  }
-});
-const upload = multer({ storage: storage });
+// Configure Multer (memory storage — buffer sent directly to Supabase, no disk write)
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Users API
 app.post('/api/login', async (req, res) => {
@@ -98,16 +82,36 @@ app.get('/api/popular', async (req, res) => {
   }
 });
 
-app.post('/api/upload', upload.single('image'), (req, res) => {
+// Upload API — stores image in Supabase Storage (persists across Render restarts)
+app.post('/api/upload', upload.single('image'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
-  res.json({ url: `/uploads/${req.file.filename}` });
+
+  try {
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(req.file.originalname)}`;
+    const { data, error } = await supabase.storage
+      .from('images')
+      .upload(uniqueName, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Supabase upload error:', error.message);
+      return res.status(500).json({ error: 'Image upload to Supabase failed: ' + error.message });
+    }
+
+    const { data: publicData } = supabase.storage.from('images').getPublicUrl(uniqueName);
+    res.json({ url: publicData.publicUrl });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/articles', async (req, res) => {
   const { title, summary, category, subCategory, author, surtitle, image, imageCredit, publishedTime } = req.body;
-  const id = Date.now().toString(); // unique string ID
+  const id = Date.now().toString();
   
   try {
     const article = await createArticle(id, category, subCategory, author, surtitle, title, summary, publishedTime, image, imageCredit);
@@ -159,12 +163,10 @@ app.post('/api/settings', async (req, res) => {
 
 // Handle all other routes by serving the frontend (SPA support)
 app.use((req, res, next) => {
-  // If it's an API or Uploads request that wasn't handled, return 404
-  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+  if (req.path.startsWith('/api')) {
     return res.status(404).json({ error: 'Not found' });
   }
 
-  // Check if a specific file exists in the build (e.g., /about or /about.html)
   const filename = req.path.endsWith('.html') ? req.path : `${req.path}.html`;
   const filePath = path.join(__dirname, '../dist', filename);
 
@@ -172,7 +174,6 @@ app.use((req, res, next) => {
     return res.sendFile(filePath);
   }
 
-  // Otherwise, fallback to the main index.html
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
