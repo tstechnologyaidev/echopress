@@ -309,9 +309,10 @@
         // Build a map: article_id -> request object
         requestMap = {};
         myRequests.forEach(r => {
-          // Keep the most recent/meaningful request per article
-          // prioritizing 'approved' status
-          if (!requestMap[r.article_id] || r.status === 'approved') {
+          // myRequests is now ordered newest first.
+          if (!requestMap[r.article_id]) {
+            requestMap[r.article_id] = r;
+          } else if (r.status === 'approved' && requestMap[r.article_id].status !== 'approved') {
             requestMap[r.article_id] = r;
           }
         });

@@ -76,7 +76,7 @@ export const createArticle = async (id, category, subCategory, author, surtitle,
 // modifiedBy: raw account username of whoever last edited
 export const updateArticle = async (id, category, subCategory, author, surtitle, title, summary, image, imageCredit, publishedTime, modifiedBy) => {
   const now = new Date();
-  const modified_at = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()} à ${now.getHours()} h ${String(now.getMinutes()).padStart(2, '0')}`;
+  const modified_at = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()} à ${String(now.getHours()).padStart(2, '0')} h ${String(now.getMinutes()).padStart(2, '0')}`;
   const { data, error } = await supabase.from('articles').update({
     category, 
     sub_category: subCategory, 
@@ -134,7 +134,7 @@ export const getEditRequests = async (status = null) => {
 };
 
 export const getEditRequestsForUser = async (requestedBy) => {
-  const { data, error } = await supabase.from('edit_requests').select('*').eq('requested_by', requestedBy);
+  const { data, error } = await supabase.from('edit_requests').select('*').eq('requested_by', requestedBy).order('created_at', { ascending: false });
   if (error) throw error;
   return data;
 };

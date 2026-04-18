@@ -337,7 +337,7 @@
 
       function getFormattedTimestamp() {
         const now = new Date();
-        const hours = now.getHours();
+        const hours = String(now.getHours()).padStart(2, "0");
         const minutes = now.getMinutes().toString().padStart(2, "0");
         return `Publié à ${hours} h ${minutes}`;
       }
