@@ -65,34 +65,59 @@
       .btn-request:hover { border-color: var(--lp-red); color: var(--lp-red); }
       .btn-pending { background: transparent; color: var(--lp-gray-dark); border: 1px solid var(--lp-gray-mid); padding: 7px 16px; font-size: 13px; border-radius: 4px; cursor: not-allowed; }
 
-      /* Modal */
+      /* Modal multi-step */
       .modal-overlay {
         display: none;
         position: fixed; inset: 0;
-        background: rgba(0,0,0,0.7);
+        background: rgba(0,0,0,0.75);
         z-index: 1000;
         align-items: center;
         justify-content: center;
+        backdrop-filter: blur(4px);
       }
       .modal-overlay.active { display: flex; }
       .modal {
-        background: #111;
-        border: 1px solid var(--lp-gray-mid);
-        border-radius: 10px;
-        padding: 30px;
-        width: 90%;
-        max-width: 500px;
+        background: #141414;
+        border: 1px solid #333;
+        border-radius: 14px;
+        padding: 36px;
+        width: 94%;
+        max-width: 560px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        animation: modalPop 0.2s ease;
       }
-      .modal h3 { font-family: var(--font-serif); font-size: 22px; margin-bottom: 15px; }
-      .modal p { font-size: 14px; color: var(--lp-gray-dark); margin-bottom: 15px; }
+      @keyframes modalPop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+      .modal-step { display: none; }
+      .modal-step.active { display: block; }
+      .modal-progress { display: flex; gap: 6px; margin-bottom: 24px; }
+      .modal-progress span { flex: 1; height: 3px; border-radius: 3px; background: #333; transition: background 0.3s; }
+      .modal-progress span.done { background: var(--lp-red); }
+      .modal h3 { font-family: var(--font-serif); font-size: 22px; margin-bottom: 6px; color: var(--lp-white); }
+      .modal-article-label { font-size: 13px; font-weight: 600; color: var(--lp-red); margin-bottom: 20px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .modal-question { font-size: 14px; color: #aaa; margin-bottom: 14px; }
+      .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px; }
+      .choice-btn {
+        padding: 12px 10px; border: 1.5px solid #333; border-radius: 8px;
+        background: #1e1e1e; color: #ccc; font-size: 13px; font-weight: 600;
+        cursor: pointer; text-align: center; transition: all 0.18s;
+      }
+      .choice-btn:hover { border-color: var(--lp-red); color: #fff; }
+      .choice-btn.selected { border-color: var(--lp-red); background: rgba(200,0,28,0.12); color: #fff; }
+      .urgency-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 6px; }
       .modal textarea {
-        width: 100%; min-height: 100px; padding: 10px;
+        width: 100%; min-height: 110px; padding: 12px;
         font-family: var(--font-sans); font-size: 14px;
-        border-radius: 4px; resize: vertical;
+        background: #1e1e1e; border: 1.5px solid #333; color: #ddd;
+        border-radius: 8px; resize: vertical; box-sizing: border-box;
+        transition: border-color 0.2s;
       }
-      .modal-actions { display: flex; gap: 10px; margin-top: 15px; justify-content: flex-end; }
-      .btn-cancel { background: var(--lp-gray-mid); color: var(--lp-black); border: none; padding: 8px 18px; border-radius: 4px; cursor: pointer; font-weight: 600; }
-      .btn-submit-req { background: var(--sunset-gradient); color: #fff; border: none; padding: 8px 18px; border-radius: 4px; cursor: pointer; font-weight: 700; }
+      .modal textarea:focus { outline: none; border-color: var(--lp-red); }
+      .modal-actions { display: flex; gap: 10px; margin-top: 22px; justify-content: space-between; align-items: center; }
+      .btn-cancel { background: transparent; color: #888; border: 1px solid #333; padding: 9px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; }
+      .btn-cancel:hover { color: #fff; border-color: #666; }
+      .btn-next { background: var(--sunset-gradient); color: #fff; border: none; padding: 9px 22px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 14px; }
+      .btn-next:disabled { opacity: 0.4; cursor: not-allowed; }
+      .btn-submit-req { background: var(--sunset-gradient); color: #fff; border: none; padding: 9px 22px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 14px; }
     </style>
   </head>
   <body>
@@ -106,16 +131,59 @@
       </div>
     </header>
 
-    <!-- Edit Request Modal -->
+    <!-- Edit Request Modal (multi-step) -->
     <div class="modal-overlay" id="request-modal">
       <div class="modal">
-        <h3>Demander une modification</h3>
-        <p id="modal-article-name" style="color:var(--lp-red);font-weight:600;"></p>
-        <p>Décrivez pourquoi vous souhaitez modifier cet article :</p>
-        <textarea id="request-description" placeholder="Ex: Correction d'une erreur factuelle dans le paragraphe 2..."></textarea>
-        <div class="modal-actions">
-          <button class="btn-cancel" onclick="closeModal()">Annuler</button>
-          <button class="btn-submit-req" onclick="submitRequest()">Envoyer la demande</button>
+        <!-- Progress bar -->
+        <div class="modal-progress">
+          <span id="prog-1" class="done"></span>
+          <span id="prog-2"></span>
+          <span id="prog-3"></span>
+        </div>
+
+        <!-- STEP 1: Type of modification -->
+        <div class="modal-step active" id="modal-step-1">
+          <h3>Demander une modification</h3>
+          <span class="modal-article-label" id="modal-article-name"></span>
+          <p class="modal-question">Quel type de modification souhaitez-vous apporter ?</p>
+          <div class="choice-grid">
+            <button class="choice-btn" data-group="type" data-val="Correction factuelle">🔍 Correction factuelle</button>
+            <button class="choice-btn" data-group="type" data-val="Mise à jour d'info">🔄 Mise à jour d'info</button>
+            <button class="choice-btn" data-group="type" data-val="Amélioration du style">✍️ Style / rédaction</button>
+            <button class="choice-btn" data-group="type" data-val="Autre">💬 Autre</button>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-cancel" id="modal-cancel-btn">Annuler</button>
+            <button class="btn-next" id="step1-next" disabled>Suivant →</button>
+          </div>
+        </div>
+
+        <!-- STEP 2: Urgency -->
+        <div class="modal-step" id="modal-step-2">
+          <h3>Niveau d'urgence</h3>
+          <span class="modal-article-label" id="modal-article-name-2"></span>
+          <p class="modal-question">Quelle est l'urgence de cette modification ?</p>
+          <div class="urgency-grid">
+            <button class="choice-btn" data-group="urgency" data-val="Basse">🟢 Basse</button>
+            <button class="choice-btn" data-group="urgency" data-val="Normale">🟡 Normale</button>
+            <button class="choice-btn" data-group="urgency" data-val="Haute">🔴 Haute</button>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-cancel" id="step2-back">← Retour</button>
+            <button class="btn-next" id="step2-next" disabled>Suivant →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: Description -->
+        <div class="modal-step" id="modal-step-3">
+          <h3>Décrivez votre demande</h3>
+          <span class="modal-article-label" id="modal-article-name-3"></span>
+          <p class="modal-question">Expliquez en détail pourquoi cette modification est nécessaire et en quoi elle améliore l'article :</p>
+          <textarea id="request-description" placeholder="Ex: Le paragraphe 2 contient une erreur factuelle sur la date de l'événement. La date correcte est le 14 mars 2025 selon..."></textarea>
+          <div class="modal-actions">
+            <button class="btn-cancel" id="step3-back">← Retour</button>
+            <button class="btn-submit-req" id="submit-request-btn">✉️ Envoyer la demande</button>
+          </div>
         </div>
       </div>
     </div>
@@ -180,7 +248,7 @@
           } else if (reqStatus === 'pending') {
             actionHtml = `<button class="btn-pending" disabled>⏳ Demande en attente</button>`;
           } else {
-            actionHtml = `<button class="btn-request" onclick="openModal('${art.id}', ${JSON.stringify(art.title)})">Demander une modification</button>`;
+            actionHtml = `<button class="btn-request" data-action="open-modal" data-id="${art.id}" data-title="${(art.title || '').replace(/"/g, '&quot;')}">Demander une modification</button>`;
           }
 
           const div = document.createElement('div');
@@ -238,27 +306,93 @@
       }
 
 
-      // Modal controls
-      window.openModal = (articleId, articleTitle) => {
+      // ─── Event delegation: handle article list button clicks ───
+      document.getElementById('articles-list').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action="open-modal"]');
+        if (btn) openModal(btn.dataset.id, btn.dataset.title);
+      });
+
+      // ─── Multi-step modal state ───
+      let selectedType = '';
+      let selectedUrgency = '';
+      let currentStep = 1;
+
+      function setStep(n) {
+        currentStep = n;
+        document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'));
+        document.getElementById(`modal-step-${n}`).classList.add('active');
+        // Update progress bar
+        ['prog-1','prog-2','prog-3'].forEach((id, i) => {
+          document.getElementById(id).classList.toggle('done', i < n);
+        });
+      }
+
+      function openModal(articleId, articleTitle) {
         currentRequestArticleId = articleId;
         currentRequestArticleTitle = articleTitle;
-        document.getElementById('modal-article-name').textContent = `« ${articleTitle} »`;
+        const label = `«\u00a0${articleTitle}\u00a0»`;
+        document.getElementById('modal-article-name').textContent = label;
+        document.getElementById('modal-article-name-2').textContent = label;
+        document.getElementById('modal-article-name-3').textContent = label;
         document.getElementById('request-description').value = '';
+        // Reset choices
+        selectedType = ''; selectedUrgency = '';
+        document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+        document.getElementById('step1-next').disabled = true;
+        document.getElementById('step2-next').disabled = true;
+        setStep(1);
         document.getElementById('request-modal').classList.add('active');
-      };
+      }
 
-      window.closeModal = () => {
+      function closeModal() {
         document.getElementById('request-modal').classList.remove('active');
         currentRequestArticleId = null;
         currentRequestArticleTitle = null;
-      };
+      }
 
-      window.submitRequest = async () => {
+      // Choice button selections
+      document.querySelectorAll('.choice-btn[data-group="type"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.choice-btn[data-group="type"]').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          selectedType = btn.dataset.val;
+          document.getElementById('step1-next').disabled = false;
+        });
+      });
+
+      document.querySelectorAll('.choice-btn[data-group="urgency"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.choice-btn[data-group="urgency"]').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          selectedUrgency = btn.dataset.val;
+          document.getElementById('step2-next').disabled = false;
+        });
+      });
+
+      // Navigation
+      document.getElementById('step1-next').addEventListener('click', () => setStep(2));
+      document.getElementById('step2-next').addEventListener('click', () => setStep(3));
+      document.getElementById('step2-back').addEventListener('click', () => setStep(1));
+      document.getElementById('step3-back').addEventListener('click', () => setStep(2));
+      document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
+
+      // Close on overlay click
+      document.getElementById('request-modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeModal();
+      });
+
+      // Submit
+      document.getElementById('submit-request-btn').addEventListener('click', async () => {
         const description = document.getElementById('request-description').value.trim();
         if (!description) {
-          alert('Veuillez écrire une description de votre demande.');
+          document.getElementById('request-description').style.borderColor = 'var(--lp-red)';
+          document.getElementById('request-description').placeholder = 'Ce champ est obligatoire !';
           return;
         }
+        const fullDescription = `[${selectedType}] [Urgence: ${selectedUrgency}] ${description}`;
+        const btn = document.getElementById('submit-request-btn');
+        btn.disabled = true;
+        btn.textContent = 'Envoi...';
         const res = await fetch('/api/edit-requests', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -266,20 +400,17 @@
             articleId: currentRequestArticleId,
             articleTitle: currentRequestArticleTitle,
             requestedBy: user.username,
-            description
+            description: fullDescription
           })
         });
+        btn.disabled = false;
+        btn.textContent = '✉️ Envoyer la demande';
         if (res.ok) {
           closeModal();
           await loadAll();
         } else {
           alert('Erreur lors de l\'envoi de la demande.');
         }
-      };
-
-      // Close modal on overlay click
-      document.getElementById('request-modal').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) closeModal();
       });
 
       loadAll();

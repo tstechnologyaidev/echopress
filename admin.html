@@ -290,7 +290,7 @@
       let editingOriginalPublishedTime = '';
 
       window.editArticle = (id) => {
-        const art = allArticles.find(a => a.id === id);
+        const art = allArticles.find(a => String(a.id) === String(id));
         if(!art) return;
         editingOriginalPublishedTime = art.publishedTime || '';
         document.getElementById("art-id").value = art.id;
