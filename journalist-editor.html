@@ -107,6 +107,8 @@
       const urlParams = new URLSearchParams(window.location.search);
       const editingId = urlParams.get('id');
       let existingImageUrl = '';
+      let originalPublishedTime = '';
+      let originalAuthor = '';
 
       if (editingId) {
         document.getElementById('editor-page-title').textContent = 'Modifier l\'article';
@@ -180,37 +182,49 @@
       }
 
       async function loadArticleForEdit(id) {
-        const res = await fetch(`/api/articles/${id}`);
-        if (!res.ok) return;
-        const art = await res.json();
+        let res;
+        try {
+          // Use a direct fetch that doesn't increment views
+          const allRes = await fetch('/api/articles');
+          if (!allRes.ok) { console.error('Failed to fetch articles list'); return; }
+          const all = await allRes.json();
+          const art = all.find(a => String(a.id) === String(id));
+          if (!art) { console.error('Article not found with id:', id); return; }
 
-        document.getElementById('art-surtitle').value = art.surtitle || '';
-        document.getElementById('art-title').value = art.title || '';
-        document.getElementById('art-category').value = art.category || '';
-        document.getElementById('art-image-credit').value = art.imageCredit || '';
-        existingImageUrl = art.image || '';
+          // Store originals to preserve on save
+          originalPublishedTime = art.publishedTime || '';
+          originalAuthor = art.author || '';
+          existingImageUrl = art.image || '';
 
-        // Trigger sub-category population
-        const cat = categories.find(c => c.id === art.category);
-        const subCategorySelect = document.getElementById('art-sub-category');
-        subCategorySelect.innerHTML = "<option value=''>-- Sélectionner une sous-catégorie --</option>";
-        if (cat && cat.subCategories) {
-          cat.subCategories.forEach(sub => {
-            const opt = document.createElement('option');
-            opt.value = sub;
-            opt.textContent = sub;
-            if (sub === art.subCategory) opt.selected = true;
-            subCategorySelect.appendChild(opt);
-          });
-          subCategorySelect.disabled = false;
-        }
+          document.getElementById('art-surtitle').value = art.surtitle || '';
+          document.getElementById('art-title').value = art.title || '';
+          document.getElementById('art-category').value = art.category || '';
+          document.getElementById('art-image-credit').value = art.imageCredit || '';
 
-        quill.root.innerHTML = art.summary || '';
+          // Trigger sub-category population
+          const cat = categories.find(c => c.id === art.category);
+          const subCategorySelect = document.getElementById('art-sub-category');
+          subCategorySelect.innerHTML = "<option value=''>-- Sélectionner une sous-catégorie --</option>";
+          if (cat && cat.subCategories) {
+            cat.subCategories.forEach(sub => {
+              const opt = document.createElement('option');
+              opt.value = sub;
+              opt.textContent = sub;
+              if (sub === art.subCategory) opt.selected = true;
+              subCategorySelect.appendChild(opt);
+            });
+            subCategorySelect.disabled = false;
+          }
 
-        if (art.image) {
-          const imgSrc = art.image.startsWith('http') ? art.image : '/' + art.image;
-          document.getElementById('image-preview').src = imgSrc;
-          document.getElementById('image-preview-container').style.display = 'block';
+          quill.root.innerHTML = art.summary || '';
+
+          if (art.image) {
+            const imgSrc = art.image.startsWith('http') ? art.image : '/' + art.image;
+            document.getElementById('image-preview').src = imgSrc;
+            document.getElementById('image-preview-container').style.display = 'block';
+          }
+        } catch(err) {
+          console.error('Error loading article for edit:', err);
         }
       }
 
@@ -234,7 +248,7 @@
         }
 
         const payload = {
-          author: user.username,
+          author: editingId ? originalAuthor : user.username,
           surtitle: document.getElementById("art-surtitle").value,
           title: document.getElementById("art-title").value,
           category: document.getElementById("art-category").value,
@@ -242,7 +256,7 @@
           image: imageUrl,
           imageCredit: document.getElementById("art-image-credit").value,
           summary: quill.root.innerHTML,
-          publishedTime: getFormattedTimestamp()
+          publishedTime: editingId ? originalPublishedTime : getFormattedTimestamp()
         };
 
         if (editingId) {

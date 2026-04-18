@@ -128,6 +128,15 @@
 
       <div class="articles-section">
         <h2>Tous les articles</h2>
+        <div style="margin: 15px 0;">
+          <input
+            type="text"
+            id="articles-search"
+            placeholder="🔍 Chercher par titre ou auteur..."
+            style="width: 100%; padding: 10px 14px; font-family: var(--font-sans); font-size: 14px; border: 1px solid var(--lp-gray-mid); border-radius: 6px; background: var(--lp-gray-light); color: var(--lp-black); outline: none; box-sizing: border-box;"
+            oninput="filterArticles(this.value)"
+          >
+        </div>
         <div id="articles-list">
           <p style="color:var(--lp-gray-dark);">Chargement des articles...</p>
         </div>
@@ -147,29 +156,15 @@
       let currentRequestArticleId = null;
       let currentRequestArticleTitle = null;
 
-      // Load all articles + this journalist's existing requests
-      async function loadAll() {
-        const [articlesRes, requestsRes] = await Promise.all([
-          fetch('/api/articles'),
-          fetch(`/api/edit-requests/user/${encodeURIComponent(user.username)}`)
-        ]);
-        const articles = await articlesRes.json();
-        const myRequests = await requestsRes.json();
+      let allArticlesCached = [];
+      let requestMap = {};
 
-        // Build a map: articleId -> request status
-        const requestMap = {};
-        myRequests.forEach(r => {
-          // Keep the most recent meaningful status per article
-          if (!requestMap[r.articleId] || r.status === 'approved') {
-            requestMap[r.articleId] = r.status;
-          }
-        });
-
+      function renderList(articles) {
         const list = document.getElementById('articles-list');
         list.innerHTML = '';
 
         if (articles.length === 0) {
-          list.innerHTML = '<p style="color:var(--lp-gray-dark);">Aucun article publié pour l\'instant.</p>';
+          list.innerHTML = '<p style="color:var(--lp-gray-dark);">Aucun article ne correspond.</p>';
           return;
         }
 
@@ -200,6 +195,48 @@
           list.appendChild(div);
         });
       }
+
+      window.filterArticles = (query) => {
+        const q = query.toLowerCase().trim();
+        if (!q) { renderList(allArticlesCached); return; }
+        const filtered = allArticlesCached.filter(a =>
+          (a.title || '').toLowerCase().includes(q) ||
+          (a.author || '').toLowerCase().includes(q) ||
+          (a.authorUsername || '').toLowerCase().includes(q)
+        );
+        renderList(filtered);
+      };
+
+      // Load all articles + this journalist's existing requests
+      async function loadAll() {
+        const articlesRes = await fetch('/api/articles');
+        const articles = articlesRes.ok ? await articlesRes.json() : [];
+        allArticlesCached = articles;
+
+        let myRequests = [];
+        try {
+          const requestsRes = await fetch(`/api/edit-requests/user/${encodeURIComponent(user.username)}`);
+          if (requestsRes.ok) myRequests = await requestsRes.json();
+        } catch (e) {
+          // edit_requests table may not exist yet — articles still load
+        }
+
+        // Build a map: articleId -> request status
+        requestMap = {};
+        myRequests.forEach(r => {
+          // Keep the most recent meaningful status per article
+          if (!requestMap[r.articleId] || r.status === 'approved') {
+            requestMap[r.articleId] = r.status;
+          }
+        });
+
+        // Reset search bar
+        const searchInput = document.getElementById('articles-search');
+        if (searchInput) searchInput.value = '';
+
+        renderList(articles);
+      }
+
 
       // Modal controls
       window.openModal = (articleId, articleTitle) => {

@@ -125,7 +125,16 @@
 
         <div id="manage-section">
           <h3>Gérer les articles existants</h3>
-          <div id="articles-list" style="margin-top:20px;">
+          <div style="margin-top: 15px; margin-bottom: 15px;">
+            <input
+              type="text"
+              id="articles-search"
+              placeholder="🔍 Chercher par titre ou auteur..."
+              style="width: 100%; padding: 10px 14px; font-family: var(--font-sans); font-size: 14px; border: 1px solid var(--lp-gray-mid); border-radius: 6px; background: var(--lp-gray-light); color: var(--lp-black); outline: none; transition: border-color 0.2s;"
+              oninput="filterArticles(this.value)"
+            >
+          </div>
+          <div id="articles-list" style="margin-top:10px;">
             <!-- Rendered via JS -->
           </div>
 
@@ -191,26 +200,46 @@
       });
 
       let allArticles = [];
-      async function fetchArticlesAdmin() {
-        const res = await fetch("/api/articles");
-        allArticles = await res.json();
+
+      function renderArticleList(articles) {
         const list = document.getElementById("articles-list");
         list.innerHTML = "";
-        allArticles.forEach(a => {
+        if (articles.length === 0) {
+          list.innerHTML = '<p style="color:var(--lp-gray-dark);font-size:14px;">Aucun article ne correspond à la recherche.</p>';
+          return;
+        }
+        articles.forEach(a => {
           const div = document.createElement("div");
           div.className = "article-row";
           div.innerHTML = `
             <div>
               <h4>${a.title}</h4>
-              <span style="font-size:12px; color:#666;">${a.category} (${a.subCategory || "N/A"}) - Par ${a.author || "Inconnu"}</span>
+              <span style="font-size:12px; color:#666;">${a.category}${a.subCategory ? ' / ' + a.subCategory : ''} &mdash; Par ${a.author || a.authorUsername || 'Inconnu'}</span>
             </div>
             <div style="display: flex; gap: 5px;">
-              <button class="btn" style="padding: 6px 12px; font-size: 14px;" onclick="window.editArticle('${a.id}')">Éditer</button>
+              <button class="btn" style="padding: 6px 12px; font-size: 14px;" onclick="window.editArticle('${a.id}')">&#9998; Éditer</button>
               <button class="btn btn-danger" style="padding: 6px 12px; font-size: 14px;" onclick="window.deleteArticle('${a.id}')">Supprimer</button>
             </div>
           `;
           list.appendChild(div);
         });
+      }
+
+      window.filterArticles = (query) => {
+        const q = query.toLowerCase().trim();
+        if (!q) { renderArticleList(allArticles); return; }
+        const filtered = allArticles.filter(a =>
+          (a.title || '').toLowerCase().includes(q) ||
+          (a.author || '').toLowerCase().includes(q) ||
+          (a.authorUsername || '').toLowerCase().includes(q)
+        );
+        renderArticleList(filtered);
+      };
+
+      async function fetchArticlesAdmin() {
+        const res = await fetch("/api/articles");
+        allArticles = await res.json();
+        renderArticleList(allArticles);
       }
 
       window.deleteArticle = async (id) => {
@@ -258,9 +287,12 @@
         }
       });
 
+      let editingOriginalPublishedTime = '';
+
       window.editArticle = (id) => {
         const art = allArticles.find(a => a.id === id);
         if(!art) return;
+        editingOriginalPublishedTime = art.publishedTime || '';
         document.getElementById("art-id").value = art.id;
         document.getElementById("art-author").value = art.author || "";
         document.getElementById("art-surtitle").value = art.surtitle || "";
@@ -330,7 +362,7 @@
           image: imageUrl,
           imageCredit: document.getElementById("art-image-credit").value,
           summary: quill.root.innerHTML,
-          publishedTime: getFormattedTimestamp()
+          publishedTime: editingId ? editingOriginalPublishedTime : getFormattedTimestamp()
         };
 
         if (editingId) {
@@ -355,6 +387,8 @@
           subCategorySelect.innerHTML = '<option value="">-- Sélectionner une catégorie d\'abord --</option>';
           subCategorySelect.disabled = true;
           quill.setContents([]);
+          editingOriginalPublishedTime = '';
+          document.getElementById('articles-search').value = '';
           fetchArticlesAdmin();
         }
       });
