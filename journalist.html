@@ -409,7 +409,9 @@
           closeModal();
           await loadAll();
         } else {
-          alert('Erreur lors de l\'envoi de la demande.');
+          let errMsg = 'Erreur inconnue';
+          try { const d = await res.json(); errMsg = d.error || JSON.stringify(d); } catch(e) {}
+          alert('Erreur serveur: ' + errMsg);
         }
       });
 

@@ -99,7 +99,7 @@
             </div>
             <div class="form-group">
               <label>Sous-catégorie</label>
-              <select id="art-sub-category" required disabled>
+              <select id="art-sub-category" disabled>
                 <option value="">-- Sélectionner une catégorie d'abord --</option>
               </select>
             </div>
@@ -377,7 +377,7 @@
           body: JSON.stringify(payload)
         });
         if(res.ok) {
-          alert("Succès !");
+          alert(editingId ? "Article mis à jour avec succès !" : "Article publié !");
           e.target.reset();
           document.getElementById("art-id").value = "";
           document.getElementById("art-existing-image").value = "";
@@ -390,6 +390,10 @@
           editingOriginalPublishedTime = '';
           document.getElementById('articles-search').value = '';
           fetchArticlesAdmin();
+        } else {
+          let errMsg = 'Erreur inconnue';
+          try { const d = await res.json(); errMsg = d.error || JSON.stringify(d); } catch(ex) {}
+          alert('Erreur lors de la sauvegarde: ' + errMsg);
         }
       });
 
