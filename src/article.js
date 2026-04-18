@@ -50,7 +50,7 @@ const initArticle = async () => {
                ${articleData.author ? `<strong>${articleData.author}</strong> | ` : ''} 
                ${articleData.publishedTime}
             </div>
-            ${articleData.image ? `<img src="${articleData.image.startsWith('/') ? articleData.image : '/' + articleData.image}" alt="${articleData.title}" class="main-img">` : ''}
+            ${articleData.image ? `<img src="${articleData.image.startsWith('http') ? articleData.image : '/' + articleData.image}" alt="${articleData.title}" class="main-img">` : ''}
             ${articleData.imageCredit ? `<p style="font-size: 13px; color: var(--lp-gray-dark); margin-top: 5px; text-align: right;">Photo: ${articleData.imageCredit}</p>` : ''}
             <div class="content">
                 <div style="font-weight: 500; font-size: 1.1em; color: var(--lp-gray-dark); margin-bottom: 20px;">
