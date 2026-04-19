@@ -224,6 +224,41 @@ app.post('/api/edit-requests/:id/fulfill', async (req, res) => {
   }
 });
 
+// Weather API
+let cachedWeather = null;
+let lastWeatherFetch = 0;
+
+app.get('/api/weather', async (req, res) => {
+  try {
+    const now = Date.now();
+    if (cachedWeather && (now - lastWeatherFetch < 5 * 60 * 1000)) {
+      return res.json(cachedWeather);
+    }
+    const meteoRes = await fetch("https://api.open-meteo.com/v1/forecast?latitude=45.5088&longitude=-73.5878&current_weather=true");
+    if (!meteoRes.ok) throw new Error("Weather fetch failed");
+    const data = await meteoRes.json();
+    
+    // Convert WMO Weather code to simple string/emoji for frontend UI
+    let conditionName = "Dégagé ☀️";
+    const code = data.current_weather.weathercode;
+    if (code === 1 || code === 2 || code === 3) conditionName = "Nuageux ⛅";
+    else if (code >= 45 && code <= 48) conditionName = "Brouillard 🌫️";
+    else if (code >= 51 && code <= 67) conditionName = "Pluie 🌧️";
+    else if (code >= 71 && code <= 77) conditionName = "Neige ❄️";
+    else if (code >= 80 && code <= 82) conditionName = "Averses 🌦️";
+    else if (code >= 95 && code <= 99) conditionName = "Orage ⛈️";
+
+    cachedWeather = {
+      temperature: data.current_weather.temperature,
+      condition: conditionName
+    };
+    lastWeatherFetch = now;
+    res.json(cachedWeather);
+  } catch(err) {
+    res.status(500).json({ error: err.message, cached: cachedWeather });
+  }
+});
+
 // Handle all other routes by serving the frontend (SPA support)
 app.use((req, res, next) => {
   if (req.path.startsWith('/api')) {

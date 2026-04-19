@@ -90,6 +90,64 @@ const initMain = async () => {
             console.error("Failed to fetch popular articles", err);
         }
     }
+
+    // 5. Update Header Time & Weather
+    let lastWeatherHtml = '';
+    
+    const fetchWeather = async () => {
+        try {
+            const res = await fetch('/api/weather');
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.temperature !== undefined) {
+                    lastWeatherHtml = `<span style="margin-left: 15px; padding-left: 15px; border-left: 1px solid var(--lp-gray-mid); font-weight: 500; font-size: 14px; color: var(--lp-black);">${data.temperature}°C ${data.condition}</span>`;
+                }
+            }
+        } catch(e) {}
+    };
+
+    const updateHeaderTime = () => {
+        const headerMeta = document.querySelector('.header-meta');
+        if (headerMeta) {
+            const now = new Date();
+            const dateFormatter = new Intl.DateTimeFormat('fr-CA', {
+                timeZone: 'America/Toronto',
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            let dateStr = dateFormatter.format(now);
+            dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+
+            const timeFormatter = new Intl.DateTimeFormat('fr-CA', {
+                timeZone: 'America/Toronto',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            const timeParts = timeFormatter.formatToParts(now);
+            const hour = timeParts.find(p => p.type === 'hour')?.value || '00';
+            const minute = timeParts.find(p => p.type === 'minute')?.value || '00';
+            const second = timeParts.find(p => p.type === 'second')?.value || '00';
+            const timeStr = `${hour}:${minute}:${second}`;
+
+            headerMeta.innerHTML = `<div style="font-size: 13px; color: var(--lp-gray-dark); margin-left: 20px; line-height: 1.4; display: flex; align-items: center;">
+                <div>
+                    <span style="font-weight: 600; color: var(--lp-black);">${dateStr}</span><br>
+                    <span>Montréal : ${timeStr}</span>
+                </div>
+                ${lastWeatherHtml}
+            </div>`;
+        }
+    };
+    
+    fetchWeather();
+    setInterval(fetchWeather, 5 * 60 * 1000); // refresh weather every 5 mins
+
+    updateHeaderTime();
+    setInterval(updateHeaderTime, 1000); // tick clock every second
 };
 
 if (document.readyState === 'loading') {
