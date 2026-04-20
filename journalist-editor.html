@@ -207,6 +207,11 @@
           if (!art) { console.error('Article not found with id:', id); return; }
 
           // Store originals to preserve on save
+          if (art.status === 'paused') {
+            alert("Cet article est actuellement en pause par un propriétaire pour révision. Vous ne pouvez pas le modifier pour le moment.");
+            window.location.href = "journalist.html";
+            return;
+          }
           originalPublishedTime = art.published_time || '';
           originalAuthor = art.author || '';
           existingImageUrl = art.image || '';

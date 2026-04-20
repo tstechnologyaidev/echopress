@@ -10,6 +10,21 @@
     <link rel="stylesheet" href="/src/style.css" />
     <style>
       .journalist-layout { margin-top: 40px; margin-bottom: 60px; }
+      .notification-banner {
+        background: rgba(255, 81, 47, 0.1);
+        border: 1px solid var(--lp-red);
+        border-left: 5px solid var(--lp-red);
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 30px;
+        display: none;
+      }
+      .notification-item {
+        margin-bottom: 10px;
+        font-size: 14px;
+        color: var(--lp-black);
+      }
+      .notification-item:last-child { margin-bottom: 0; }
       .welcome-card {
         background: var(--lp-gray-light);
         padding: 30px 40px;
@@ -194,6 +209,11 @@
         <a href="journalist-editor.html" class="btn-large">+ Publier un nouvel article</a>
       </div>
 
+      <div id="notifications-section" class="notification-banner">
+        <h4 style="color: var(--lp-red); margin-bottom: 10px;">⚠️ Articles Suspendus / En Pause</h4>
+        <div id="notifications-list"></div>
+      </div>
+
       <div class="articles-section">
         <h2>Tous les articles</h2>
         <div style="margin: 15px 0;">
@@ -238,6 +258,7 @@
 
         articles.forEach(art => {
           const isOwn = art.author_username === user.username;
+          const isPaused = art.status === 'paused';
           const req = requestMap[art.id];
           const status = req ? (typeof req === 'string' ? req : req.status) : null;
           
@@ -259,7 +280,7 @@
 
           let actionHtml = '';
           if (isOwn) {
-            actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit">Modifier</a>`;
+            actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit" style="${isPaused ? 'background: #444; pointer-events: none; opacity: 0.5;' : ''}">${isPaused ? 'En Pause' : 'Modifier'}</a>`;
           } else if (isApproved) {
             actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit">Modifier l'article complet</a><div style="font-size:10px; color:var(--lp-red); margin-top:4px;">${expiryLabel || (req.is_one_time ? 'Une seule fois' : 'Approuvé')}</div>`;
           } else if (status === 'pending') {
@@ -268,7 +289,7 @@
               actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit" style="background:#444;margin-right:8px;">Corriger le texte</a> ` + actionHtml;
             }
           } else {
-            actionHtml = `<button class="btn-request" data-action="open-modal" data-id="${art.id}" data-title="${(art.title || '').replace(/"/g, '&quot;')}">Demander une modification</button>`;
+            actionHtml = `<button class="btn-request" data-action="open-modal" data-id="${art.id}" data-title="${(art.title || '').replace(/"/g, '&quot;')}" ${isPaused ? 'disabled' : ''}>${isPaused ? 'Article en pause' : 'Demander une modification'}</button>`;
             if (user.role === 'corrector') {
               actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit" style="background:#444;margin-right:8px;">Corriger le texte</a> ` + actionHtml;
             }
@@ -276,9 +297,10 @@
 
           const div = document.createElement('div');
           div.className = `article-manage-row ${isOwn ? 'own' : ''}`;
+          if (isPaused) div.style.opacity = "0.7";
           div.innerHTML = `
             <div class="art-info">
-              <h4>${art.title}</h4>
+              <h4 style="${isPaused ? 'text-decoration: line-through;' : ''}">${art.title} ${isPaused ? '<span style="color:var(--lp-red); font-size:11px;">(PAUSÉ)</span>' : ''}</h4>
               <span>${user.role === 'corrector' ? art.published_time : `${art.category} — Par ${art.author || art.author_username || 'Inconnu'} — ${art.published_time}`}</span>
             </div>
             <div class="art-actions">${actionHtml}</div>
@@ -300,9 +322,28 @@
 
       // Load all articles + this journalist's existing requests
       async function loadAll() {
-        const articlesRes = await fetch('/api/articles');
+        const articlesRes = await fetch('/api/articles?includePaused=true');
         const articles = articlesRes.ok ? await articlesRes.json() : [];
         allArticlesCached = articles;
+
+        // Handle notifications for paused articles
+        const myArticles = articles.filter(a => a.author_username === user.username);
+        const pausedArticles = myArticles.filter(a => a.status === 'paused');
+        const notifSection = document.getElementById('notifications-section');
+        const notifList = document.getElementById('notifications-list');
+        
+        if (pausedArticles.length > 0) {
+          notifSection.style.display = 'block';
+          notifList.innerHTML = '';
+          pausedArticles.forEach(a => {
+            const div = document.createElement('div');
+            div.className = 'notification-item';
+            div.innerHTML = `L'article <strong>"${a.title}"</strong> a été mis en pause par un propriétaire. <br> <span style="font-style:italic; color:var(--lp-red);">Raison : ${a.suspension_reason || 'Non spécifiée'}</span>`;
+            notifList.appendChild(div);
+          });
+        } else {
+          notifSection.style.display = 'none';
+        }
 
         let myRequests = [];
         try {

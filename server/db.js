@@ -24,7 +24,7 @@ export const getDisplayName = (username) => {
 
 // Users API
 export const getUsers = async () => {
-  const { data, error } = await supabase.from('users').select('id, username, role');
+  const { data, error } = await supabase.from('users').select('id, username, role, status, punishment_reason');
   if (error) throw error;
   return data;
 };
@@ -36,14 +36,33 @@ export const getUserByUsername = async (username) => {
 };
 
 export const createUser = async (username, password, role) => {
-  const { data, error } = await supabase.from('users').insert([{ username, password, role }]).select().single();
+  const { data, error } = await supabase.from('users').insert([{ username, password, role, status: 'active' }]).select().single();
   if (error) throw error;
   return data;
 };
 
+export const deleteUser = async (id) => {
+  const { error } = await supabase.from('users').delete().eq('id', id);
+  if (error) throw error;
+};
+
+export const updateUserStatus = async (id, status, reason) => {
+  const { error } = await supabase.from('users').update({ status, punishment_reason: reason }).eq('id', id);
+  if (error) throw error;
+};
+
+export const resetUserPassword = async (id, newPassword, reason) => {
+  const { error } = await supabase.from('users').update({ password: newPassword, punishment_reason: reason }).eq('id', id);
+  if (error) throw error;
+};
+
 // Articles API
-export const getArticles = async () => {
-  const { data, error } = await supabase.from('articles').select('*').order('id', { ascending: false });
+export const getArticles = async (includePaused = true) => {
+  let query = supabase.from('articles').select('*').order('id', { ascending: false });
+  if (!includePaused) {
+    query = query.eq('status', 'published');
+  }
+  const { data, error } = await query;
   if (error) throw error;
   return data;
 };
@@ -105,6 +124,11 @@ export const deleteArticle = async (id) => {
   if (error) throw error;
 };
 
+export const updateArticleStatus = async (id, status, reason) => {
+  const { error } = await supabase.from('articles').update({ status, suspension_reason: reason }).eq('id', id);
+  if (error) throw error;
+};
+
 export const incrementArticleViews = async (id) => {
   const { data: article } = await supabase.from('articles').select('views').eq('id', id).single();
   const newViews = (article?.views || 0) + 1;
@@ -113,7 +137,7 @@ export const incrementArticleViews = async (id) => {
 };
 
 export const getPopularArticles = async (limit) => {
-  const { data, error } = await supabase.from('articles').select('*').order('views', { ascending: false }).limit(limit);
+  const { data, error } = await supabase.from('articles').select('*').eq('status', 'published').order('views', { ascending: false }).limit(limit);
   if (error) throw error;
   return data;
 };

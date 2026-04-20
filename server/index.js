@@ -5,8 +5,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import {
   supabase,
-  getUserByUsername, createUser,
-  getArticles, getArticleById, createArticle, updateArticle, deleteArticle,
+  getUsers, getUserByUsername, createUser, deleteUser, updateUserStatus, resetUserPassword,
+  getArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus,
   incrementArticleViews, getPopularArticles,
   getSetting, upsertSetting,
   getEditRequests, getEditRequestsForUser, createEditRequest, updateEditRequestStatus
@@ -37,8 +37,49 @@ app.post('/api/login', async (req, res) => {
     if (!user || user.password !== password) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
+    if (user.status === 'suspended') {
+      return res.status(403).json({ error: `Votre compte est suspendu. Raison : ${user.punishment_reason || 'Aucune raison spécifiée.'}` });
+    }
     const token = { username: user.username, role: user.role };
     res.json({ token });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await getUsers();
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/users/:id', async (req, res) => {
+  try {
+    await deleteUser(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/users/:id/status', async (req, res) => {
+  const { status, reason } = req.body;
+  try {
+    await updateUserStatus(req.params.id, status, reason);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/users/:id/reset-password', async (req, res) => {
+  const { password, reason } = req.body;
+  try {
+    await resetUserPassword(req.params.id, password, reason);
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -64,7 +105,8 @@ app.post('/api/register', async (req, res) => {
 // Articles API
 app.get('/api/articles', async (req, res) => {
   try {
-    const articles = await getArticles();
+    const { includePaused } = req.query;
+    const articles = await getArticles(includePaused === 'true');
     res.json(articles);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -140,6 +182,16 @@ app.put('/api/articles/:id', async (req, res) => {
 app.delete('/api/articles/:id', async (req, res) => {
   try {
     await deleteArticle(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/articles/:id/status', async (req, res) => {
+  const { status, reason } = req.body;
+  try {
+    await updateArticleStatus(req.params.id, status, reason);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -44,6 +44,19 @@
       }
       .article-row h4 { font-family: var(--font-serif); margin-bottom: 5px; color: var(--lp-black); }
       .article-row span { color: var(--lp-gray-dark) !important; }
+      
+      /* User management styles */
+      .user-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--lp-gray-mid); padding-bottom: 10px; }
+      .user-tab { padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px; background: var(--lp-gray-mid); color: var(--lp-gray-dark); }
+      .user-tab.active { background: var(--sunset-gradient); color: white; }
+      .user-card { background: var(--lp-gray-light); border: 1px solid var(--lp-gray-mid); padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+      .user-info h5 { font-size: 16px; margin-bottom: 4px; }
+      .user-info p { font-size: 13px; color: var(--lp-gray-dark); }
+      .user-actions { display: flex; gap: 8px; }
+      
+      /* Modal simulation */
+      #punishment-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+      .modal-content { background: var(--lp-gray-light); padding: 30px; border-radius: 8px; width: 400px; border: 1px solid var(--lp-gray-mid); }
     </style>
   </head>
   <body>
@@ -154,10 +167,39 @@
             <p style="font-size: 13px; color: var(--lp-gray-dark); margin-bottom: 15px;">Révoquez les permissions ici pour forcer le journaliste à redemander l'accès.</p>
             <div id="active-approvals-list"></div>
           </div>
+
+          <div id="user-management-section" style="margin-top: 40px; border-top: 2px solid var(--lp-black); padding-top: 20px; display: none;">
+            <h3>👥 Gestion des comptes</h3>
+            <div class="user-tabs" style="margin-top: 15px;">
+              <div class="user-tab active" onclick="switchUserTab('journalist')">Journalistes</div>
+              <div class="user-tab" onclick="switchUserTab('corrector')">Correcteurs</div>
+              <div class="user-tab" onclick="switchUserTab('user')">Public</div>
+            </div>
+            <div id="users-list"></div>
+          </div>
         </div>
         </div>
       </div>
     </main>
+
+    <div id="punishment-modal">
+      <div class="modal-content">
+        <h4 id="modal-title">Action sur le compte</h4>
+        <p id="modal-subtitle" style="font-size: 13px; color: var(--lp-gray-dark); margin: 10px 0;"></p>
+        <div class="form-group" style="margin-top: 15px;">
+          <label id="reason-label">Raison de la sanction</label>
+          <textarea id="punishment-reason" placeholder="Entrez la raison ici..." required></textarea>
+        </div>
+        <div id="password-reset-field" class="form-group" style="display: none;">
+          <label>Nouveau mot de passe</label>
+          <input type="text" id="new-password">
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button id="modal-confirm-btn" class="btn">Confirmer</button>
+          <button class="btn" style="background: #444;" onclick="closeModal()">Annuler</button>
+        </div>
+      </div>
+    </div>
 
     <script type="module" src="/src/auth-ui.js"></script>
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
@@ -181,6 +223,8 @@
         document.getElementById("about-edit-section").style.display = "block";
         document.getElementById("edit-requests-section").style.display = "block";
         document.getElementById("active-approvals-section").style.display = "block";
+        document.getElementById("user-management-section").style.display = "block";
+        fetchUsers();
       }
 
       const categorySelect = document.getElementById("art-category");
@@ -217,14 +261,17 @@
           return;
         }
         articles.forEach(a => {
+          const isPaused = a.status === 'paused';
           const div = document.createElement("div");
           div.className = "article-row";
+          if (isPaused) div.style.borderLeft = "4px solid var(--lp-gray-dark)";
           div.innerHTML = `
             <div>
-              <h4>${a.title}</h4>
+              <h4 style="${isPaused ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${a.title} ${isPaused ? '<small>(PAUSÉ)</small>' : ''}</h4>
               <span style="font-size:12px; color:#666;">${a.category}${a.sub_category ? ' / ' + a.sub_category : ''} &mdash; Par ${a.author || a.author_username || 'Inconnu'}</span>
             </div>
             <div style="display: flex; gap: 5px;">
+              <button class="btn" style="padding: 6px 12px; font-size: 14px; background: ${isPaused ? '#444' : ''};" onclick="window.toggleArticleStatus('${a.id}', '${a.status}')">${isPaused ? '▶ Reprendre' : '⏸ Pauser'}</button>
               <button class="btn" style="padding: 6px 12px; font-size: 14px;" onclick="window.editArticle('${a.id}')">&#9998; Éditer</button>
               <button class="btn btn-danger" style="padding: 6px 12px; font-size: 14px;" onclick="window.deleteArticle('${a.id}')">Supprimer</button>
             </div>
@@ -232,6 +279,27 @@
           list.appendChild(div);
         });
       }
+
+      window.toggleArticleStatus = async (id, currentStatus) => {
+        if (currentStatus === 'paused') {
+          await fetch(`/api/articles/${id}/status`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ status: 'published', reason: null })
+          });
+          fetchArticlesAdmin();
+        } else {
+          const reason = prompt("Raison de la mise en pause (pour le journaliste) :");
+          if (reason !== null) {
+            await fetch(`/api/articles/${id}/status`, {
+              method: 'PUT',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ status: 'paused', reason })
+            });
+            fetchArticlesAdmin();
+          }
+        }
+      };
 
       window.filterArticles = (query) => {
         const q = query.toLowerCase().trim();
@@ -245,7 +313,7 @@
       };
 
       async function fetchArticlesAdmin() {
-        const res = await fetch("/api/articles");
+        const res = await fetch("/api/articles?includePaused=true");
         allArticles = await res.json();
         renderArticleList(allArticles);
       }
@@ -596,10 +664,137 @@
         if (res.ok) loadAllRequests();
       };
 
+      // User Management Logic
+      let allUsers = [];
+      let currentUserTab = 'journalist';
+
+      window.switchUserTab = (role) => {
+        currentUserTab = role;
+        document.querySelectorAll('.user-tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+        renderUsers();
+      };
+
+      async function fetchUsers() {
+        const res = await fetch('/api/users');
+        allUsers = await res.json();
+        renderUsers();
+      }
+
+      function renderUsers() {
+        const list = document.getElementById('users-list');
+        const filteredUsers = allUsers.filter(u => u.role === currentUserTab);
+        list.innerHTML = '';
+
+        if (filteredUsers.length === 0) {
+          list.innerHTML = '<p style="font-size:13px; color:var(--lp-gray-dark);">Aucun utilisateur dans cette catégorie.</p>';
+          return;
+        }
+
+        filteredUsers.forEach(u => {
+          const div = document.createElement('div');
+          div.className = 'user-card';
+          const isSuspended = u.status === 'suspended';
+          div.innerHTML = `
+            <div class="user-info">
+              <h5>${u.username} ${isSuspended ? '<span style="color:var(--lp-red); font-size:11px;">(SUSPENDU)</span>' : ''}</h5>
+              <p>Rôle: ${u.role} | Status: ${u.status}</p>
+              ${u.punishment_reason ? `<p style="font-style:italic; color:var(--lp-red);">Raison: ${u.punishment_reason}</p>` : ''}
+            </div>
+            <div class="user-actions">
+              <button class="btn" style="padding:5px 10px; font-size:12px; background:#444;" onclick="openPunishmentModal('reset', '${u.id}', '${u.username}')">🗝 MDP</button>
+              <button class="btn" style="padding:5px 10px; font-size:12px; background:${isSuspended ? '#28a745' : '#e67e22'};" onclick="handleSuspension('${u.id}', '${u.status}', '${u.username}')">
+                ${isSuspended ? '▶ Activer' : '⏸ Suspendre'}
+              </button>
+              <button class="btn btn-danger" style="padding:5px 10px; font-size:12px;" onclick="handleDeleteUser('${u.id}', '${u.username}')">🗑</button>
+            </div>
+          `;
+          list.appendChild(div);
+        });
+      }
+
+      let currentActionTarget = null;
+      window.openPunishmentModal = (type, userId, username) => {
+        currentActionTarget = { type, userId, username };
+        const modal = document.getElementById('punishment-modal');
+        const title = document.getElementById('modal-title');
+        const subtitle = document.getElementById('modal-subtitle');
+        const pwdField = document.getElementById('password-reset-field');
+        
+        modal.style.display = 'flex';
+        pwdField.style.display = type === 'reset' ? 'block' : 'none';
+        
+        if (type === 'reset') {
+          title.textContent = 'Réinitialisation du mot de passe';
+          subtitle.textContent = `Pour l'utilisateur : ${username}`;
+        } else if (type === 'suspend') {
+          title.textContent = 'Suspension du compte';
+          subtitle.textContent = `Pour l'utilisateur : ${username}`;
+        }
+      };
+
+      window.closeModal = () => {
+        document.getElementById('punishment-modal').style.display = 'none';
+        document.getElementById('punishment-reason').value = '';
+        document.getElementById('new-password').value = '';
+      };
+
+      document.getElementById('modal-confirm-btn').addEventListener('click', async () => {
+        const reason = document.getElementById('punishment-reason').value;
+        const { type, userId } = currentActionTarget;
+
+        if (!reason) { alert("Veuillez entrer une raison."); return; }
+
+        if (type === 'reset') {
+          const password = document.getElementById('new-password').value;
+          if (!password) { alert("Veuillez entrer le nouveau mot de passe."); return; }
+          await fetch(`/api/users/${userId}/reset-password`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ password, reason })
+          });
+        } else if (type === 'suspend') {
+          await fetch(`/api/users/${userId}/status`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ status: 'suspended', reason })
+          });
+        }
+
+        closeModal();
+        fetchUsers();
+      });
+
+      window.handleSuspension = async (id, currentStatus, username) => {
+        if (currentStatus === 'suspended') {
+          if (confirm(`Réactiver le compte de ${username} ?`)) {
+            await fetch(`/api/users/${id}/status`, {
+              method: 'PUT',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ status: 'active', reason: null })
+            });
+            fetchUsers();
+          }
+        } else {
+          openPunishmentModal('suspend', id, username);
+        }
+      };
+
+      window.handleDeleteUser = async (id, username) => {
+        const reason = prompt(`Êtes-vous sûr de vouloir supprimer définitivement le compte de ${username} ? Entrez la raison pour confirmation :`);
+        if (reason) {
+          await fetch(`/api/users/${id}`, { method: 'DELETE' });
+          fetchUsers();
+        }
+      };
+
       // Initial load
       loadAllRequests();
       // Refresh active status every minute
-      setInterval(loadAllRequests, 60000);
+      setInterval(() => {
+        loadAllRequests();
+        if (isOwner) fetchUsers();
+      }, 60000);
     </script>
   </body>
 </html>
