@@ -134,6 +134,16 @@
             </div>
             <button type="submit" id="submit-btn-form" class="btn" style="margin-top: 20px;">Publier l'article</button>
           </form>
+
+          <div id="user-management-section" style="margin-top: 40px; border-top: 2px solid var(--lp-black); padding-top: 20px; display: none;">
+            <h3 style="margin-bottom: 15px;">👥 Gestion des comptes</h3>
+            <div class="user-tabs" style="margin-bottom: 15px;">
+              <div class="user-tab active" onclick="switchUserTab('journalist')">Journalistes</div>
+              <div class="user-tab" onclick="switchUserTab('corrector')">Correcteurs</div>
+              <div class="user-tab" onclick="switchUserTab('user')">Public</div>
+            </div>
+            <div id="users-list"></div>
+          </div>
         </div>
 
         <div id="manage-section">
@@ -167,17 +177,6 @@
             <p style="font-size: 13px; color: var(--lp-gray-dark); margin-bottom: 15px;">Révoquez les permissions ici pour forcer le journaliste à redemander l'accès.</p>
             <div id="active-approvals-list"></div>
           </div>
-
-          <div id="user-management-section" style="margin-top: 40px; border-top: 2px solid var(--lp-black); padding-top: 20px; display: none;">
-            <h3>👥 Gestion des comptes</h3>
-            <div class="user-tabs" style="margin-top: 15px;">
-              <div class="user-tab active" onclick="switchUserTab('journalist')">Journalistes</div>
-              <div class="user-tab" onclick="switchUserTab('corrector')">Correcteurs</div>
-              <div class="user-tab" onclick="switchUserTab('user')">Public</div>
-            </div>
-            <div id="users-list"></div>
-          </div>
-        </div>
         </div>
       </div>
     </main>
@@ -281,23 +280,30 @@
       }
 
       window.toggleArticleStatus = async (id, currentStatus) => {
-        if (currentStatus === 'paused') {
-          await fetch(`/api/articles/${id}/status`, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ status: 'published', reason: null })
-          });
-          fetchArticlesAdmin();
-        } else {
-          const reason = prompt("Raison de la mise en pause (pour le journaliste) :");
-          if (reason !== null) {
-            await fetch(`/api/articles/${id}/status`, {
+        try {
+          if (currentStatus === 'paused') {
+            const res = await fetch(`/api/articles/${id}/status`, {
               method: 'PUT',
               headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({ status: 'paused', reason })
+              body: JSON.stringify({ status: 'published', reason: null })
             });
+            if (!res.ok) throw new Error(await res.text());
             fetchArticlesAdmin();
+          } else {
+            const reason = prompt("Raison de la mise en pause (pour le journaliste) :");
+            if (reason !== null) {
+              const res = await fetch(`/api/articles/${id}/status`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ status: 'paused', reason })
+              });
+              if (!res.ok) throw new Error(await res.text());
+              fetchArticlesAdmin();
+            }
           }
+        } catch (err) {
+          console.error("Pause error:", err);
+          alert("Erreur lors de la mise à jour du statut : " + err.message + "\nAssurez-vous que les colonnes 'status' et 'suspension_reason' existent dans la table 'articles' de Supabase.");
         }
       };
 

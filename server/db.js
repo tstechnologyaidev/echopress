@@ -126,7 +126,10 @@ export const deleteArticle = async (id) => {
 
 export const updateArticleStatus = async (id, status, reason) => {
   const { error } = await supabase.from('articles').update({ status, suspension_reason: reason }).eq('id', id);
-  if (error) throw error;
+  if (error) {
+    console.error(`ERROR updating article status for ID ${id}:`, error.message);
+    throw error;
+  }
 };
 
 export const incrementArticleViews = async (id) => {
