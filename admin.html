@@ -138,21 +138,6 @@
             <button type="submit" id="submit-btn-form" class="btn" style="margin-top: 20px;">Publier l'article</button>
           </form>
 
-          <div id="user-management-section" style="margin-top: 40px; border-top: 2px solid var(--lp-black); padding-top: 20px; display: none;">
-            <h3 style="margin-bottom: 15px;">👥 Gestion des comptes</h3>
-            <div class="user-tabs" style="margin-bottom: 15px;">
-              <div class="user-tab active" onclick="switchUserTab('journalist')">Journalistes</div>
-              <div class="user-tab" onclick="switchUserTab('corrector')">Correcteurs</div>
-              <div class="user-tab" onclick="switchUserTab('user')">Public</div>
-            </div>
-            <div id="mass-action-bar" style="display: none; margin-bottom: 15px; padding: 10px; background: var(--lp-gray-mid); border-radius: 4px; align-items: center; gap: 15px;">
-              <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600;">
-                <input type="checkbox" id="select-all-users" onchange="toggleSelectAllUsers()"> Tout sélectionner
-              </label>
-              <button class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;" onclick="handleBulkDelete()">Supprimer la sélection</button>
-            </div>
-            <div id="users-list"></div>
-          </div>
         </div>
 
         <div id="manage-section">
@@ -187,6 +172,22 @@
             <div id="active-approvals-list"></div>
           </div>
         </div>
+      </div>
+
+      <div id="user-management-section" style="margin-top: 40px; border-top: 2px solid var(--lp-black); padding-top: 20px; display: none;">
+        <h3 style="margin-bottom: 15px;">👥 Gestion des comptes</h3>
+        <div class="user-tabs" style="margin-bottom: 15px;">
+          <div class="user-tab active" onclick="switchUserTab('journalist')">Journalistes</div>
+          <div class="user-tab" onclick="switchUserTab('corrector')">Correcteurs</div>
+          <div class="user-tab" onclick="switchUserTab('user')">Public</div>
+        </div>
+        <div id="mass-action-bar" style="display: none; margin-bottom: 15px; padding: 10px; background: var(--lp-gray-mid); border-radius: 4px; align-items: center; gap: 15px;">
+          <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600;">
+            <input type="checkbox" id="select-all-users" onchange="toggleSelectAllUsers()"> Tout sélectionner
+          </label>
+          <button class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;" onclick="handleBulkDelete()">Supprimer la sélection</button>
+        </div>
+        <div id="users-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px;"></div>
       </div>
     </main>
 
