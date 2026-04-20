@@ -156,7 +156,8 @@
           const data = await response.json();
           if (response.ok) {
             // Save token
-            localStorage.setItem('echopress_user', JSON.stringify(data.token));
+            localStorage.setItem('echopress_user', JSON.stringify(data.user));
+            localStorage.setItem('echopress_token', data.token);
             window.location.href = '/';
           } else {
             errorMsg.innerText = data.error || "Erreur lors de l'authentification";

@@ -145,6 +145,12 @@
               <div class="user-tab" onclick="switchUserTab('corrector')">Correcteurs</div>
               <div class="user-tab" onclick="switchUserTab('user')">Public</div>
             </div>
+            <div id="mass-action-bar" style="display: none; margin-bottom: 15px; padding: 10px; background: var(--lp-gray-mid); border-radius: 4px; align-items: center; gap: 15px;">
+              <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600;">
+                <input type="checkbox" id="select-all-users" onchange="toggleSelectAllUsers()"> Tout sélectionner
+              </label>
+              <button class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;" onclick="handleBulkDelete()">Supprimer la sélection</button>
+            </div>
             <div id="users-list"></div>
           </div>
         </div>
@@ -681,7 +687,9 @@
         currentUserTab = role;
         document.querySelectorAll('.user-tab').forEach(t => t.classList.remove('active'));
         event.target.classList.add('active');
+        document.getElementById('mass-action-bar').style.display = role === 'user' ? 'flex' : 'none';
         renderUsers();
+        if (role === 'user') document.getElementById('select-all-users').checked = false;
       };
 
       async function fetchUsers() {
@@ -708,10 +716,15 @@
           const isSuspended = u.status === 'suspended';
           const safeNotes = u.special_notes ? u.special_notes.replace(/"/g, '&quot;') : '';
           
+          const checkboxHtml = currentUserTab === 'user' 
+            ? `<input type="checkbox" class="user-select-checkbox" value="${u.id}" style="margin-right: 10px; transform: scale(1.2);">` 
+            : '';
+
           div.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div class="user-info">
                 <h5>
+                  ${checkboxHtml}
                   ${u.username} 
                   ${isSuspended ? '<span style="color:var(--lp-red); font-size:11px;">(SUSPENDU)</span>' : ''}
                   <span class="info-icon" onclick="toggleUserInfo('info-${u.id}')" title="Plus d'informations">&#9416;</span>
@@ -832,11 +845,69 @@
         }
       };
 
+      window.toggleSelectAllUsers = () => {
+        const isChecked = document.getElementById('select-all-users').checked;
+        document.querySelectorAll('.user-select-checkbox').forEach(cb => cb.checked = isChecked);
+      };
+
+      window.promptAdminPin = () => {
+        return prompt("🔐 SÉCURITÉ MASSIFE : \nVeuillez entrer le PIN d'Administration pour confirmer cette action sensible :");
+      };
+
+      window.handleBulkDelete = async () => {
+        const checkboxes = document.querySelectorAll('.user-select-checkbox:checked');
+        const ids = Array.from(checkboxes).map(cb => cb.value);
+
+        if (ids.length === 0) {
+          alert("Veuillez sélectionner au moins un compte.");
+          return;
+        }
+
+        const adminPin = window.promptAdminPin();
+        if (!adminPin) return;
+
+        if (confirm(`Êtes-vous sûr de vouloir supprimer DÉFINITIVEMENT ${ids.length} comptes ?`)) {
+          try {
+            const res = await fetch('/api/users/bulk-delete', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-admin-pin': adminPin
+              },
+              body: JSON.stringify({ ids })
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              alert(`Succès! ${data.count} comptes ont été supprimés.`);
+              fetchUsers();
+              document.getElementById('select-all-users').checked = false;
+            } else {
+              const err = await res.json();
+              alert(`Erreur: ${err.error || 'PIN Invalide ou erreur serveur.'}`);
+            }
+          } catch (e) {
+            alert('Erreur: ' + e.message);
+          }
+        }
+      };
+
       window.handleDeleteUser = async (id, username) => {
+        const adminPin = window.promptAdminPin();
+        if (!adminPin) return;
+
         const reason = prompt(`Êtes-vous sûr de vouloir supprimer définitivement le compte de ${username} ? Entrez la raison pour confirmation :`);
-        if (reason) {
-          await fetch(`/api/users/${id}`, { method: 'DELETE' });
-          fetchUsers();
+        if (reason !== null) {
+          const res = await fetch(`/api/users/${id}`, { 
+            method: 'DELETE',
+            headers: { 'x-admin-pin': adminPin }
+          });
+          if (res.ok) {
+            fetchUsers();
+          } else {
+            const err = await res.json();
+            alert('Erreur: ' + (err.error || 'Action refusée'));
+          }
         }
       };
 

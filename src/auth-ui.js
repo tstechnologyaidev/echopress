@@ -1,4 +1,32 @@
+// Sync patching of fetch
+const token = localStorage.getItem('echopress_token');
+if (token && !window._fetchPatched) {
+  const originalFetch = window.fetch;
+  window.fetch = async function(resource, options) {
+    if (typeof resource === 'string' && resource.startsWith('/api/') && !resource.startsWith('/api/weather') && !resource.startsWith('/api/popular')) {
+      options = options || {};
+      options.headers = options.headers || {};
+      if (options.headers instanceof Headers) {
+        options.headers.append('Authorization', `Bearer ${token}`);
+      } else {
+        options.headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+    const response = await originalFetch.call(this, resource, options);
+    if (response.status === 401 || response.status === 403) {
+      if (resource !== '/api/login' && resource !== '/api/register') {
+         localStorage.removeItem('echopress_user');
+         localStorage.removeItem('echopress_token');
+         window.location.href = '/login.html';
+      }
+    }
+    return response;
+  };
+  window._fetchPatched = true;
+}
+
 export function setupAuthUI() {
+
   const userStr = localStorage.getItem('echopress_user');
   const authLinks = document.querySelector('.auth-links');
   const headerActions = document.querySelector('.header-actions');
@@ -29,6 +57,7 @@ export function setupAuthUI() {
     document.getElementById('logout-btn').addEventListener('click', (e) => {
       e.preventDefault();
       localStorage.removeItem('echopress_user');
+      localStorage.removeItem('echopress_token');
       window.location.reload();
     });
     

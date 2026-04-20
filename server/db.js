@@ -46,6 +46,11 @@ export const deleteUser = async (id) => {
   if (error) throw error;
 };
 
+export const deleteMultipleUsers = async (ids) => {
+  const { error } = await supabase.from('users').delete().in('id', ids);
+  if (error) throw error;
+};
+
 export const updateUserStatus = async (id, status, reason) => {
   const { error } = await supabase.from('users').update({ status, punishment_reason: reason }).eq('id', id);
   if (error) throw error;
