@@ -24,7 +24,7 @@ export const getDisplayName = (username) => {
 
 // Users API
 export const getUsers = async () => {
-  const { data, error } = await supabase.from('users').select('id, username, role, status, punishment_reason');
+  const { data, error } = await supabase.from('users').select('*');
   if (error) throw error;
   return data;
 };
@@ -53,6 +53,11 @@ export const updateUserStatus = async (id, status, reason) => {
 
 export const resetUserPassword = async (id, newPassword, reason) => {
   const { error } = await supabase.from('users').update({ password: newPassword, punishment_reason: reason }).eq('id', id);
+  if (error) throw error;
+};
+
+export const updateUserNotes = async (id, notes) => {
+  const { error } = await supabase.from('users').update({ special_notes: notes }).eq('id', id);
   if (error) throw error;
 };
 

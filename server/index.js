@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import {
   supabase,
-  getUsers, getUserByUsername, createUser, deleteUser, updateUserStatus, resetUserPassword,
+  getUsers, getUserByUsername, createUser, deleteUser, updateUserStatus, resetUserPassword, updateUserNotes,
   getArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus,
   incrementArticleViews, getPopularArticles,
   getSetting, upsertSetting,
@@ -79,6 +79,16 @@ app.put('/api/users/:id/reset-password', async (req, res) => {
   const { password, reason } = req.body;
   try {
     await resetUserPassword(req.params.id, password, reason);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/users/:id/notes', async (req, res) => {
+  const { notes } = req.body;
+  try {
+    await updateUserNotes(req.params.id, notes);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

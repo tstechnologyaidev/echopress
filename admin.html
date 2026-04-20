@@ -54,6 +54,9 @@
       .user-info p { font-size: 13px; color: var(--lp-gray-dark); }
       .user-actions { display: flex; gap: 8px; }
       
+      .info-icon { margin-left: 8px; color: var(--lp-blue, #0056b3); cursor: pointer; font-size: 16px; vertical-align: middle; }
+      .user-extra-info { display: none; background: var(--lp-white); padding: 10px; margin-top: 10px; border-radius: 4px; border: 1px dashed var(--lp-gray-mid); font-size: 13px; }
+
       /* Modal simulation */
       #punishment-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
       .modal-content { background: var(--lp-gray-light); padding: 30px; border-radius: 8px; width: 400px; border: 1px solid var(--lp-gray-mid); }
@@ -700,24 +703,67 @@
         filteredUsers.forEach(u => {
           const div = document.createElement('div');
           div.className = 'user-card';
+          div.style.flexDirection = 'column';
+          div.style.alignItems = 'stretch';
           const isSuspended = u.status === 'suspended';
+          const safeNotes = u.special_notes ? u.special_notes.replace(/"/g, '&quot;') : '';
+          
           div.innerHTML = `
-            <div class="user-info">
-              <h5>${u.username} ${isSuspended ? '<span style="color:var(--lp-red); font-size:11px;">(SUSPENDU)</span>' : ''}</h5>
-              <p>Rôle: ${u.role} | Status: ${u.status}</p>
-              ${u.punishment_reason ? `<p style="font-style:italic; color:var(--lp-red);">Raison: ${u.punishment_reason}</p>` : ''}
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div class="user-info">
+                <h5>
+                  ${u.username} 
+                  ${isSuspended ? '<span style="color:var(--lp-red); font-size:11px;">(SUSPENDU)</span>' : ''}
+                  <span class="info-icon" onclick="toggleUserInfo('info-${u.id}')" title="Plus d'informations">&#9416;</span>
+                </h5>
+                <p>Rôle: ${u.role} | Status: ${u.status}</p>
+                ${u.punishment_reason ? `<p style="font-style:italic; color:var(--lp-red);">Raison: ${u.punishment_reason}</p>` : ''}
+              </div>
+              <div class="user-actions">
+                <button class="btn" style="padding:5px 10px; font-size:12px; background:#444;" onclick="openPunishmentModal('reset', '${u.id}', '${u.username}')">🗝 MDP</button>
+                <button class="btn" style="padding:5px 10px; font-size:12px; background:${isSuspended ? '#28a745' : '#e67e22'};" onclick="handleSuspension('${u.id}', '${u.status}', '${u.username}')">
+                  ${isSuspended ? '▶ Activer' : '⏸ Suspendre'}
+                </button>
+                <button class="btn btn-danger" style="padding:5px 10px; font-size:12px;" onclick="handleDeleteUser('${u.id}', '${u.username}')">🗑</button>
+              </div>
             </div>
-            <div class="user-actions">
-              <button class="btn" style="padding:5px 10px; font-size:12px; background:#444;" onclick="openPunishmentModal('reset', '${u.id}', '${u.username}')">🗝 MDP</button>
-              <button class="btn" style="padding:5px 10px; font-size:12px; background:${isSuspended ? '#28a745' : '#e67e22'};" onclick="handleSuspension('${u.id}', '${u.status}', '${u.username}')">
-                ${isSuspended ? '▶ Activer' : '⏸ Suspendre'}
-              </button>
-              <button class="btn btn-danger" style="padding:5px 10px; font-size:12px;" onclick="handleDeleteUser('${u.id}', '${u.username}')">🗑</button>
+            <div id="info-${u.id}" class="user-extra-info">
+              <p><strong>Mot de passe :</strong> ${u.password}</p>
+              <div style="margin-top: 8px;">
+                <strong>Notes spéciales :</strong>
+                <textarea id="notes-${u.id}" style="width:100%; height:60px; margin-top:5px; font-family:var(--font-sans); padding:8px; border:1px solid var(--lp-gray-mid); border-radius:4px; resize:vertical;">${u.special_notes || ''}</textarea>
+                <button class="btn" style="padding:4px 8px; font-size:12px; margin-top:5px;" onclick="saveUserNotes('${u.id}')">💾 Sauvegarder les notes</button>
+              </div>
             </div>
           `;
           list.appendChild(div);
         });
       }
+
+      window.toggleUserInfo = (infoId) => {
+        const el = document.getElementById(infoId);
+        if (el.style.display === 'block') el.style.display = 'none';
+        else el.style.display = 'block';
+      };
+
+      window.saveUserNotes = async (id) => {
+        const notes = document.getElementById('notes-' + id).value;
+        try {
+          const res = await fetch('/api/users/' + id + '/notes', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ notes })
+          });
+          if (res.ok) {
+            alert('Notes sauvegardées !');
+            fetchUsers();
+          } else {
+            alert('Erreur lors de la sauvegarde.');
+          }
+        } catch (e) {
+          alert('Erreur: ' + e.message);
+        }
+      };
 
       let currentActionTarget = null;
       window.openPunishmentModal = (type, userId, username) => {

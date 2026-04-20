@@ -35,6 +35,22 @@
     <main class="container editor-layout">
       <div class="form-section">
         <h1 id="editor-page-title">Publier un nouvel article</h1>
+        
+        <div style="background: var(--lp-gray-mid); color: var(--lp-black); padding: 15px; border-radius: 6px; margin-top: 15px; margin-bottom: 25px; font-size: 14px;">
+          <h4 style="margin-bottom: 0; font-weight: 600; display: flex; justify-content: space-between; cursor: pointer;" onclick="document.getElementById('tutorial-content').style.display = document.getElementById('tutorial-content').style.display === 'none' ? 'block' : 'none'; document.getElementById('tutorial-icon').textContent = document.getElementById('tutorial-content').style.display === 'none' ? '▼' : '▲';">
+            <span>ⓘ Tutoriel de rédaction : Astuces et outils</span>
+            <span id="tutorial-icon">▼</span>
+          </h4>
+          <div id="tutorial-content" style="display: none; line-height: 1.6; margin-top: 15px; border-top: 1px solid var(--lp-gray-dark); padding-top: 15px;">
+            <ul style="margin-left: 20px; list-style-type: disc;">
+              <li style="margin-bottom: 8px;"><strong>Mise en forme :</strong> Utilisez la barre d'outils de l'éditeur pour ajouter du gras, de l'italique, des listes et bien plus à votre texte.</li>
+              <li style="margin-bottom: 8px;"><strong>Mode Citation :</strong> Tapez simplement le symbole <code>></code> (supérieur à) au tout début d'une ligne dans le contenu. L'éditeur transformera automatiquement la ligne en un bloc de citation élégant. Pour sortir de la citation et écrire du texte normal, appuyez sur <code>Maj + Entrée</code>.</li>
+              <li style="margin-bottom: 8px;"><strong>Image Principale :</strong> Uploadez une image d'en-tête via le champ "Image (fichier uploader)" pour illustrer l'article. Indiquez le "Crédit photo" pour respecter les droits d'auteur.</li>
+              <li style="margin-bottom: 8px;"><strong>Organisation :</strong> Sélectionnez judicieusement une catégorie et une sous-catégorie pour que l'article soit référencé correctement. Le "Surtitre" (ex: Exclusif, Actualité) aide à contextualiser l'information en haut du titre principal.</li>
+            </ul>
+          </div>
+        </div>
+
         <form id="journalist-article-form" style="margin-top:20px;">
           <input type="hidden" id="art-id">
           <div class="form-group">
