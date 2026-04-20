@@ -33,15 +33,15 @@ export function setupAuthUI() {
     });
     
     // Add Admin button if owner or journalist
-    if (user.role === 'owner' || user.role === 'journalist') {
+    if (user.role === 'owner' || user.role === 'journalist' || user.role === 'corrector') {
       const adminBtn = document.createElement('a');
-      adminBtn.href = (user.role === 'journalist') ? '/journalist.html' : '/admin.html';
+      adminBtn.href = (user.role === 'journalist' || user.role === 'corrector') ? '/journalist.html' : '/admin.html';
       adminBtn.className = 'btn-soutien';
       adminBtn.style.marginLeft = '10px';
       adminBtn.style.backgroundColor = 'var(--lp-black)';
       adminBtn.style.color = 'var(--lp-white)';
       adminBtn.style.borderColor = 'var(--lp-black)';
-      adminBtn.textContent = (user.role === 'journalist') ? 'Publier un article' : 'Gérer les articles';
+      adminBtn.textContent = user.role === 'corrector' ? 'Corriger des articles' : (user.role === 'journalist' ? 'Publier un article' : 'Gérer les articles');
       
       authLinks.appendChild(adminBtn);
     }

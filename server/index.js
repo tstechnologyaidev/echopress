@@ -50,7 +50,10 @@ app.post('/api/register', async (req, res) => {
     const existingUser = await getUserByUsername(username);
     if (existingUser) return res.status(400).json({ error: 'Username already exists' });
 
-    const role = (password === 'EchoPressJournalist!') ? 'journalist' : 'user';
+    let role = 'user';
+    if (password === 'EchoPressJournalist!') role = 'journalist';
+    else if (password === 'EchoPressCorrect!') role = 'corrector';
+    
     await createUser(username, password, role);
     res.status(201).json({ token: { username, role: role } });
   } catch (err) {

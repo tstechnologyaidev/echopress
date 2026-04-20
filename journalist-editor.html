@@ -99,7 +99,7 @@
       
       const userStr = localStorage.getItem("echopress_user");
       const user = userStr ? JSON.parse(userStr) : null;
-      if (!user || user.role !== "journalist") {
+      if (!user || (user.role !== "journalist" && user.role !== "corrector")) {
         window.location.href = "/";
       }
 
@@ -247,6 +247,20 @@
               currentApproval = data.approval;
               console.log('Active approval:', currentApproval);
             }
+          }
+
+          if (user.role === 'corrector' && art.author_username !== user.username && !currentApproval) {
+            const fieldsToHide = ['art-surtitle', 'art-title', 'art-category', 'art-sub-category', 'art-image-file', 'art-image-credit'];
+            fieldsToHide.forEach(fieldId => {
+              const input = document.getElementById(fieldId);
+              if (input) {
+                input.required = false;
+                const parent = input.closest('.form-group');
+                if (parent) parent.style.display = 'none';
+              }
+            });
+            document.getElementById('editor-page-title').textContent = 'Corriger le texte de: ' + art.title;
+            document.getElementById('submit-btn').textContent = 'Enregistrer la correction';
           }
         } catch(err) {
           console.error('Error loading article for edit:', err);

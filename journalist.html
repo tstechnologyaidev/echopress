@@ -215,11 +215,11 @@
     <script type="module">
       const userStr = localStorage.getItem("echopress_user");
       const user = userStr ? JSON.parse(userStr) : null;
-      if (!user || user.role !== "journalist") {
+      if (!user || (user.role !== "journalist" && user.role !== "corrector")) {
         window.location.href = "/";
       }
 
-      document.getElementById("journalist-name").textContent = user.username;
+      document.getElementById("journalist-name").textContent = user.username + (user.role === 'corrector' ? ' (Correcteur)' : '');
 
       let currentRequestArticleId = null;
       let currentRequestArticleTitle = null;
@@ -261,11 +261,17 @@
           if (isOwn) {
             actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit">Modifier</a>`;
           } else if (isApproved) {
-            actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit">Modifier</a><div style="font-size:10px; color:var(--lp-red); margin-top:4px;">${expiryLabel || (req.is_one_time ? 'Une seule fois' : 'Approuvé')}</div>`;
+            actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit">Modifier l'article complet</a><div style="font-size:10px; color:var(--lp-red); margin-top:4px;">${expiryLabel || (req.is_one_time ? 'Une seule fois' : 'Approuvé')}</div>`;
           } else if (status === 'pending') {
             actionHtml = `<button class="btn-pending" disabled>⏳ Demande en attente</button>`;
+            if (user.role === 'corrector') {
+              actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit" style="background:#444;margin-right:8px;">Corriger le texte</a> ` + actionHtml;
+            }
           } else {
             actionHtml = `<button class="btn-request" data-action="open-modal" data-id="${art.id}" data-title="${(art.title || '').replace(/"/g, '&quot;')}">Demander une modification</button>`;
+            if (user.role === 'corrector') {
+              actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit" style="background:#444;margin-right:8px;">Corriger le texte</a> ` + actionHtml;
+            }
           }
 
           const div = document.createElement('div');
@@ -273,7 +279,7 @@
           div.innerHTML = `
             <div class="art-info">
               <h4>${art.title}</h4>
-              <span>${art.category} — Par ${art.author || art.author_username || 'Inconnu'} — ${art.published_time}</span>
+              <span>${user.role === 'corrector' ? art.published_time : `${art.category} — Par ${art.author || art.author_username || 'Inconnu'} — ${art.published_time}`}</span>
             </div>
             <div class="art-actions">${actionHtml}</div>
           `;
