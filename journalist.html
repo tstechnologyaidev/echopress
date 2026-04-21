@@ -368,7 +368,10 @@
         const searchInput = document.getElementById('articles-search');
         if (searchInput) searchInput.value = '';
 
-        renderList(articles);
+          renderList(articles);
+        } catch (err) {
+          console.error("Error loading articles:", err);
+        }
       }
 
 
