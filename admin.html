@@ -955,7 +955,7 @@
                 <p>${u.role.toUpperCase()} &bull; ${u.status === 'active' ? 'En ligne' : 'Inactif'}</p>
               </div>
               <div class="user-actions">
-                <button class="btn" style="padding:6px; background:#f0f0f0;" onclick="handleDeleteUser('${u.id}', '${u.username}')" title="Supprimer">🗑</button>
+                    <button class="btn-icon danger" onclick="handleDeleteUser('${u.id}', '${u.username}', '${u.role}')" title="Supprimer">🗑️</button>
               </div>
             </div>
             
@@ -1089,8 +1089,12 @@
           return;
         }
 
-        const adminPin = window.promptAdminPin();
-        if (!adminPin) return;
+        let adminPin = '';
+        // Only require PIN if we are NOT in the 'Public' (user) tab
+        if (currentUserTab !== 'user') {
+          adminPin = window.promptAdminPin();
+          if (!adminPin) return;
+        }
 
         if (confirm(`Êtes-vous sûr de vouloir supprimer DÉFINITIVEMENT ${ids.length} comptes ?`)) {
           try {
@@ -1118,9 +1122,13 @@
         }
       };
 
-      window.handleDeleteUser = async (id, username) => {
-        const adminPin = window.promptAdminPin();
-        if (!adminPin) return;
+      window.handleDeleteUser = async (id, username, role) => {
+        let adminPin = '';
+        // Only require PIN if the user being deleted is NOT a Public user
+        if (role !== 'user') {
+          adminPin = window.promptAdminPin();
+          if (!adminPin) return;
+        }
 
         const reason = prompt(`Êtes-vous sûr de vouloir supprimer définitivement le compte de ${username} ? Entrez la raison pour confirmation :`);
         if (reason !== null) {

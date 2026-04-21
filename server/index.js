@@ -138,15 +138,25 @@ app.delete('/api/users/:id', authenticateToken, requireOwner, async (req, res) =
 
 app.post('/api/users/bulk-delete', authenticateToken, requireOwner, async (req, res) => {
   try {
-    const adminPin = req.headers['x-admin-pin'];
-    const expectedPin = process.env.ADMIN_PIN || 'EchoAdmin2026!'; // Hardcoded fallback
-    if (adminPin !== expectedPin) {
-      return res.status(403).json({ error: 'Code PIN invalide. Accès refusé.' });
-    }
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ error: 'Aucun ID fourni.' });
     }
+
+    // Check if any of the target users have a role higher than 'user' (Public)
+    const { data: targetUsers } = await supabase.from('users').select('role').in('id', ids);
+    
+    // Determine if we need a PIN (if anyone is NOT a Public user)
+    const needsPin = targetUsers && targetUsers.some(u => u.role !== 'user');
+
+    if (needsPin) {
+      const adminPin = req.headers['x-admin-pin'];
+      const expectedPin = process.env.ADMIN_PIN || 'EchoAdmin2026!'; // Hardcoded fallback
+      if (adminPin !== expectedPin) {
+        return res.status(403).json({ error: 'Code PIN invalide. Un PIN est requis pour supprimer des comptes du personnel.' });
+      }
+    }
+
     await deleteMultipleUsers(ids);
     res.json({ success: true, count: ids.length });
   } catch (err) {
