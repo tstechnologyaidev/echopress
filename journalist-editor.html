@@ -11,6 +11,74 @@
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <style>
       .editor-layout { margin-top: 40px; margin-bottom: 60px; max-width: 900px; margin-left: auto; margin-right: auto; }
+      
+      /* Security Gatekeeper Overlay */
+      #security-gatekeeper {
+        position: fixed;
+        inset: 0;
+        background: rgba(5, 5, 5, 0.8);
+        backdrop-filter: blur(40px);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        transition: opacity 0.5s ease-out;
+      }
+      .security-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        padding: 3rem;
+        border-radius: 40px;
+        width: 100%;
+        max-width: 450px;
+        text-align: center;
+        box-shadow: 0 50px 100px rgba(0,0,0,0.8);
+        position: relative;
+        overflow: hidden;
+      }
+      .security-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+        pointer-events: none;
+        opacity: 0.5;
+      }
+      .security-card h2 { font-family: 'Outfit'; font-size: 2.2rem; margin-bottom: 1rem; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
+      .security-card p { color: var(--text-dim); margin-bottom: 2rem; font-size: 1rem; }
+      .security-group { margin-bottom: 1.5rem; text-align: left; }
+      .security-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+      .security-group input {
+        width: 100%;
+        padding: 1rem;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        color: white;
+        font-family: inherit;
+        font-size: 1.1rem;
+        text-align: center;
+        letter-spacing: 0.2em;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .security-group input:focus { border-color: var(--accent); outline: none; background: rgba(255,255,255,0.07); transform: scale(1.02); }
+      .security-btn {
+        width: 100%;
+        padding: 1.2rem;
+        font-size: 1.1rem;
+        margin-top: 1rem;
+        justify-content: center;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .security-error { color: #FF4B2B; font-size: 0.9rem; margin-top: 1rem; min-height: 1.2rem; font-weight: 600; }
+      
+      #editor-main-content { display: none; }
+
       .form-section {
         background: var(--glass-bg);
         backdrop-filter: var(--glass-blur);
@@ -44,7 +112,25 @@
       <div class="bg-blob"></div>
     </div>
 
-    <header class="header">
+    <div id="security-gatekeeper">
+      <div class="security-card">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">✍️</div>
+        <h2>Éditeur Sécurisé</h2>
+        <p>Veuillez entrer le code PIN journaliste pour accéder à l'outil de publication.</p>
+        
+        <form id="security-form">
+          <div class="security-group">
+            <label>Code PIN Journaliste</label>
+            <input type="password" id="journal-pin" placeholder="••••••••" required>
+          </div>
+          <button type="submit" class="btn security-btn">Déverrouiller</button>
+        </form>
+        <div id="security-error-msg" class="security-error"></div>
+      </div>
+    </div>
+
+    <div id="editor-main-content">
+      <header class="header">
       <div class="header-top container">
         <div class="header-logo"><a href="/">ECHOPRESS</a></div>
         <div class="header-actions">
@@ -124,6 +210,7 @@
         </form>
       </div>
     </main>
+  </div>
 
     <script type="module" src="/src/auth-ui.js"></script>
     <script type="module" src="/src/theme-engine.js"></script>
@@ -138,7 +225,72 @@
       });
       
       const userStr = localStorage.getItem("echopress_user");
-      const user = userStr ? JSON.parse(userStr) : { username: "Invité", role: "journalist" };
+      const user = userStr ? JSON.parse(userStr) : null;
+      
+      // Define global flags for original platform logic
+      window.isOwner = user && user.role === 'owner';
+      window.isJournalist = user && user.role === 'journalist';
+      window.isCorrector = user && user.role === 'corrector';
+
+      const JOURNALIST_PIN = "EchoJournalist2026!!";
+
+      // Security Gatekeeper Logic
+      const gatekeeper = document.getElementById('security-gatekeeper');
+      const editorContent = document.getElementById('editor-main-content');
+      const securityForm = document.getElementById('security-form');
+      const securityError = document.getElementById('security-error-msg');
+
+      function revealEditor() {
+        gatekeeper.style.opacity = '0';
+        setTimeout(() => {
+          gatekeeper.style.display = 'none';
+          editorContent.style.display = 'block';
+          
+          // Execute title effect
+          const title = document.getElementById('editor-page-title');
+          if (title && window.scrambleText) window.scrambleText(title, title.innerText, 2000);
+          
+          // Load article if editing
+          const urlParams = new URLSearchParams(window.location.search);
+          const editingId = urlParams.get('id');
+          if (editingId && typeof loadArticleForEdit === 'function') {
+            loadArticleForEdit(editingId);
+          }
+        }, 500);
+      }
+
+      function checkSecurity() {
+        if (!user || (!window.isJournalist && !window.isOwner && !window.isCorrector)) {
+          alert("Accès refusé. Cette page est réservée au personnel de rédaction.");
+          window.location.replace("/");
+          return;
+        }
+
+        const isVerified = sessionStorage.getItem('journalist_verified') === 'true';
+        if (isVerified) {
+          revealEditor();
+        }
+      }
+
+      // Start security check immediately
+      checkSecurity();
+
+      securityForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const pin = document.getElementById('journal-pin').value;
+
+        if (pin === JOURNALIST_PIN) {
+          sessionStorage.setItem('journalist_verified', 'true');
+          revealEditor();
+        } else {
+          securityError.textContent = "Code PIN invalide.";
+          document.getElementById('journal-pin').value = "";
+          
+          const card = document.querySelector('.security-card');
+          card.style.animation = 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both';
+          setTimeout(() => card.style.animation = '', 500);
+        }
+      });
       
       // Connection limitation removed: No forced login
       /*
@@ -316,9 +468,7 @@
         }
       }
 
-      if (editingId) {
-        loadArticleForEdit(editingId);
-      }
+      // Initial load logic was moved to revealEditor for security
 
       document.getElementById("journalist-article-form").addEventListener("submit", async (e) => {
         e.preventDefault();

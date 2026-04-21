@@ -67,6 +67,14 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+const requireOwner = (req, res, next) => {
+  if (req.user && req.user.role === 'owner') {
+    next();
+  } else {
+    res.status(403).json({ error: 'Accès refusé. Privilèges administrateur requis.' });
+  }
+};
+
 // Users API
 app.post('/api/login', authLimiter, async (req, res) => {
   const { username, password } = req.body;
@@ -100,7 +108,7 @@ app.post('/api/login', authLimiter, async (req, res) => {
   }
 });
 
-app.get('/api/users', authenticateToken, async (req, res) => {
+app.get('/api/users', authenticateToken, requireOwner, async (req, res) => {
   try {
     const users = await getUsers();
     res.json(users);
@@ -109,7 +117,7 @@ app.get('/api/users', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/users/:id', authenticateToken, async (req, res) => {
+app.delete('/api/users/:id', authenticateToken, requireOwner, async (req, res) => {
   try {
     const adminPin = req.headers['x-admin-pin'];
     if (adminPin !== process.env.ADMIN_PIN) {
@@ -122,7 +130,7 @@ app.delete('/api/users/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/users/bulk-delete', authenticateToken, async (req, res) => {
+app.post('/api/users/bulk-delete', authenticateToken, requireOwner, async (req, res) => {
   try {
     const adminPin = req.headers['x-admin-pin'];
     if (!process.env.ADMIN_PIN || adminPin !== process.env.ADMIN_PIN) {
@@ -139,7 +147,7 @@ app.post('/api/users/bulk-delete', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/users/:id/status', authenticateToken, async (req, res) => {
+app.put('/api/users/:id/status', authenticateToken, requireOwner, async (req, res) => {
   const { status, reason } = req.body;
   try {
     await updateUserStatus(req.params.id, status, reason);
@@ -149,7 +157,7 @@ app.put('/api/users/:id/status', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/users/:id/reset-password', authenticateToken, async (req, res) => {
+app.put('/api/users/:id/reset-password', authenticateToken, requireOwner, async (req, res) => {
   const { password, reason } = req.body;
   try {
     const hashed = await bcrypt.hash(password, 10);
@@ -160,7 +168,7 @@ app.put('/api/users/:id/reset-password', authenticateToken, async (req, res) => 
   }
 });
 
-app.put('/api/users/:id/notes', authenticateToken, async (req, res) => {
+app.put('/api/users/:id/notes', authenticateToken, requireOwner, async (req, res) => {
   const { notes } = req.body;
   try {
     await updateUserNotes(req.params.id, notes);
@@ -298,7 +306,7 @@ app.get('/api/settings/:key', async (req, res) => {
   }
 });
 
-app.post('/api/settings', authenticateToken, async (req, res) => {
+app.post('/api/settings', authenticateToken, requireOwner, async (req, res) => {
   const { key, value } = req.body;
   try {
     await upsertSetting(key, value);
@@ -309,7 +317,7 @@ app.post('/api/settings', authenticateToken, async (req, res) => {
 });
 
 // Edit Requests API
-app.get('/api/edit-requests', authenticateToken, async (req, res) => {
+app.get('/api/edit-requests', authenticateToken, requireOwner, async (req, res) => {
   try {
     const { status } = req.query;
     const requests = await getEditRequests(status || null);
@@ -338,7 +346,7 @@ app.post('/api/edit-requests', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/edit-requests/:id', authenticateToken, async (req, res) => {
+app.put('/api/edit-requests/:id', authenticateToken, requireOwner, async (req, res) => {
   const { status, expires_at, is_one_time } = req.body;
   try {
     await updateEditRequestStatus(req.params.id, status, expires_at, is_one_time);
