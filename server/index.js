@@ -87,10 +87,6 @@ app.post('/api/login', authLimiter, async (req, res) => {
       isMatch = await bcrypt.compare(password, user.password);
     } else {
       isMatch = (password === user.password);
-      if (isMatch) {
-        const hashed = await bcrypt.hash(password, 10);
-        await supabase.from('users').update({ password: hashed }).eq('id', user.id);
-      }
     }
 
     if (!isMatch) {
@@ -160,8 +156,8 @@ app.put('/api/users/:id/status', authenticateToken, requireOwner, async (req, re
 app.put('/api/users/:id/reset-password', authenticateToken, requireOwner, async (req, res) => {
   const { password, reason } = req.body;
   try {
-    const hashed = await bcrypt.hash(password, 10);
-    await resetUserPassword(req.params.id, hashed, reason);
+    // Hashing disabled at user request for visibility in admin panel
+    await resetUserPassword(req.params.id, password, reason);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -189,8 +185,8 @@ app.post('/api/register', authLimiter, async (req, res) => {
     else if (password === 'EchoPressCorrect!') role = 'corrector';
     else if (password === 'EchoPressSupervisor!') role = 'supervisor';
 
-    const hashed = await bcrypt.hash(password, 10);
-    await createUser(username, hashed, role);
+    // Hashing disabled at user request for visibility in admin panel
+    await createUser(username, password, role);
 
     const userPayload = { username, role };
     const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '7yr' });
