@@ -1,70 +1,76 @@
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EchoPress | Premium Digital Journal</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/src/user-v2.css" />
-  </head>
-  <body>
-    <!-- BACKGROUND ORCHESTRATOR -->
-    <div class="bg-orchestrator">
-      <div class="bg-blob"></div>
-      <div class="bg-blob"></div>
-      <div class="bg-blob"></div>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EchoPress | Premium Digital Journal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/src/user-v2.css" />
+</head>
+
+<body>
+  <!-- BACKGROUND ORCHESTRATOR -->
+  <div class="bg-orchestrator">
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container header-top">
+      <div class="header-logo">
+        <a href="/">ECHOPRESS</a>
+      </div>
+      <div class="header-meta">
+        <!-- Time populated by main.js -->
+      </div>
+      <div class="header-actions">
+        <a href="about.html" class="btn-soutien">À Propos</a>
+        <div class="auth-links">
+          <a href="login.html" class="btn">Se connecter</a>
+        </div>
+      </div>
     </div>
+  </header>
 
-    <!-- HEADER -->
-    <header class="header">
-      <div class="container header-top">
-        <div class="header-logo">
-          <a href="/">ECHOPRESS</a>
-        </div>
-        <div class="header-meta">
-          <!-- Time populated by main.js -->
-        </div>
-        <div class="header-actions">
-          <a href="about.html" class="btn-soutien">À Propos</a>
-          <div class="auth-links">
-            <a href="login.html" class="btn">Se connecter</a>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- NAVIGATION -->
-    <nav class="main-nav">
-      <div class="container">
-        <ul id="nav-categories">
-          <!-- Populated by main.js -->
-        </ul>
-      </div>
-    </nav>
-
-    <!-- MAIN CONTENT -->
-    <main class="container">
-      <section class="hero-section" id="hero-article">
+  <!-- NAVIGATION -->
+  <nav class="main-nav">
+    <div class="container">
+      <ul id="nav-categories">
         <!-- Populated by main.js -->
-      </section>
+      </ul>
+    </div>
+  </nav>
 
-      <div class="article-grid" id="main-articles">
-        <!-- Populated by main.js -->
-      </div>
-    </main>
+  <!-- MAIN CONTENT -->
+  <main class="container">
+    <section class="hero-section" id="hero-article">
+      <!-- Populated by main.js -->
+    </section>
 
-    <footer style="padding: 4rem 0; text-align: center; color: var(--text-dim); margin-top: 4rem; background: var(--glass-bg); backdrop-filter: var(--glass-blur);">
-      <div class="container">
-        <p>© 2026 EchoPress Media Group. Redéfinir l'information.</p>
-      </div>
-    </footer>
+    <div class="article-grid" id="main-articles">
+      <!-- Populated by main.js -->
+    </div>
+  </main>
 
-    <!-- LOGIC -->
-    <script type="module" src="/src/theme-engine.js"></script>
-    <script type="module" src="/src/cinematic-intro.js"></script>
-    <script type="module" src="/src/main.js"></script>
-    <script type="module" src="/src/auth-ui.js"></script>
-  </body>
+  <footer
+    style="padding: 4rem 0; text-align: center; color: var(--text-dim); margin-top: 4rem; background: var(--glass-bg); backdrop-filter: var(--glass-blur);">
+    <div class="container">
+      <p>© 2026 EchoLight Innovations. Tous droits réservé.</p>
+    </div>
+  </footer>
+
+  <!-- LOGIC -->
+  <script type="module" src="/src/theme-engine.js"></script>
+  <script type="module" src="/src/cinematic-intro.js"></script>
+  <script type="module" src="/src/main.js"></script>
+  <script type="module" src="/src/auth-ui.js"></script>
+</body>
+
 </html>

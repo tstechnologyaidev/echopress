@@ -59,7 +59,7 @@ const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Accès refusé. Token manquant.' });
-  
+
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ error: 'Token invalide ou expiré.' });
     req.user = user;
@@ -179,12 +179,13 @@ app.post('/api/register', authLimiter, async (req, res) => {
     let role = 'user';
     if (password === 'EchoPressJournalist!') role = 'journalist';
     else if (password === 'EchoPressCorrect!') role = 'corrector';
-    
+    else if (password === 'EchoPressSupervisor!') role = 'supervisor'
+
     const hashed = await bcrypt.hash(password, 10);
     await createUser(username, hashed, role);
-    
+
     const userPayload = { username, role };
-    const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '7yr' });
     res.status(201).json({ token, user: userPayload });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -381,7 +382,7 @@ app.get('/api/weather', async (req, res) => {
     const meteoRes = await fetch("https://api.open-meteo.com/v1/forecast?latitude=45.5088&longitude=-73.5878&current_weather=true");
     if (!meteoRes.ok) throw new Error("Weather fetch failed");
     const data = await meteoRes.json();
-    
+
     // Convert WMO Weather code to simple string/emoji for frontend UI
     let conditionName = "Dégagé ☀️";
     const code = data.current_weather.weathercode;
@@ -398,7 +399,7 @@ app.get('/api/weather', async (req, res) => {
     };
     lastWeatherFetch = now;
     res.json(cachedWeather);
-  } catch(err) {
+  } catch (err) {
     res.status(500).json({ error: err.message, cached: cachedWeather });
   }
 });
