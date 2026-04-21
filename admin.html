@@ -346,10 +346,17 @@
           const div = document.createElement("div");
           div.className = "article-row";
           if (isPaused) div.style.borderLeft = "4px solid var(--lp-gray-dark)";
+          
+          // Format metadata info
+          const authorText = a.author || a.author_username || 'Inconnu';
+          const pubText = a.published_time ? `${a.published_time}` : 'Date inconnue';
+          const modText = a.modified_at ? ` &bull; Modifié le ${a.modified_at}${a.modified_by ? ' par ' + a.modified_by : ''}` : '';
+
           div.innerHTML = `
             <div>
               <h4 style="${isPaused ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${a.title} ${isPaused ? '<small>(PAUSÉ)</small>' : ''}</h4>
-              <span style="font-size:12px; color:#666;">${a.category}${a.sub_category ? ' / ' + a.sub_category : ''} &mdash; Par ${a.author || a.author_username || 'Inconnu'}</span>
+              <span style="font-size:12px; color:#666;">${a.category}${a.sub_category ? ' / ' + a.sub_category : ''} &mdash; Par ${authorText}</span>
+              <div style="font-size:11px; color:#999; margin-top:4px;">${pubText}${modText}</div>
             </div>
             <div style="display: flex; gap: 5px;">
               <button class="btn" style="padding: 6px 12px; font-size: 14px; background: ${isPaused ? '#444' : ''};" onclick="window.toggleArticleStatus('${a.id}', '${a.status}')">${isPaused ? '▶ Reprendre' : '⏸ Pauser'}</button>
@@ -628,7 +635,11 @@
 
       async function loadAllRequests() {
         try {
-          const res = await fetch('/api/edit-requests');
+          const token = localStorage.getItem('echopress_token');
+          const headers = {};
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+
+          const res = await fetch('/api/edit-requests', { headers });
           if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
             throw new Error(errData.error || `Erreur serveur (${res.status})`);
@@ -766,9 +777,23 @@
       };
 
       async function fetchUsers() {
-        const res = await fetch('/api/users');
-        allUsers = await res.json();
-        renderUsers();
+        try {
+          const token = localStorage.getItem('echopress_token');
+          const headers = {};
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+          
+          const res = await fetch('/api/users', { headers });
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.error || `Erreur ${res.status}`);
+          }
+          const data = await res.json();
+          allUsers = Array.isArray(data) ? data : [];
+          renderUsers();
+        } catch (err) {
+          console.error("Error fetching users:", err);
+          document.getElementById('users-list').innerHTML = `<p style="color:var(--lp-red); font-size:13px;">Impossible de charger les comptes : ${err.message}</p>`;
+        }
       }
 
       function renderUsers() {

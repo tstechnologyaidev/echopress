@@ -290,13 +290,17 @@
             }
           }
 
+          const pubText = art.published_time || 'Date inconnue';
+          const modText = art.modified_at ? ` &bull; Modifié le ${art.modified_at}${art.modified_by ? ' par ' + art.modified_by : ''}` : '';
+
           const div = document.createElement('div');
           div.className = `article-manage-row ${isOwn ? 'own' : ''}`;
           if (isPaused) div.style.opacity = "0.7";
           div.innerHTML = `
             <div class="art-info">
               <h4 style="${isPaused ? 'text-decoration: line-through;' : ''}">${art.title} ${isPaused ? '<span style="color:var(--lp-red); font-size:11px;">(PAUSÉ)</span>' : ''}</h4>
-              <span>${user.role === 'corrector' ? art.published_time : `${art.category} — Par ${art.author || art.author_username || 'Inconnu'} — ${art.published_time}`}</span>
+              <span>${art.category} &mdash; Par ${art.author || art.author_username || 'Inconnu'}</span>
+              <div style="font-size:11px; color:#999; margin-top:4px;">${pubText}${modText}</div>
             </div>
             <div class="art-actions">${actionHtml}</div>
           `;
@@ -317,36 +321,37 @@
 
       // Load all articles + this journalist's existing requests
       async function loadAll() {
-        const articlesRes = await fetch('/api/articles?includePaused=true');
-        const articles = articlesRes.ok ? await articlesRes.json() : [];
-        allArticlesCached = articles;
-
-        // Handle notifications for paused articles
-        const myArticles = articles.filter(a => a.author_username === user.username);
-        const pausedArticles = myArticles.filter(a => a.status === 'paused');
-        const notifSection = document.getElementById('notifications-section');
-        const notifList = document.getElementById('notifications-list');
-        
-        if (pausedArticles.length > 0) {
-          notifSection.style.display = 'block';
-          notifList.innerHTML = '';
-          pausedArticles.forEach(a => {
-            const div = document.createElement('div');
-            div.className = 'notification-item';
-            div.innerHTML = `L'article <strong>"${a.title}"</strong> a été mis en pause par un propriétaire. <br> <span style="font-style:italic; color:var(--lp-red);">Raison : ${a.suspension_reason || 'Non spécifiée'}</span>`;
-            notifList.appendChild(div);
-          });
-        } else {
-          notifSection.style.display = 'none';
-        }
-
-        let myRequests = [];
         try {
-          const requestsRes = await fetch(`/api/edit-requests/user/${encodeURIComponent(user.username)}`);
+          const token = localStorage.getItem('echopress_token');
+          const headers = {};
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+
+          const articlesRes = await fetch('/api/articles?includePaused=true', { headers });
+          const articles = articlesRes.ok ? await articlesRes.json() : [];
+          allArticlesCached = articles;
+
+          // Handle notifications for paused articles
+          const myArticles = articles.filter(a => a.author_username === user.username);
+          const pausedArticles = myArticles.filter(a => a.status === 'paused');
+          const notifSection = document.getElementById('notifications-section');
+          const notifList = document.getElementById('notifications-list');
+          
+          if (pausedArticles.length > 0) {
+            notifSection.style.display = 'block';
+            notifList.innerHTML = '';
+            pausedArticles.forEach(a => {
+              const div = document.createElement('div');
+              div.className = 'notification-item';
+              div.innerHTML = `L'article <strong>"${a.title}"</strong> a été mis en pause par un propriétaire. <br> <span style="font-style:italic; color:var(--lp-red);">Raison : ${a.suspension_reason || 'Non spécifiée'}</span>`;
+              notifList.appendChild(div);
+            });
+          } else {
+            notifSection.style.display = 'none';
+          }
+
+          let myRequests = [];
+          const requestsRes = await fetch(`/api/edit-requests/user/${encodeURIComponent(user.username)}`, { headers });
           if (requestsRes.ok) myRequests = await requestsRes.json();
-        } catch (e) {
-          // edit_requests table may not exist yet — articles still load
-        }
 
         // Build a map: article_id -> request object
         requestMap = {};
