@@ -168,6 +168,12 @@ const checkAndTriggerIntro = () => {
     }
 };
 
-window.addEventListener('load', checkAndTriggerIntro);
+window.addEventListener('load', () => {
+    // We only trigger the cinematic greeting if we are on the homepage
+    const isHomepage = window.location.pathname === '/' || window.location.pathname.endsWith('index.html');
+    if (isHomepage) {
+        checkAndTriggerIntro();
+    }
+});
 
-export { runIntro, scrambleText };
+export { runIntro, scrambleText, checkAndTriggerIntro };
