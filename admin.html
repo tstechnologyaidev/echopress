@@ -34,9 +34,12 @@
       .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-dim); }
       .form-group input, .form-group textarea, .form-group select {
         width: 100%; padding: 12px; font-family: inherit; border: 1px solid var(--glass-border); border-radius: 12px;
-        background: rgba(255,255,255,0.05); color: white; transition: all 0.3s;
+        background: #121212; color: white; transition: all 0.3s;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
       }
-      .form-group input:focus, .form-group select:focus { border-color: var(--accent); outline: none; background: rgba(255,255,255,0.08); }
+      .form-group input:focus, .form-group select:focus { border-color: var(--accent); outline: none; background: #1a1a1a; box-shadow: 0 0 0 4px var(--accent-glow); }
+      
+      select option { background: #1a1a1a; color: white; }
       
       .manage-section {
         background: var(--glass-bg);

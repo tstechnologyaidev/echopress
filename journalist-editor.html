@@ -23,9 +23,12 @@
       .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-dim); }
       .form-group input, .form-group select {
         width: 100%; padding: 12px; font-family: inherit; border: 1px solid var(--glass-border); border-radius: 12px;
-        background: rgba(255,255,255,0.05); color: white; transition: all 0.3s;
+        background: #121212; color: white; transition: all 0.3s;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
       }
-      .form-group input:focus, .form-group select:focus { border-color: var(--accent); outline: none; background: rgba(255,255,255,0.08); }
+      .form-group input:focus, .form-group select:focus { border-color: var(--accent); outline: none; background: #1a1a1a; box-shadow: 0 0 0 4px var(--accent-glow); }
+      
+      select option { background: #1a1a1a; color: white; }
       .btn { background: var(--gradient); color: #fff; border: none; padding: 12px 32px; cursor: pointer; border-radius: 50px; font-weight: 700; font-size: 16px; transition: all 0.3s; box-shadow: 0 4px 15px var(--accent-glow); }
       .btn:hover { transform: scale(1.05); box-shadow: 0 8px 25px var(--accent-glow); }
       .btn-back { background-color: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); margin-right: 15px; text-decoration: none; display: inline-block; padding: 12px 32px; color: var(--text-dim); border-radius: 50px; font-weight: 700; transition: all 0.3s; }
