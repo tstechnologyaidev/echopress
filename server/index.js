@@ -1,5 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
+dotenv.config();
+
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -115,10 +118,17 @@ app.get('/api/users', authenticateToken, requireOwner, async (req, res) => {
 
 app.delete('/api/users/:id', authenticateToken, requireOwner, async (req, res) => {
   try {
-    const adminPin = req.headers['x-admin-pin'];
-    if (adminPin !== process.env.ADMIN_PIN) {
-      return res.status(403).json({ error: 'Code PIN invalide. Accès refusé.' });
+    const { data: targetUser } = await supabase.from('users').select('role').eq('id', req.params.id).single();
+    
+    // Skip PIN check if it's a Public user (role: 'user'), otherwise require PIN
+    if (targetUser && targetUser.role !== 'user') {
+      const adminPin = req.headers['x-admin-pin'];
+      const expectedPin = process.env.ADMIN_PIN || 'EchoAdmin2026!'; // Hardcoded fallback
+      if (adminPin !== expectedPin) {
+        return res.status(403).json({ error: 'Code PIN invalide. Accès refusé pour ce type de compte.' });
+      }
     }
+    
     await deleteUser(req.params.id);
     res.json({ success: true });
   } catch (err) {
@@ -129,7 +139,8 @@ app.delete('/api/users/:id', authenticateToken, requireOwner, async (req, res) =
 app.post('/api/users/bulk-delete', authenticateToken, requireOwner, async (req, res) => {
   try {
     const adminPin = req.headers['x-admin-pin'];
-    if (!process.env.ADMIN_PIN || adminPin !== process.env.ADMIN_PIN) {
+    const expectedPin = process.env.ADMIN_PIN || 'EchoAdmin2026!'; // Hardcoded fallback
+    if (adminPin !== expectedPin) {
       return res.status(403).json({ error: 'Code PIN invalide. Accès refusé.' });
     }
     const { ids } = req.body;
