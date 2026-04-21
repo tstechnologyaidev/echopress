@@ -187,7 +187,7 @@ app.post('/api/register', authLimiter, async (req, res) => {
     let role = 'user';
     if (password === 'EchoPressJournalist!') role = 'journalist';
     else if (password === 'EchoPressCorrect!') role = 'corrector';
-    else if (password === 'EchoPressSupervisor!') role = 'supervisor'
+    else if (password === 'EchoPressSupervisor!') role = 'supervisor';
 
     const hashed = await bcrypt.hash(password, 10);
     await createUser(username, hashed, role);

@@ -227,7 +227,14 @@
       }
       */
 
-      const roleText = user.role === 'corrector' ? ' (Correcteur)' : '';
+      const roleNames = {
+        'owner': ' (Propriétaire)',
+        'supervisor': ' (Superviseur)',
+        'journalist': ' (Journaliste)',
+        'corrector': ' (Correcteur)'
+      };
+      
+      const roleText = roleNames[user.role] || '';
       const finalGreeting = `Bienvenue, ${user.username}${roleText} !`;
       document.getElementById("journalist-name").textContent = user.username + roleText;
       
@@ -235,6 +242,17 @@
           const title = document.getElementById('welcome-title');
           if (title) scrambleText(title, finalGreeting, 2500);
       });
+
+      // Security Gatekeeper
+      function checkSecurity() {
+        const allowedRoles = ['owner', 'supervisor', 'journalist', 'corrector'];
+        if (!user || !allowedRoles.includes(user.role)) {
+          alert("Accès refusé. Cette page est réservée au personnel de rédaction.");
+          window.location.replace("/");
+          return;
+        }
+      }
+      checkSecurity();
 
       let currentRequestArticleId = null;
       let currentRequestArticleTitle = null;

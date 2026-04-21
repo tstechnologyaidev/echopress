@@ -336,6 +336,7 @@
         <div class="user-tabs">
           <div class="user-tab active" onclick="switchUserTab('journalist')">Journalistes</div>
           <div class="user-tab" onclick="switchUserTab('corrector')">Correcteurs</div>
+          <div class="user-tab" onclick="switchUserTab('supervisor')">Superviseurs</div>
           <div class="user-tab" onclick="switchUserTab('user')">Public</div>
         </div>
         
@@ -895,7 +896,8 @@
       window.switchUserTab = (role) => {
         currentUserTab = role;
         document.querySelectorAll('.user-tab').forEach(t => t.classList.remove('active'));
-        event.target.classList.add('active');
+        // Find the tab that was clicked based on its onclick or more reliably:
+        event.currentTarget.classList.add('active');
         document.getElementById('mass-action-bar').style.display = role === 'user' ? 'flex' : 'none';
         renderUsers();
         if (role === 'user') document.getElementById('select-all-users').checked = false;

@@ -231,6 +231,7 @@
       window.isOwner = user && user.role === 'owner';
       window.isJournalist = user && user.role === 'journalist';
       window.isCorrector = user && user.role === 'corrector';
+      window.isSupervisor = user && user.role === 'supervisor';
 
       const JOURNALIST_PIN = "EchoJournalist2026!!";
 
@@ -260,11 +261,12 @@
       }
 
       function checkSecurity() {
-        if (!user || (!window.isJournalist && !window.isOwner && !window.isCorrector)) {
+        if (!user || (!window.isJournalist && !window.isOwner && !window.isCorrector && !window.isSupervisor)) {
           alert("Accès refusé. Cette page est réservée au personnel de rédaction.");
           window.location.replace("/");
           return;
         }
+      }
 
         // Verification persistence removed at user request. PIN is required on every load.
       }
