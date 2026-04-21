@@ -266,10 +266,7 @@
           return;
         }
 
-        const isVerified = sessionStorage.getItem('journalist_verified') === 'true';
-        if (isVerified) {
-          revealEditor();
-        }
+        // Verification persistence removed at user request. PIN is required on every load.
       }
 
       // Start security check immediately
@@ -280,7 +277,6 @@
         const pin = document.getElementById('journal-pin').value;
 
         if (pin === JOURNALIST_PIN) {
-          sessionStorage.setItem('journalist_verified', 'true');
           revealEditor();
         } else {
           securityError.textContent = "Code PIN invalide.";

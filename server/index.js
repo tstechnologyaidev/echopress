@@ -286,7 +286,7 @@ app.delete('/api/articles/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/articles/:id/status', authenticateToken, async (req, res) => {
+app.put('/api/articles/:id/status', authenticateToken, requireOwner, async (req, res) => {
   const { status, reason } = req.body;
   try {
     await updateArticleStatus(req.params.id, status, reason);

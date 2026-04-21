@@ -409,10 +409,7 @@
           return;
         }
 
-        const isVerified = sessionStorage.getItem('admin_verified') === 'true';
-        if (isVerified) {
-          revealAdmin();
-        }
+        // Verification persistence removed at user request. PIN is required on every load.
       }
 
       // Start security check immediately
@@ -424,7 +421,6 @@
         const p2 = document.getElementById('pin-2').value;
 
         if (p1 === PIN1_SECRET && p2 === PIN2_SECRET) {
-          sessionStorage.setItem('admin_verified', 'true');
           revealAdmin();
         } else {
           securityError.textContent = "Codes PIN invalides. Tentative enregistrée.";
