@@ -1,108 +1,231 @@
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Éditeur d'article | EchoPress</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/src/user-v2.css" />
-    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <style>
-      .editor-layout { margin-top: 40px; margin-bottom: 60px; max-width: 900px; margin-left: auto; margin-right: auto; }
-      
-      /* Security Gatekeeper Overlay */
-      #security-gatekeeper {
-        position: fixed;
-        inset: 0;
-        background: rgba(5, 5, 5, 0.8);
-        backdrop-filter: blur(40px);
-        z-index: 99999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 1;
-        transition: opacity 0.5s ease-out;
-      }
-      .security-card {
-        background: var(--glass-bg);
-        border: 1px solid var(--glass-border);
-        padding: 3rem;
-        border-radius: 40px;
-        width: 100%;
-        max-width: 450px;
-        text-align: center;
-        box-shadow: 0 50px 100px rgba(0,0,0,0.8);
-        position: relative;
-        overflow: hidden;
-      }
-      .security-card::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
-        pointer-events: none;
-        opacity: 0.5;
-      }
-      .security-card h2 { font-family: 'Outfit'; font-size: 2.2rem; margin-bottom: 1rem; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
-      .security-card p { color: var(--text-dim); margin-bottom: 2rem; font-size: 1rem; }
-      .security-group { margin-bottom: 1.5rem; text-align: left; }
-      .security-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
-      .security-group input {
-        width: 100%;
-        padding: 1rem;
-        background: rgba(255,255,255,0.03);
-        border: 1px solid var(--glass-border);
-        border-radius: 16px;
-        color: white;
-        font-family: inherit;
-        font-size: 1.1rem;
-        text-align: center;
-        letter-spacing: 0.2em;
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      }
-      .security-group input:focus { border-color: var(--accent); outline: none; background: rgba(255,255,255,0.07); transform: scale(1.02); }
-      .security-btn {
-        width: 100%;
-        padding: 1.2rem;
-        font-size: 1.1rem;
-        margin-top: 1rem;
-        justify-content: center;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-      }
-      .security-error { color: #FF4B2B; font-size: 0.9rem; margin-top: 1rem; min-height: 1.2rem; font-weight: 600; }
-      
-      #editor-main-content { display: none; }
 
-      .form-section {
-        background: var(--glass-bg);
-        backdrop-filter: var(--glass-blur);
-        padding: 40px;
-        border-radius: 32px;
-        border: 1px solid var(--glass-border);
-        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-      }
-      .form-group { margin-bottom: 20px; }
-      .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-dim); }
-      .form-group input, .form-group select {
-        width: 100%; padding: 12px; font-family: inherit; border: 1px solid var(--glass-border); border-radius: 12px;
-        background: #121212; color: white; transition: all 0.3s;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-      }
-      .form-group input:focus, .form-group select:focus { border-color: var(--accent); outline: none; background: #1a1a1a; box-shadow: 0 0 0 4px var(--accent-glow); }
-      
-      select option { background: #1a1a1a; color: white; }
-      .btn { background: var(--gradient); color: #fff; border: none; padding: 12px 32px; cursor: pointer; border-radius: 50px; font-weight: 700; font-size: 16px; transition: all 0.3s; box-shadow: 0 4px 15px var(--accent-glow); }
-      .btn:hover { transform: scale(1.05); box-shadow: 0 8px 25px var(--accent-glow); }
-      .btn-back { background-color: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); margin-right: 15px; text-decoration: none; display: inline-block; padding: 12px 32px; color: var(--text-dim); border-radius: 50px; font-weight: 700; transition: all 0.3s; }
-      .btn-back:hover { color: white; border-color: white; }
-      #editor-page-title { font-family: 'Outfit'; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 30px; }
-    
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Éditeur d'article | EchoPress</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/src/user-v2.css" />
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <style>
+    .editor-layout {
+      margin-top: 40px;
+      margin-bottom: 60px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Security Gatekeeper Overlay */
+    #security-gatekeeper {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 5, 5, 0.8);
+      backdrop-filter: blur(40px);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 0.5s ease-out;
+    }
+
+    .security-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      padding: 3rem;
+      border-radius: 40px;
+      width: 100%;
+      max-width: 450px;
+      text-align: center;
+      box-shadow: 0 50px 100px rgba(0, 0, 0, 0.8);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .security-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    .security-card h2 {
+      font-family: 'Outfit';
+      font-size: 2.2rem;
+      margin-bottom: 1rem;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .security-card p {
+      color: var(--text-dim);
+      margin-bottom: 2rem;
+      font-size: 1rem;
+    }
+
+    .security-group {
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+
+    .security-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .security-group input {
+      width: 100%;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      color: white;
+      font-family: inherit;
+      font-size: 1.1rem;
+      text-align: center;
+      letter-spacing: 0.2em;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .security-group input:focus {
+      border-color: var(--accent);
+      outline: none;
+      background: rgba(255, 255, 255, 0.07);
+      transform: scale(1.02);
+    }
+
+    .security-btn {
+      width: 100%;
+      padding: 1.2rem;
+      font-size: 1.1rem;
+      margin-top: 1rem;
+      justify-content: center;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .security-error {
+      color: #FF4B2B;
+      font-size: 0.9rem;
+      margin-top: 1rem;
+      min-height: 1.2rem;
+      font-weight: 600;
+    }
+
+    #editor-main-content {
+      display: none;
+    }
+
+    .form-section {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      padding: 40px;
+      border-radius: 32px;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-dim);
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      font-family: inherit;
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      background: #121212;
+      color: white;
+      transition: all 0.3s;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--accent);
+      outline: none;
+      background: #1a1a1a;
+      box-shadow: 0 0 0 4px var(--accent-glow);
+    }
+
+    select option {
+      background: #1a1a1a;
+      color: white;
+    }
+
+    .btn {
+      background: var(--gradient);
+      color: #fff;
+      border: none;
+      padding: 12px 32px;
+      cursor: pointer;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 16px;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 25px var(--accent-glow);
+    }
+
+    .btn-back {
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      margin-right: 15px;
+      text-decoration: none;
+      display: inline-block;
+      padding: 12px 32px;
+      color: var(--text-dim);
+      border-radius: 50px;
+      font-weight: 700;
+      transition: all 0.3s;
+    }
+
+    .btn-back:hover {
+      color: white;
+      border-color: white;
+    }
+
+    #editor-page-title {
+      font-family: 'Outfit';
+      font-weight: 800;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 30px;
+    }
+
     /* Quill Blockquote Styling */
     .ql-editor blockquote {
       border-left: 4px solid var(--accent);
@@ -110,45 +233,46 @@
       margin-left: 0;
       font-style: italic;
       color: var(--text-dim);
-      background: rgba(255,255,255,0.03);
+      background: rgba(255, 255, 255, 0.03);
       padding-top: 10px;
       padding-bottom: 10px;
       border-radius: 0 8px 8px 0;
     }
   </style>
-  </head>
-  <body>
-    <!-- BACKGROUND ORCHESTRATOR -->
-    <div class="bg-orchestrator">
-      <div class="bg-blob"></div>
-      <div class="bg-blob"></div>
-      <div class="bg-blob"></div>
-    </div>
+</head>
 
-    <div id="security-gatekeeper">
-      <div class="security-card">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">✍️</div>
-        <h2>Éditeur Sécurisé</h2>
-        <p>Veuillez entrer le code PIN journaliste pour accéder à l'outil de publication.</p>
-        
-        <form id="security-form">
-          <div class="security-group">
-            <label>Code PIN Journaliste</label>
-            <input type="password" id="journal-pin" placeholder="••••••••" required>
-          </div>
-          <button type="submit" class="btn security-btn">Déverrouiller</button>
-        </form>
-        <div id="security-error-msg" class="security-error"></div>
-      </div>
-    </div>
+<body>
+  <!-- BACKGROUND ORCHESTRATOR -->
+  <div class="bg-orchestrator">
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+  </div>
 
-    <div id="editor-main-content">
-      <header class="header">
+  <div id="security-gatekeeper">
+    <div class="security-card">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">✍️</div>
+      <h2>Éditeur Sécurisé</h2>
+      <p>Veuillez entrer le code PIN journaliste pour accéder à l'outil de publication.</p>
+
+      <form id="security-form">
+        <div class="security-group">
+          <label>Code PIN Journaliste</label>
+          <input type="password" id="journal-pin" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn security-btn">Déverrouiller</button>
+      </form>
+      <div id="security-error-msg" class="security-error"></div>
+    </div>
+  </div>
+
+  <div id="editor-main-content">
+    <header class="header">
       <div class="header-top container">
         <div class="header-logo"><a href="/">ECHOPRESS</a></div>
         <div class="header-actions">
-           <a href="/" class="btn-soutien">Voir le site</a>
-           <div class="auth-links"></div>
+          <a href="/" class="btn-soutien">Voir le site</a>
+          <div class="auth-links"></div>
         </div>
       </div>
     </header>
@@ -156,27 +280,36 @@
     <main class="container editor-layout">
       <div class="form-section">
         <h1 id="editor-page-title">Publier un nouvel article</h1>
-        
-        <div style="background: rgba(255,255,255,0.03); color: white; padding: 25px; border-radius: 20px; margin-top: 15px; margin-bottom: 30px; font-size: 14px; border: 1px solid var(--glass-border);">
-          <h4 style="margin-bottom: 0; font-weight: 700; font-family: 'Outfit'; display: flex; justify-content: space-between; cursor: pointer;" onclick="document.getElementById('tutorial-content').style.display = document.getElementById('tutorial-content').style.display === 'none' ? 'block' : 'none'; document.getElementById('tutorial-icon').textContent = document.getElementById('tutorial-content').style.display === 'none' ? '▼' : '▲';">
+
+        <div
+          style="background: rgba(255,255,255,0.03); color: white; padding: 25px; border-radius: 20px; margin-top: 15px; margin-bottom: 30px; font-size: 14px; border: 1px solid var(--glass-border);">
+          <h4
+            style="margin-bottom: 0; font-weight: 700; font-family: 'Outfit'; display: flex; justify-content: space-between; cursor: pointer;"
+            onclick="document.getElementById('tutorial-content').style.display = document.getElementById('tutorial-content').style.display === 'none' ? 'block' : 'none'; document.getElementById('tutorial-icon').textContent = document.getElementById('tutorial-content').style.display === 'none' ? '▼' : '▲';">
             <span>🛡️ Guide du Personnel : Maîtriser l'Éditeur</span>
             <span id="tutorial-icon" style="color: var(--accent);">▼</span>
           </h4>
-          <div id="tutorial-content" style="display: none; line-height: 1.6; margin-top: 15px; border-top: 1px solid var(--glass-border); padding-top: 15px; color: var(--text-dim);">
+          <div id="tutorial-content"
+            style="display: none; line-height: 1.6; margin-top: 15px; border-top: 1px solid var(--glass-border); padding-top: 15px; color: var(--text-dim);">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
               <div>
                 <strong style="color: white; display: block; margin-bottom: 8px;">✍️ Rédaction & Style</strong>
                 <ul style="margin-left: 20px; list-style-type: disc;">
-                  <li style="margin-bottom: 4px;">Utilisez le <strong>Surtitre</strong> pour catégoriser l'article (ex: EXCLUSIF, SPORT).</li>
-                  <li style="margin-bottom: 4px;">Le <strong>Résumé</strong> apparaît sur la page d'accueil. Soyez incisif !</li>
+                  <li style="margin-bottom: 4px;">Utilisez le <strong>Surtitre</strong> pour catégoriser l'article (ex:
+                    EXCLUSIF, SPORT).</li>
+                  <li style="margin-bottom: 4px;">Le <strong>Résumé</strong> apparaît sur la page d'accueil. Soyez
+                    incisif !</li>
                   <li style="margin-bottom: 4px;">Utilisez les outils de mise en forme pour aérer votre texte.</li>
                 </ul>
               </div>
               <div>
                 <strong style="color: white; display: block; margin-bottom: 8px;">💬 Citations & Blocs</strong>
                 <ul style="margin-left: 20px; list-style-type: disc;">
-                  <li style="margin-bottom: 4px;"><strong>Mode Citation :</strong> Tapez <code>></code> au début d'une ligne pour créer une citation élégante.</li>
-                  <li style="margin-bottom: 4px;"><strong>Sortir de Citation :</strong> Appuyez sur <kbd style="background: #333; padding: 2px 4px; border-radius: 4px; color: white;">Maj + Entrée</kbd> pour sortir instantanément du bloc de citation.</li>
+                  <li style="margin-bottom: 4px;"><strong>Mode Citation :</strong> Tapez <code>></code> au début d'une
+                    ligne pour créer une citation élégante.</li>
+                  <li style="margin-bottom: 4px;"><strong>Sortir de Citation :</strong> Appuyez sur <kbd
+                      style="background: #333; padding: 2px 4px; border-radius: 4px; color: white;">Maj + Entrée</kbd>
+                    pour sortir instantanément du bloc de citation.</li>
                 </ul>
               </div>
             </div>
@@ -208,7 +341,7 @@
           </div>
           <div class="form-group">
             <label>Sous-catégorie</label>
-            <select id="art-sub-category" disabled>
+            <select id="art-sub-category" enabled>
               <option value="">-- Sélectionner une catégorie d'abord --</option>
             </select>
           </div>
@@ -216,7 +349,8 @@
             <label>Image (fichier uploader)</label>
             <input type="file" id="art-image-file" accept="image/*">
             <div id="image-preview-container" style="margin-top: 10px; display: none;">
-              <img id="image-preview" src="" style="max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid var(--lp-gray-mid);">
+              <img id="image-preview" src=""
+                style="max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid var(--lp-gray-mid);">
             </div>
           </div>
           <div class="form-group">
@@ -236,336 +370,337 @@
     </main>
   </div>
 
-    <script type="module" src="/src/auth-ui.js"></script>
-    <script type="module" src="/src/theme-engine.js"></script>
-    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
-    <script type="module">
-      import { categories } from "/src/data.js";
-      import { scrambleText } from "/src/cinematic-intro.js";
+  <script type="module" src="/src/auth-ui.js"></script>
+  <script type="module" src="/src/theme-engine.js"></script>
+  <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+  <script type="module">
+    import { categories } from "/src/data.js";
+    import { scrambleText } from "/src/cinematic-intro.js";
 
+    window.addEventListener('load', () => {
+      const title = document.getElementById('editor-page-title');
+      if (title) scrambleText(title, title.innerText, 2000);
+    });
+
+    const userStr = localStorage.getItem("echopress_user");
+    const user = userStr ? JSON.parse(userStr) : null;
+
+    // Define global flags for original platform logic
+    window.isOwner = user && user.role === 'owner';
+    window.isJournalist = user && user.role === 'journalist';
+    window.isCorrector = user && user.role === 'corrector';
+    window.isSupervisor = user && user.role === 'supervisor';
+
+    const JOURNALIST_PIN = "EchoJournalist2026!!";
+
+    // Security Gatekeeper Logic
+    const gatekeeper = document.getElementById('security-gatekeeper');
+    const editorContent = document.getElementById('editor-main-content');
+    const securityForm = document.getElementById('security-form');
+    const securityError = document.getElementById('security-error-msg');
+
+    function revealEditor() {
+      gatekeeper.style.opacity = '0';
+      setTimeout(() => {
+        gatekeeper.style.display = 'none';
+        editorContent.style.display = 'block';
+
+        // Execute title effect
+        const title = document.getElementById('editor-page-title');
+        if (title && window.scrambleText) window.scrambleText(title, title.innerText, 2000);
+
+        // Load article if editing
+        const urlParams = new URLSearchParams(window.location.search);
+        const editingId = urlParams.get('id');
+        if (editingId && typeof loadArticleForEdit === 'function') {
+          loadArticleForEdit(editingId);
+        }
+      }, 500);
+    }
+
+    // Initial Autoreveal for Owner
+    if (window.isOwner) {
       window.addEventListener('load', () => {
-          const title = document.getElementById('editor-page-title');
-          if (title) scrambleText(title, title.innerText, 2000);
+        revealEditor();
       });
-      
-      const userStr = localStorage.getItem("echopress_user");
-      const user = userStr ? JSON.parse(userStr) : null;
-      
-      // Define global flags for original platform logic
-      window.isOwner = user && user.role === 'owner';
-      window.isJournalist = user && user.role === 'journalist';
-      window.isCorrector = user && user.role === 'corrector';
-      window.isSupervisor = user && user.role === 'supervisor';
+    }
 
-      const JOURNALIST_PIN = "EchoJournalist2026!!";
-
-      // Security Gatekeeper Logic
-      const gatekeeper = document.getElementById('security-gatekeeper');
-      const editorContent = document.getElementById('editor-main-content');
-      const securityForm = document.getElementById('security-form');
-      const securityError = document.getElementById('security-error-msg');
-
-      function revealEditor() {
-        gatekeeper.style.opacity = '0';
-        setTimeout(() => {
-          gatekeeper.style.display = 'none';
-          editorContent.style.display = 'block';
-          
-          // Execute title effect
-          const title = document.getElementById('editor-page-title');
-          if (title && window.scrambleText) window.scrambleText(title, title.innerText, 2000);
-          
-          // Load article if editing
-          const urlParams = new URLSearchParams(window.location.search);
-          const editingId = urlParams.get('id');
-          if (editingId && typeof loadArticleForEdit === 'function') {
-            loadArticleForEdit(editingId);
-          }
-        }, 500);
+    function checkSecurity() {
+      if (!user || (!window.isJournalist && !window.isOwner && !window.isCorrector && !window.isSupervisor)) {
+        alert("Accès refusé. Cette page est réservée au personnel de rédaction.");
+        window.location.replace("/");
+        return;
       }
+    }
 
-      // Initial Autoreveal for Owner
-      if (window.isOwner) {
-        window.addEventListener('load', () => {
-          revealEditor();
+    // Verification persistence removed at user request. PIN is required on every load.
+
+    // Start security check immediately
+    if (!window.isOwner) {
+      checkSecurity();
+    }
+
+    securityForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const pin = document.getElementById('journal-pin').value;
+
+      if (pin === JOURNALIST_PIN) {
+        revealEditor();
+      } else {
+        securityError.textContent = "Code PIN invalide.";
+        document.getElementById('journal-pin').value = "";
+
+        const card = document.querySelector('.security-card');
+        card.style.animation = 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both';
+        setTimeout(() => card.style.animation = '', 500);
+      }
+    });
+
+    // Connection limitation removed: No forced login
+    /*
+    if (!user || (user.role !== "journalist" && user.role !== "corrector")) {
+      window.location.href = "/";
+    }
+    */
+
+    // Check if we're in edit mode
+    const urlParams = new URLSearchParams(window.location.search);
+    const editingId = urlParams.get('id');
+    let originalPublishedTime = '';
+    let originalAuthor = '';
+    let existingImageUrl = '';
+    let currentApproval = null;
+
+    if (editingId) {
+      document.getElementById('editor-page-title').textContent = 'Modifier l\'article';
+      document.getElementById('submit-btn').textContent = 'Mettre à jour l\'article';
+    }
+
+    const categorySelect = document.getElementById("art-category");
+    const subCategorySelect = document.getElementById("art-sub-category");
+
+    categorySelect.addEventListener("change", (e) => {
+      const cat = categories.find(c => c.id === e.target.value);
+      subCategorySelect.innerHTML = "<option value=''>-- Sélectionner une sous-catégorie --</option>";
+      if (cat && cat.subCategories) {
+        cat.subCategories.forEach(sub => {
+          const opt = document.createElement("option");
+          opt.value = sub;
+          opt.textContent = sub;
+          subCategorySelect.appendChild(opt);
         });
+        subCategorySelect.disabled = false;
+      } else {
+        subCategorySelect.disabled = true;
       }
+    });
 
-      function checkSecurity() {
-        if (!user || (!window.isJournalist && !window.isOwner && !window.isCorrector && !window.isSupervisor)) {
-          alert("Accès refusé. Cette page est réservée au personnel de rédaction.");
-          window.location.replace("/");
+    const quill = new Quill("#quill-editor", {
+      theme: "snow",
+      modules: {
+        keyboard: {
+          bindings: {
+            'exit-blockquote': {
+              key: 13, // Enter
+              shiftKey: true,
+              format: ['blockquote'],
+              handler: function (range, context) {
+                // Insert a newline after current cursor
+                this.quill.insertText(range.index, '\n', 'user');
+                // Remove blockquote format from the new line
+                this.quill.formatLine(range.index + 1, 1, 'blockquote', false, 'user');
+                // Move cursor to the new line
+                this.quill.setSelection(range.index + 1, 0, 'silent');
+                return false;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Citation shortcut: typing '>' at the start of a line
+    quill.on('text-change', (delta, oldDelta, source) => {
+      if (source !== 'user') return;
+      const selection = quill.getSelection();
+      if (selection) {
+        const [line, offset] = quill.getLine(selection.index);
+        const text = line.domNode.textContent;
+        if (text === '>') {
+          quill.deleteText(selection.index - 1, 1);
+          quill.formatLine(selection.index - 1, 1, 'blockquote', true);
+        }
+      }
+    });
+
+    document.getElementById("art-image-file").addEventListener("change", (e) => {
+      if (e.target.files && e.target.files[0]) {
+        document.getElementById("image-preview").src = URL.createObjectURL(e.target.files[0]);
+        document.getElementById("image-preview-container").style.display = "block";
+      }
+    });
+
+    function getFormattedTimestamp() {
+      const now = new Date();
+      const dateFormatter = new Intl.DateTimeFormat('fr-CA', {
+        timeZone: 'America/Toronto',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      const dateStr = dateFormatter.format(now);
+      const timeFormatter = new Intl.DateTimeFormat('fr-CA', {
+        timeZone: 'America/Toronto',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      const timeStr = timeFormatter.format(now).replace(':', ' h ');
+      return `Publié le ${dateStr} à ${timeStr}`;
+    }
+
+    async function loadArticleForEdit(id) {
+      let res;
+      try {
+        // Use a direct fetch that doesn't increment views
+        const allRes = await fetch('/api/articles');
+        if (!allRes.ok) { console.error('Failed to fetch articles list'); return; }
+        const all = await allRes.json();
+        const art = all.find(a => String(a.id) === String(id));
+        if (!art) { console.error('Article not found with id:', id); return; }
+
+        // Store originals to preserve on save
+        if (art.status === 'paused') {
+          alert("Cet article est actuellement en pause par un propriétaire pour révision. Vous ne pouvez pas le modifier pour le moment.");
+          window.location.href = "journalist.html";
           return;
         }
-      }
+        originalPublishedTime = art.published_time || '';
+        originalAuthor = art.author || '';
+        existingImageUrl = art.image || '';
 
-        // Verification persistence removed at user request. PIN is required on every load.
+        document.getElementById('art-surtitle').value = art.surtitle || '';
+        document.getElementById('art-title').value = art.title || '';
+        document.getElementById('art-category').value = art.category || '';
+        document.getElementById('art-image-credit').value = art.image_credit || '';
 
-      // Start security check immediately
-      if (!window.isOwner) {
-        checkSecurity();
-      }
-
-      securityForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const pin = document.getElementById('journal-pin').value;
-
-        if (pin === JOURNALIST_PIN) {
-          revealEditor();
-        } else {
-          securityError.textContent = "Code PIN invalide.";
-          document.getElementById('journal-pin').value = "";
-          
-          const card = document.querySelector('.security-card');
-          card.style.animation = 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both';
-          setTimeout(() => card.style.animation = '', 500);
-        }
-      });
-      
-      // Connection limitation removed: No forced login
-      /*
-      if (!user || (user.role !== "journalist" && user.role !== "corrector")) {
-        window.location.href = "/";
-      }
-      */
-
-      // Check if we're in edit mode
-      const urlParams = new URLSearchParams(window.location.search);
-      const editingId = urlParams.get('id');
-      let originalPublishedTime = '';
-      let originalAuthor = '';
-      let existingImageUrl = '';
-      let currentApproval = null;
-
-      if (editingId) {
-        document.getElementById('editor-page-title').textContent = 'Modifier l\'article';
-        document.getElementById('submit-btn').textContent = 'Mettre à jour l\'article';
-      }
-
-      const categorySelect = document.getElementById("art-category");
-      const subCategorySelect = document.getElementById("art-sub-category");
-
-      categorySelect.addEventListener("change", (e) => {
-        const cat = categories.find(c => c.id === e.target.value);
+        // Trigger sub-category population
+        const cat = categories.find(c => c.id === art.category);
+        const subCategorySelect = document.getElementById('art-sub-category');
         subCategorySelect.innerHTML = "<option value=''>-- Sélectionner une sous-catégorie --</option>";
         if (cat && cat.subCategories) {
           cat.subCategories.forEach(sub => {
-            const opt = document.createElement("option");
+            const opt = document.createElement('option');
             opt.value = sub;
             opt.textContent = sub;
+            if (sub === art.sub_category) opt.selected = true;
             subCategorySelect.appendChild(opt);
           });
           subCategorySelect.disabled = false;
-        } else {
-          subCategorySelect.disabled = true;
         }
-      });
 
-      const quill = new Quill("#quill-editor", { 
-        theme: "snow",
-        modules: {
-          keyboard: {
-            bindings: {
-              'exit-blockquote': {
-                key: 13, // Enter
-                shiftKey: true,
-                format: ['blockquote'],
-                handler: function(range, context) {
-                  // Insert a newline after current cursor
-                  this.quill.insertText(range.index, '\n', 'user');
-                  // Remove blockquote format from the new line
-                  this.quill.formatLine(range.index + 1, 1, 'blockquote', false, 'user');
-                  // Move cursor to the new line
-                  this.quill.setSelection(range.index + 1, 0, 'silent');
-                  return false;
-                }
-              }
+        quill.root.innerHTML = art.summary || '';
+
+        if (art.image) {
+          const imgSrc = art.image.startsWith('http') ? art.image : '/' + art.image;
+          document.getElementById('image-preview').src = imgSrc;
+          document.getElementById('image-preview-container').style.display = 'block';
+        }
+
+        // Check if this edit is via an approval request
+        if (art.author_username !== user.username) {
+          const checkRes = await fetch(`/api/edit-requests/check-valid?article_id=${id}&requested_by=${encodeURIComponent(user.username)}`);
+          if (checkRes.ok) {
+            const data = await checkRes.json();
+            currentApproval = data.approval;
+            console.log('Active approval:', currentApproval);
+          }
+        }
+
+        if (user.role === 'corrector' && art.author_username !== user.username && !currentApproval) {
+          const fieldsToHide = ['art-surtitle', 'art-title', 'art-category', 'art-sub-category', 'art-image-file', 'art-image-credit'];
+          fieldsToHide.forEach(fieldId => {
+            const input = document.getElementById(fieldId);
+            if (input) {
+              input.required = false;
+              const parent = input.closest('.form-group');
+              if (parent) parent.style.display = 'none';
             }
-          }
+          });
+          document.getElementById('editor-page-title').textContent = 'Corriger le texte de: ' + art.title;
+          document.getElementById('submit-btn').textContent = 'Enregistrer la correction';
         }
-      });
-
-      // Citation shortcut: typing '>' at the start of a line
-      quill.on('text-change', (delta, oldDelta, source) => {
-        if (source !== 'user') return;
-        const selection = quill.getSelection();
-        if (selection) {
-          const [line, offset] = quill.getLine(selection.index);
-          const text = line.domNode.textContent;
-          if (text === '>') {
-            quill.deleteText(selection.index - 1, 1);
-            quill.formatLine(selection.index - 1, 1, 'blockquote', true);
-          }
-        }
-      });
-
-      document.getElementById("art-image-file").addEventListener("change", (e) => {
-        if (e.target.files && e.target.files[0]) {
-          document.getElementById("image-preview").src = URL.createObjectURL(e.target.files[0]);
-          document.getElementById("image-preview-container").style.display = "block";
-        }
-      });
-
-      function getFormattedTimestamp() {
-        const now = new Date();
-        const dateFormatter = new Intl.DateTimeFormat('fr-CA', {
-          timeZone: 'America/Toronto',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-        const dateStr = dateFormatter.format(now);
-        const timeFormatter = new Intl.DateTimeFormat('fr-CA', {
-          timeZone: 'America/Toronto',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
-        const timeStr = timeFormatter.format(now).replace(':', ' h ');
-        return `Publié le ${dateStr} à ${timeStr}`;
+      } catch (err) {
+        console.error('Error loading article for edit:', err);
       }
+    }
 
-      async function loadArticleForEdit(id) {
-        let res;
-        try {
-          // Use a direct fetch that doesn't increment views
-          const allRes = await fetch('/api/articles');
-          if (!allRes.ok) { console.error('Failed to fetch articles list'); return; }
-          const all = await allRes.json();
-          const art = all.find(a => String(a.id) === String(id));
-          if (!art) { console.error('Article not found with id:', id); return; }
+    // Initial load logic was moved to revealEditor for security
 
-          // Store originals to preserve on save
-          if (art.status === 'paused') {
-            alert("Cet article est actuellement en pause par un propriétaire pour révision. Vous ne pouvez pas le modifier pour le moment.");
-            window.location.href = "journalist.html";
-            return;
-          }
-          originalPublishedTime = art.published_time || '';
-          originalAuthor = art.author || '';
-          existingImageUrl = art.image || '';
+    document.getElementById("journalist-article-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-          document.getElementById('art-surtitle').value = art.surtitle || '';
-          document.getElementById('art-title').value = art.title || '';
-          document.getElementById('art-category').value = art.category || '';
-          document.getElementById('art-image-credit').value = art.image_credit || '';
-
-          // Trigger sub-category population
-          const cat = categories.find(c => c.id === art.category);
-          const subCategorySelect = document.getElementById('art-sub-category');
-          subCategorySelect.innerHTML = "<option value=''>-- Sélectionner une sous-catégorie --</option>";
-          if (cat && cat.subCategories) {
-            cat.subCategories.forEach(sub => {
-              const opt = document.createElement('option');
-              opt.value = sub;
-              opt.textContent = sub;
-              if (sub === art.sub_category) opt.selected = true;
-              subCategorySelect.appendChild(opt);
-            });
-            subCategorySelect.disabled = false;
-          }
-
-          quill.root.innerHTML = art.summary || '';
-
-          if (art.image) {
-            const imgSrc = art.image.startsWith('http') ? art.image : '/' + art.image;
-            document.getElementById('image-preview').src = imgSrc;
-            document.getElementById('image-preview-container').style.display = 'block';
-          }
-
-          // Check if this edit is via an approval request
-          if (art.author_username !== user.username) {
-            const checkRes = await fetch(`/api/edit-requests/check-valid?article_id=${id}&requested_by=${encodeURIComponent(user.username)}`);
-            if (checkRes.ok) {
-              const data = await checkRes.json();
-              currentApproval = data.approval;
-              console.log('Active approval:', currentApproval);
-            }
-          }
-
-          if (user.role === 'corrector' && art.author_username !== user.username && !currentApproval) {
-            const fieldsToHide = ['art-surtitle', 'art-title', 'art-category', 'art-sub-category', 'art-image-file', 'art-image-credit'];
-            fieldsToHide.forEach(fieldId => {
-              const input = document.getElementById(fieldId);
-              if (input) {
-                input.required = false;
-                const parent = input.closest('.form-group');
-                if (parent) parent.style.display = 'none';
-              }
-            });
-            document.getElementById('editor-page-title').textContent = 'Corriger le texte de: ' + art.title;
-            document.getElementById('submit-btn').textContent = 'Enregistrer la correction';
-          }
-        } catch(err) {
-          console.error('Error loading article for edit:', err);
+      let imageUrl = existingImageUrl;
+      const fileInput = document.getElementById("art-image-file");
+      if (fileInput.files.length > 0) {
+        const formData = new FormData();
+        formData.append("image", fileInput.files[0]);
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+        if (uploadRes.ok) {
+          const data = await uploadRes.json();
+          imageUrl = data.url;
         }
       }
 
-      // Initial load logic was moved to revealEditor for security
+      const payload = {
+        author: editingId ? originalAuthor : user.username,
+        surtitle: document.getElementById("art-surtitle").value,
+        title: document.getElementById("art-title").value,
+        category: document.getElementById("art-category").value,
+        sub_category: document.getElementById("art-sub-category").value,
+        image: imageUrl,
+        image_credit: document.getElementById("art-image-credit").value,
+        summary: quill.root.innerHTML,
+        published_time: editingId ? originalPublishedTime : getFormattedTimestamp()
+      };
 
-      document.getElementById("journalist-article-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        
-        let imageUrl = existingImageUrl;
-        const fileInput = document.getElementById("art-image-file");
-        if (fileInput.files.length > 0) {
-          const formData = new FormData();
-          formData.append("image", fileInput.files[0]);
-          const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
-          if(uploadRes.ok) {
-            const data = await uploadRes.json();
-            imageUrl = data.url;
+      if (editingId) {
+        payload.modified_by = user.username;
+        const res = await fetch(`/api/articles/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          // Fulfill one-time approval if it exists
+          if (currentApproval && currentApproval.is_one_time) {
+            await fetch(`/api/edit-requests/${currentApproval.id}/fulfill`, { method: 'POST' });
           }
-        }
-
-        const payload = {
-          author: editingId ? originalAuthor : user.username,
-          surtitle: document.getElementById("art-surtitle").value,
-          title: document.getElementById("art-title").value,
-          category: document.getElementById("art-category").value,
-          sub_category: document.getElementById("art-sub-category").value,
-          image: imageUrl,
-          image_credit: document.getElementById("art-image-credit").value,
-          summary: quill.root.innerHTML,
-          published_time: editingId ? originalPublishedTime : getFormattedTimestamp()
-        };
-
-        if (editingId) {
-          payload.modified_by = user.username;
-          const res = await fetch(`/api/articles/${editingId}`, {
-            method: "PUT",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(payload)
-          });
-          if (res.ok) {
-            // Fulfill one-time approval if it exists
-            if (currentApproval && currentApproval.is_one_time) {
-              await fetch(`/api/edit-requests/${currentApproval.id}/fulfill`, { method: 'POST' });
-            }
-            alert("Article mis à jour avec succès !");
-            window.location.href = "journalist.html";
-          } else {
-            let errMsg = 'Erreur inconnue';
-            try { const d = await res.json(); errMsg = d.error || JSON.stringify(d); } catch(ex) {}
-            alert('Erreur lors de la mise à jour: ' + errMsg);
-          }
+          alert("Article mis à jour avec succès !");
+          window.location.href = "journalist.html";
         } else {
-          payload.author_username = user.username;
-          const res = await fetch("/api/articles", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(payload)
-          });
-          if (res.ok) {
-            alert("Article publié avec succès !");
-            window.location.href = "journalist.html";
-          } else {
-            let errMsg = 'Erreur inconnue';
-            try { const d = await res.json(); errMsg = d.error || JSON.stringify(d); } catch(ex) {}
-            alert('Erreur lors de la publication: ' + errMsg);
-          }
+          let errMsg = 'Erreur inconnue';
+          try { const d = await res.json(); errMsg = d.error || JSON.stringify(d); } catch (ex) { }
+          alert('Erreur lors de la mise à jour: ' + errMsg);
         }
-      });
-    </script>
-  </body>
+      } else {
+        payload.author_username = user.username;
+        const res = await fetch("/api/articles", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          alert("Article publié avec succès !");
+          window.location.href = "journalist.html";
+        } else {
+          let errMsg = 'Erreur inconnue';
+          try { const d = await res.json(); errMsg = d.error || JSON.stringify(d); } catch (ex) { }
+          alert('Erreur lors de la publication: ' + errMsg);
+        }
+      }
+    });
+  </script>
+</body>
+
 </html>

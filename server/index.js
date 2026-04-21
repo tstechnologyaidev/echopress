@@ -80,10 +80,16 @@ const requireOwner = (req, res, next) => {
 
 // Users API
 app.post('/api/login', authLimiter, async (req, res) => {
-  const { username, password } = req.body;
+  const { username: rawUsername, password: rawPassword } = req.body;
+  const username = (rawUsername || '').trim();
+  const password = (rawPassword || '').trim();
+
   try {
     const user = await getUserByUsername(username);
-    if (!user) return res.status(401).json({ error: 'Identifiant ou mot de passe incorrect' });
+    if (!user) {
+      console.log(`[AUTH] Login failed: User not found [${username}]`);
+      return res.status(401).json({ error: 'Identifiant ou mot de passe incorrect' });
+    }
 
     let isMatch = false;
     if (user.password.startsWith('$2')) {
@@ -93,8 +99,11 @@ app.post('/api/login', authLimiter, async (req, res) => {
     }
 
     if (!isMatch) {
+      console.log(`[AUTH] Login failed: Password mismatch for user [${username}]`);
       return res.status(401).json({ error: 'Identifiant ou mot de passe incorrect' });
     }
+
+    console.log(`[AUTH] Login success: [${username}] (${user.role})`);
 
     if (user.status === 'suspended') {
       return res.status(403).json({ error: `Votre compte est suspendu. Raison : ${user.punishment_reason || 'Aucune raison spécifiée.'}` });
@@ -196,7 +205,10 @@ app.put('/api/users/:id/notes', authenticateToken, requireOwner, async (req, res
 });
 
 app.post('/api/register', authLimiter, async (req, res) => {
-  const { username, password } = req.body;
+  const { username: rawUsername, password: rawPassword } = req.body;
+  const username = (rawUsername || '').trim();
+  const password = (rawPassword || '').trim();
+  
   try {
     const existingUser = await getUserByUsername(username);
     if (existingUser) return res.status(400).json({ error: 'Username already exists' });

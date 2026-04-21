@@ -65,13 +65,13 @@ export function setupAuthUI() {
       window.location.reload();
     });
     
-    // Add Admin button if owner or journalist
-    if (user.role === 'owner' || user.role === 'journalist' || user.role === 'corrector') {
+    // Add Admin button if owner, journalist, corrector or supervisor
+    if (user.role === 'owner' || user.role === 'journalist' || user.role === 'corrector' || user.role === 'supervisor') {
       const adminBtn = document.createElement('a');
-      adminBtn.href = (user.role === 'journalist' || user.role === 'corrector') ? '/journalist.html' : '/admin.html';
+      adminBtn.href = (user.role === 'journalist' || user.role === 'corrector' || user.role === 'supervisor') ? '/journalist.html' : '/admin.html';
       adminBtn.className = 'btn-soutien';
       adminBtn.style.marginLeft = '15px';
-      adminBtn.textContent = user.role === 'corrector' ? 'Corriger' : (user.role === 'journalist' ? 'Écrire' : 'Gestion');
+      adminBtn.textContent = user.role === 'corrector' ? 'Corriger' : (user.role === 'supervisor' ? 'Superviser' : (user.role === 'journalist' ? 'Écrire' : 'Gestion'));
       
       authLinks.appendChild(adminBtn);
     }

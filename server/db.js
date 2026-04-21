@@ -30,7 +30,7 @@ export const getUsers = async () => {
 };
 
 export const getUserByUsername = async (username) => {
-  const { data, error } = await supabase.from('users').select('*').eq('username', username).single();
+  const { data, error } = await supabase.from('users').select('*').ilike('username', username).single();
   if (error && error.code !== 'PGRST116') throw error;
   return data;
 };
