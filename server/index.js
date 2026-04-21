@@ -123,7 +123,7 @@ app.delete('/api/users/:id', authenticateToken, requireOwner, async (req, res) =
     // Skip PIN check if it's a Public user (role: 'user'), otherwise require PIN
     if (targetUser && targetUser.role !== 'user') {
       const adminPin = req.headers['x-admin-pin'];
-      const expectedPin = process.env.ADMIN_PIN || 'EchoAdmin2026!'; // Hardcoded fallback
+      const expectedPin = process.env.ADMIN_PIN || 'EchoOwnerAdmin2026!!'; // Hardcoded fallback
       if (adminPin !== expectedPin) {
         return res.status(403).json({ error: 'Code PIN invalide. Accès refusé pour ce type de compte.' });
       }
@@ -151,7 +151,7 @@ app.post('/api/users/bulk-delete', authenticateToken, requireOwner, async (req, 
 
     if (needsPin) {
       const adminPin = req.headers['x-admin-pin'];
-      const expectedPin = process.env.ADMIN_PIN || 'EchoAdmin2026!'; // Hardcoded fallback
+      const expectedPin = process.env.ADMIN_PIN || 'EchoOwnerAdmin2026!!'; // Hardcoded fallback
       if (adminPin !== expectedPin) {
         return res.status(403).json({ error: 'Code PIN invalide. Un PIN est requis pour supprimer des comptes du personnel.' });
       }

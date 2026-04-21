@@ -284,6 +284,13 @@
         }, 500);
       }
 
+      // Initial Autoreveal for Owner
+      if (window.isOwner) {
+        window.addEventListener('load', () => {
+          revealEditor();
+        });
+      }
+
       function checkSecurity() {
         if (!user || (!window.isJournalist && !window.isOwner && !window.isCorrector && !window.isSupervisor)) {
           alert("Accès refusé. Cette page est réservée au personnel de rédaction.");
@@ -295,7 +302,9 @@
         // Verification persistence removed at user request. PIN is required on every load.
 
       // Start security check immediately
-      checkSecurity();
+      if (!window.isOwner) {
+        checkSecurity();
+      }
 
       securityForm.addEventListener('submit', (e) => {
         e.preventDefault();
