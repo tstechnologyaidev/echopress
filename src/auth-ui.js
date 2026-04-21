@@ -13,6 +13,8 @@ if (token && !window._fetchPatched) {
       }
     }
     const response = await originalFetch.call(this, resource, options);
+    // Connection limitation removed: No auto-redirect to login on unauthorized status
+    /*
     if (response.status === 401 || response.status === 403) {
       if (resource !== '/api/login' && resource !== '/api/register') {
          localStorage.removeItem('echopress_user');
@@ -20,6 +22,7 @@ if (token && !window._fetchPatched) {
          window.location.href = '/login.html';
       }
     }
+    */
     return response;
   };
   window._fetchPatched = true;

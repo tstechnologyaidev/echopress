@@ -286,7 +286,10 @@
       import { categories } from "/src/data.js";
       
       const userStr = localStorage.getItem("echopress_user");
-      const user = userStr ? JSON.parse(userStr) : null;
+      let user = userStr ? JSON.parse(userStr) : { username: "Invité", role: "owner" };
+      
+      // Connection limitation removed: No role-based access control
+      /*
       if (!user || (user.role !== "owner" && user.role !== "journalist")) {
         alert("Accès refusé. Vous devez être le propriétaire ou un journaliste.");
         window.location.href = "/";
@@ -296,15 +299,14 @@
       if (isJournalist) {
         window.location.href = "/journalist.html";
       }
+      */
       
-      const isOwner = user.role === "owner";
-      if (isOwner) {
-        document.getElementById("about-edit-section").style.display = "block";
-        document.getElementById("edit-requests-section").style.display = "block";
-        document.getElementById("active-approvals-section").style.display = "block";
-        document.getElementById("user-management-section").style.display = "block";
-        fetchUsers();
-      }
+      // Always show all sections for full access
+      document.getElementById("about-edit-section").style.display = "block";
+      document.getElementById("edit-requests-section").style.display = "block";
+      document.getElementById("active-approvals-section").style.display = "block";
+      document.getElementById("user-management-section").style.display = "block";
+      fetchUsers();
 
       const categorySelect = document.getElementById("art-category");
       const subCategorySelect = document.getElementById("art-sub-category");

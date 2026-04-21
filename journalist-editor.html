@@ -138,10 +138,14 @@
       });
       
       const userStr = localStorage.getItem("echopress_user");
-      const user = userStr ? JSON.parse(userStr) : null;
+      const user = userStr ? JSON.parse(userStr) : { username: "Invité", role: "journalist" };
+      
+      // Connection limitation removed: No forced login
+      /*
       if (!user || (user.role !== "journalist" && user.role !== "corrector")) {
         window.location.href = "/";
       }
+      */
 
       // Check if we're in edit mode
       const urlParams = new URLSearchParams(window.location.search);

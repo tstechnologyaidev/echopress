@@ -218,10 +218,14 @@
       import { scrambleText } from '/src/cinematic-intro.js';
       
       const userStr = localStorage.getItem("echopress_user");
-      const user = userStr ? JSON.parse(userStr) : null;
+      const user = userStr ? JSON.parse(userStr) : { username: "Invité", role: "journalist" };
+      
+      // Connection limitation removed: No forced login
+      /*
       if (!user || (user.role !== "journalist" && user.role !== "corrector")) {
         window.location.href = "/";
       }
+      */
 
       const roleText = user.role === 'corrector' ? ' (Correcteur)' : '';
       const finalGreeting = `Bienvenue, ${user.username}${roleText} !`;
