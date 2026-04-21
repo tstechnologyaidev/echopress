@@ -46,30 +46,30 @@ const initArticle = async () => {
         }
     }
 
-    const contentContainer = document.getElementById('article-content');
+    const contentContainer = document.getElementById('article-view');
 
     if (contentContainer && articleData) {
         contentContainer.innerHTML = `
-            <span class="surtitle" style="font-size:16px;">${articleData.surtitle}${articleData.sub_category ? ` | ${articleData.sub_category}` : ''}</span>
+            <span class="surtitle">${articleData.surtitle}${articleData.sub_category ? ` | ${articleData.sub_category}` : ''}</span>
             <h1>${articleData.title}</h1>
             <div class="meta">
-               ${articleData.author ? `<strong>${articleData.author}</strong> | ` : ''} 
+               ${articleData.author ? `<strong>${getDisplayName(articleData.author)}</strong> • ` : ''} 
                ${articleData.published_time}
                ${articleData.modified_at && articleData.modified_by ? `
-                 <br><span style="font-size:12px; color: var(--lp-gray-dark); margin-top: 4px; display: block;">
-                   Modifié le ${articleData.modified_at} par <strong>${getDisplayName(articleData.modified_by)}</strong>
-                 </span>` : ''}
+                 <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 10px;">
+                   Modifié par <strong>${getDisplayName(articleData.modified_by)}</strong> • ${articleData.modified_at}
+                 </div>` : ''}
             </div>
             ${articleData.image ? `<img src="${articleData.image.startsWith('http') ? articleData.image : '/' + articleData.image}" alt="${articleData.title}" class="main-img">` : ''}
-            ${articleData.image_credit ? `<p style="font-size: 13px; color: var(--lp-gray-dark); margin-top: 5px; text-align: right;">Photo: ${articleData.image_credit}</p>` : ''}
+            ${articleData.image_credit ? `<p style="font-size: 0.75rem; color: var(--text-dim); margin-top: -1rem; margin-bottom: 2rem; text-align: right;">Photo: ${articleData.image_credit}</p>` : ''}
             <div class="content">
-                <div style="font-weight: 500; font-size: 1.1em; color: var(--lp-gray-dark); margin-bottom: 20px;">
+                <div style="font-weight: 500; font-size: 1.2rem; color: var(--text-main); margin-bottom: 2rem; border-left: 4px solid var(--accent); padding-left: 1.5rem;">
                    ${articleData.summary}
                 </div>
             </div>
         `;
     } else if (contentContainer) {
-        contentContainer.innerHTML = `<h1>Article introuvable</h1><p>Désolé, l'article demandé n'existe pas ou l'identifiant est invalide.</p>`;
+        contentContainer.innerHTML = `<h1>Article introuvable</h1><p>Désolé, l'article demandé n'existe pas.</p>`;
     }
 
     // 3. Render Popular Articles in Sidebar

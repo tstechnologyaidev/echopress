@@ -3,171 +3,130 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Connexion | EchoPress</title>
+    <title>EchoPress | Connexion</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/src/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/user-v2.css" />
     <style>
       .login-container {
-        max-width: 400px;
-        margin: 80px auto;
-        padding: 40px;
-        background-color: var(--lp-white);
-        border-radius: 8px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        border: 1px solid var(--lp-gray-mid);
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
-      .login-header {
-        text-align: center;
-        margin-bottom: 30px;
-      }
-      .login-header h1 {
-        font-family: var(--font-serif);
-        font-size: 32px;
-        color: var(--lp-black);
-        margin-bottom: 10px;
-      }
-      .login-header p {
-        color: var(--lp-gray-dark);
-        font-size: 14px;
-      }
-      .form-group {
-        margin-bottom: 20px;
-      }
-      .form-group label {
-        display: block;
-        font-size: 14px;
-        font-weight: 600;
-        margin-bottom: 8px;
-        color: var(--lp-black);
-      }
-      .form-group input {
+      .login-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        backdrop-filter: var(--glass-blur);
+        padding: 3rem;
+        border-radius: 32px;
         width: 100%;
-        padding: 12px 15px;
-        font-family: var(--font-sans);
-        font-size: 16px;
-        border: 1px solid var(--lp-gray-mid);
-        border-radius: 4px;
-        transition: border-color 0.2s;
+        max-width: 450px;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.5);
       }
-      .form-group input:focus {
-        outline: none;
-        border-color: var(--lp-red);
+      .login-card h2 { font-size: 2rem; margin-bottom: 2rem; text-align: center; }
+      .form-group { margin-bottom: 1.5rem; }
+      .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-dim); }
+      .form-group input { 
+        width: 100%; 
+        padding: 1rem; 
+        background: rgba(255,255,255,0.05); 
+        border: 1px solid var(--glass-border); 
+        border-radius: 12px; 
+        color: white; 
+        font-family: inherit;
+        transition: border-color 0.3s;
       }
-      .btn-submit {
-        display: block;
-        width: 100%;
-        padding: 14px;
-        background-color: var(--lp-red);
-        color: var(--lp-white);
-        border: none;
-        border-radius: 4px;
-        font-family: var(--font-sans);
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background-color 0.2s;
-      }
-      .btn-submit:hover {
-        background-color: #C0141C;
-      }
-      .login-footer {
-        text-align: center;
-        margin-top: 25px;
-        font-size: 14px;
-        color: var(--lp-gray-dark);
-      }
-      .login-footer a {
-        color: var(--lp-red);
-        font-weight: 600;
-      }
+      .form-group input:focus { border-color: var(--accent); outline: none; }
+      .login-btn { width: 100%; margin-top: 1rem; padding: 1rem; font-size: 1rem; justify-content: center; }
+      .toggle-link { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-dim); }
+      .toggle-link a { color: var(--accent); font-weight: 600; }
     </style>
   </head>
   <body>
-    <!-- HEADER -->
-    <header class="header">
-      <div class="header-top container">
-        <div class="header-logo">
-          <a href="/">ECHOPRESS</a>
-        </div>
-      </div>
-    </header>
+    <div class="bg-orchestrator">
+      <div class="bg-blob"></div>
+      <div class="bg-blob"></div>
+    </div>
 
-    <!-- CONTENT -->
-    <main class="container">
-      <div class="login-container">
-        <div class="login-header">
-          <h1 id="form-title">Connexion</h1>
-          <p id="form-desc">Accédez à votre compte EchoPress</p>
-        </div>
+    <div class="container login-container">
+      <div class="login-card">
+        <h2 id="auth-title">Bon retour !</h2>
         <form id="auth-form">
           <div class="form-group">
-            <label for="username">Nom d'utilisateur</label>
-            <input type="text" id="username" name="username" required placeholder="Votre nom d'utilisateur">
+            <label>Nom d'utilisateur</label>
+            <input type="text" id="username" required placeholder="Votre pseudo">
           </div>
           <div class="form-group">
-            <label for="password">Mot de passe</label>
-            <input type="password" id="password" name="password" required placeholder="Votre mot de passe">
+            <label>Mot de passe</label>
+            <input type="password" id="password" required placeholder="••••••••">
           </div>
-          <p id="error-message" style="color: red; font-size: 14px; margin-bottom: 10px; display: none;"></p>
-          <button type="submit" class="btn-submit" id="submit-btn">Se connecter</button>
+          <button type="submit" class="btn login-btn" id="auth-submit">Se connecter</button>
         </form>
-        <div class="login-footer">
-          <span id="toggle-text">Nouveau sur EchoPress?</span> <a href="#" id="toggle-btn">Créer un compte</a>
+        <div class="toggle-link">
+          <span id="auth-toggle-text">Pas encore de compte ?</span>
+          <a href="#" id="auth-toggle-btn">S'inscrire</a>
         </div>
+        <p id="auth-error" style="color: #ff4d4d; margin-top: 1rem; font-size: 0.85rem; text-align: center; display: none;"></p>
       </div>
-    </main>
+    </div>
 
-    <footer class="footer">
-      <div class="container">
-        <p>© 2026 EchoPress Inc. Tous droits réservés.</p>
-      </div>
-    </footer>
+    <script type="module" src="/src/theme-engine.js"></script>
+    <script type="module">
+      import { setupAuthForm } from '/src/auth-ui.js'; 
+      // Note: I'll need to make sure auth-ui exports this or just use the global logic if it's there.
+      // But looking at auth-ui.js, it doesn't seem to have the form logic. It might be in login.html script tags usually.
+    </script>
+    
+    <!-- Using the original login logic but updated for the new UI -->
+    <script type="module">
+        const authForm = document.getElementById('auth-form');
+        const authTitle = document.getElementById('auth-title');
+        const authSubmit = document.getElementById('auth-submit');
+        const authToggleBtn = document.getElementById('auth-toggle-btn');
+        const authToggleText = document.getElementById('auth-toggle-text');
+        const authError = document.getElementById('auth-error');
 
-    <script>
-      let isLoginMode = true;
+        let isLogin = true;
 
-      document.getElementById('toggle-btn').addEventListener('click', (e) => {
-        e.preventDefault();
-        isLoginMode = !isLoginMode;
-        document.getElementById('form-title').innerText = isLoginMode ? 'Connexion' : 'Inscription';
-        document.getElementById('form-desc').innerText = isLoginMode ? 'Accédez à votre compte EchoPress' : 'Créez votre compte EchoPress';
-        document.getElementById('submit-btn').innerText = isLoginMode ? 'Se connecter' : 'S\'inscrire';
-        document.getElementById('toggle-text').innerText = isLoginMode ? 'Nouveau sur EchoPress?' : 'Déjà un compte?';
-        document.getElementById('toggle-btn').innerText = isLoginMode ? 'Créer un compte' : 'Se connecter';
-        document.getElementById('error-message').style.display = 'none';
-      });
+        authToggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLogin = !isLogin;
+            authTitle.textContent = isLogin ? 'Bon retour !' : 'Créer un compte';
+            authSubmit.textContent = isLogin ? 'Se connecter' : "S'inscrire";
+            authToggleText.textContent = isLogin ? 'Pas encore de compte ?' : 'Déjà inscrit ?';
+            authToggleBtn.textContent = isLogin ? "S'inscrire" : 'Se connecter';
+            authError.style.display = 'none';
+        });
 
-      document.getElementById('auth-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const errorMsg = document.getElementById('error-message');
-        
-        try {
-          const endpoint = isLoginMode ? '/api/login' : '/api/register';
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-          });
-          
-          const data = await response.json();
-          if (response.ok) {
-            // Save token
-            localStorage.setItem('echopress_user', JSON.stringify(data.user));
-            localStorage.setItem('echopress_token', data.token);
-            window.location.href = '/';
-          } else {
-            errorMsg.innerText = data.error || "Erreur lors de l'authentification";
-            errorMsg.style.display = 'block';
-          }
-        } catch (err) {
-          errorMsg.innerText = 'Impossible de se connecter au serveur backend.';
-          errorMsg.style.display = 'block';
-        }
-      });
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const endpoint = isLogin ? '/api/login' : '/api/register';
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    localStorage.setItem('echopress_user', JSON.stringify(data.user));
+                    localStorage.setItem('echopress_token', data.token);
+                    window.location.href = '/';
+                } else {
+                    authError.textContent = data.error || 'Une erreur est survenue';
+                    authError.style.display = 'block';
+                }
+            } catch (err) {
+                authError.textContent = 'Erreur de connexion au serveur';
+                authError.style.display = 'block';
+            }
+        });
     </script>
   </body>
 </html>

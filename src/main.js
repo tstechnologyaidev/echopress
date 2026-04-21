@@ -91,21 +91,7 @@ const initMain = async () => {
         }
     }
 
-    // 5. Update Header Time & Weather
-    let lastWeatherHtml = '';
-    
-    const fetchWeather = async () => {
-        try {
-            const res = await fetch('/api/weather');
-            if (res.ok) {
-                const data = await res.json();
-                if (data && data.temperature !== undefined) {
-                    lastWeatherHtml = `<span style="margin-left: 15px; padding-left: 15px; border-left: 1px solid var(--lp-gray-mid); font-weight: 500; font-size: 14px; color: var(--lp-black);">${data.temperature}°C ${data.condition}</span>`;
-                }
-            }
-        } catch(e) {}
-    };
-
+    // 5. Update Header Time
     const updateHeaderTime = () => {
         const headerMeta = document.querySelector('.header-meta');
         if (headerMeta) {
@@ -133,21 +119,17 @@ const initMain = async () => {
             const second = timeParts.find(p => p.type === 'second')?.value || '00';
             const timeStr = `${hour}:${minute}:${second}`;
 
-            headerMeta.innerHTML = `<div style="font-size: 13px; color: var(--lp-gray-dark); margin-left: 20px; line-height: 1.4; display: flex; align-items: center;">
-                <div>
-                    <span style="font-weight: 600; color: var(--lp-black);">${dateStr}</span><br>
-                    <span>Montréal : ${timeStr}</span>
+            headerMeta.innerHTML = `
+                <div style="font-size: 0.85rem; color: var(--text-dim); text-align: right;">
+                    <span style="font-weight: 700; color: var(--text-main);">${dateStr}</span><br>
+                    <span>Montréal • ${timeStr}</span>
                 </div>
-                ${lastWeatherHtml}
-            </div>`;
+            `;
         }
     };
     
-    fetchWeather();
-    setInterval(fetchWeather, 5 * 60 * 1000); // refresh weather every 5 mins
-
     updateHeaderTime();
-    setInterval(updateHeaderTime, 1000); // tick clock every second
+    setInterval(updateHeaderTime, 1000);
 };
 
 if (document.readyState === 'loading') {

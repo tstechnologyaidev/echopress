@@ -47,17 +47,18 @@ export function setupAuthUI() {
     
     // Update Auth Links
     authLinks.innerHTML = `
-      <span style="font-weight:600;font-size:14px;color:var(--lp-red);display:flex;align-items:center;">
+      <span style="font-weight:600;font-size:14px;color:var(--accent);display:flex;align-items:center;">
         ${accountIcon} ${greetingText}
       </span>
-      <span style="color:var(--lp-gray-mid);margin:0 5px;">|</span>
-      <a href="#" id="logout-btn" style="color:var(--lp-gray-dark);font-weight:500;">Se déconnecter</a>
+      <span style="color:var(--text-dim);margin:0 10px;">•</span>
+      <a href="#" id="logout-btn" style="color:var(--text-dim);font-weight:500;transition:color 0.3s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'">Se déconnecter</a>
     `;
     
     document.getElementById('logout-btn').addEventListener('click', (e) => {
       e.preventDefault();
       localStorage.removeItem('echopress_user');
       localStorage.removeItem('echopress_token');
+      sessionStorage.removeItem('last_intro'); // Reset intro for next login
       window.location.reload();
     });
     
@@ -66,11 +67,8 @@ export function setupAuthUI() {
       const adminBtn = document.createElement('a');
       adminBtn.href = (user.role === 'journalist' || user.role === 'corrector') ? '/journalist.html' : '/admin.html';
       adminBtn.className = 'btn-soutien';
-      adminBtn.style.marginLeft = '10px';
-      adminBtn.style.backgroundColor = 'var(--lp-black)';
-      adminBtn.style.color = 'var(--lp-white)';
-      adminBtn.style.borderColor = 'var(--lp-black)';
-      adminBtn.textContent = user.role === 'corrector' ? 'Corriger des articles' : (user.role === 'journalist' ? 'Publier un article' : 'Gérer les articles');
+      adminBtn.style.marginLeft = '15px';
+      adminBtn.textContent = user.role === 'corrector' ? 'Corriger' : (user.role === 'journalist' ? 'Écrire' : 'Gestion');
       
       authLinks.appendChild(adminBtn);
     }

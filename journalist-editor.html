@@ -6,22 +6,41 @@
     <title>Éditeur d'article | EchoPress</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/src/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/user-v2.css" />
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <style>
       .editor-layout { margin-top: 40px; margin-bottom: 60px; max-width: 900px; margin-left: auto; margin-right: auto; }
-      .form-section { background-color: var(--lp-gray-light); padding: 30px; border-radius: 8px; border: 1px solid var(--lp-gray-mid); }
-      .form-group { margin-bottom: 15px; }
-      .form-group label { display: block; font-weight: 600; margin-bottom: 5px; }
-      .form-group input, .form-group select { width: 100%; padding: 10px; font-family: var(--font-sans); border: 1px solid var(--lp-gray-mid); border-radius: 4px; }
-      .btn { background: var(--sunset-gradient); color: #fff; border: none; padding: 12px 25px; cursor: pointer; border-radius: 6px; font-weight: 700; font-size: 16px; transition: opacity 0.2s; }
-      .btn:hover { opacity: 0.9; }
-      .btn-back { background-color: var(--lp-gray-mid); margin-right: 10px; text-decoration: none; display: inline-block; padding: 12px 25px; color: var(--lp-black); border-radius: 6px; font-weight: 700; transition: opacity 0.2s; }
-      .btn-back:hover { opacity: 0.8; }
+      .form-section {
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-blur);
+        padding: 40px;
+        border-radius: 32px;
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      }
+      .form-group { margin-bottom: 20px; }
+      .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-dim); }
+      .form-group input, .form-group select {
+        width: 100%; padding: 12px; font-family: inherit; border: 1px solid var(--glass-border); border-radius: 12px;
+        background: rgba(255,255,255,0.05); color: white; transition: all 0.3s;
+      }
+      .form-group input:focus, .form-group select:focus { border-color: var(--accent); outline: none; background: rgba(255,255,255,0.08); }
+      .btn { background: var(--gradient); color: #fff; border: none; padding: 12px 32px; cursor: pointer; border-radius: 50px; font-weight: 700; font-size: 16px; transition: all 0.3s; box-shadow: 0 4px 15px var(--accent-glow); }
+      .btn:hover { transform: scale(1.05); box-shadow: 0 8px 25px var(--accent-glow); }
+      .btn-back { background-color: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); margin-right: 15px; text-decoration: none; display: inline-block; padding: 12px 32px; color: var(--text-dim); border-radius: 50px; font-weight: 700; transition: all 0.3s; }
+      .btn-back:hover { color: white; border-color: white; }
+      #editor-page-title { font-family: 'Outfit'; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 30px; }
     </style>
   </head>
   <body>
+    <!-- BACKGROUND ORCHESTRATOR -->
+    <div class="bg-orchestrator">
+      <div class="bg-blob"></div>
+      <div class="bg-blob"></div>
+      <div class="bg-blob"></div>
+    </div>
+
     <header class="header">
       <div class="header-top container">
         <div class="header-logo"><a href="/">ECHOPRESS</a></div>
@@ -36,17 +55,17 @@
       <div class="form-section">
         <h1 id="editor-page-title">Publier un nouvel article</h1>
         
-        <div style="background: var(--lp-gray-mid); color: var(--lp-black); padding: 15px; border-radius: 6px; margin-top: 15px; margin-bottom: 25px; font-size: 14px;">
-          <h4 style="margin-bottom: 0; font-weight: 600; display: flex; justify-content: space-between; cursor: pointer;" onclick="document.getElementById('tutorial-content').style.display = document.getElementById('tutorial-content').style.display === 'none' ? 'block' : 'none'; document.getElementById('tutorial-icon').textContent = document.getElementById('tutorial-content').style.display === 'none' ? '▼' : '▲';">
+        <div style="background: rgba(255,255,255,0.03); color: white; padding: 25px; border-radius: 20px; margin-top: 15px; margin-bottom: 30px; font-size: 14px; border: 1px solid var(--glass-border);">
+          <h4 style="margin-bottom: 0; font-weight: 700; font-family: 'Outfit'; display: flex; justify-content: space-between; cursor: pointer;" onclick="document.getElementById('tutorial-content').style.display = document.getElementById('tutorial-content').style.display === 'none' ? 'block' : 'none'; document.getElementById('tutorial-icon').textContent = document.getElementById('tutorial-content').style.display === 'none' ? '▼' : '▲';">
             <span>ⓘ Tutoriel de rédaction : Astuces et outils</span>
-            <span id="tutorial-icon">▼</span>
+            <span id="tutorial-icon" style="color: var(--accent);">▼</span>
           </h4>
-          <div id="tutorial-content" style="display: none; line-height: 1.6; margin-top: 15px; border-top: 1px solid var(--lp-gray-dark); padding-top: 15px;">
+          <div id="tutorial-content" style="display: none; line-height: 1.6; margin-top: 15px; border-top: 1px solid var(--glass-border); padding-top: 15px; color: var(--text-dim);">
             <ul style="margin-left: 20px; list-style-type: disc;">
-              <li style="margin-bottom: 8px;"><strong>Mise en forme :</strong> Utilisez la barre d'outils de l'éditeur pour ajouter du gras, de l'italique, des listes et bien plus à votre texte.</li>
-              <li style="margin-bottom: 8px;"><strong>Mode Citation :</strong> Tapez simplement le symbole <code>></code> (supérieur à) au tout début d'une ligne dans le contenu. L'éditeur transformera automatiquement la ligne en un bloc de citation élégant. Pour sortir de la citation et écrire du texte normal, appuyez sur <code>Maj + Entrée</code>.</li>
-              <li style="margin-bottom: 8px;"><strong>Image Principale :</strong> Uploadez une image d'en-tête via le champ "Image (fichier uploader)" pour illustrer l'article. Indiquez le "Crédit photo" pour respecter les droits d'auteur.</li>
-              <li style="margin-bottom: 8px;"><strong>Organisation :</strong> Sélectionnez judicieusement une catégorie et une sous-catégorie pour que l'article soit référencé correctement. Le "Surtitre" (ex: Exclusif, Actualité) aide à contextualiser l'information en haut du titre principal.</li>
+              <li style="margin-bottom: 8px;"><strong style="color: white;">Mise en forme :</strong> Utilisez la barre d'outils de l'éditeur pour ajouter du gras, de l'italique, des listes et bien plus à votre texte.</li>
+              <li style="margin-bottom: 8px;"><strong style="color: white;">Mode Citation :</strong> Tapez simplement le symbole <code>></code> (supérieur à) au tout début d'une ligne dans le contenu. L'éditeur transformera automatiquement la ligne en un bloc de citation élégant. Pour sortir de la citation et écrire du texte normal, appuyez sur <code>Maj + Entrée</code>.</li>
+              <li style="margin-bottom: 8px;"><strong style="color: white;">Image Principale :</strong> Uploadez une image d'en-tête via le champ "Image (fichier uploader)" pour illustrer l'article. Indiquez le "Crédit photo" pour respecter les droits d'auteur.</li>
+              <li style="margin-bottom: 8px;"><strong style="color: white;">Organisation :</strong> Sélectionnez judicieusement une catégorie et une sous-catégorie pour que l'article soit référencé correctement. Le "Surtitre" (ex: Exclusif, Actualité) aide à contextualiser l'information en haut du titre principal.</li>
             </ul>
           </div>
         </div>
@@ -66,17 +85,12 @@
             <select id="art-category" required>
               <option value="actualites">Actualités</option>
               <option value="international">International</option>
-              <option value="dialogue">Dialogue</option>
-              <option value="contexte">Contexte</option>
               <option value="affaires">Affaires</option>
               <option value="sports">Sports</option>
               <option value="auto">Auto</option>
               <option value="arts">Arts</option>
               <option value="cinema">Cinéma</option>
               <option value="societe">Société</option>
-              <option value="gourmand">Gourmand</option>
-              <option value="voyage">Voyage</option>
-              <option value="maison">Maison</option>
             </select>
           </div>
           <div class="form-group">
@@ -109,9 +123,16 @@
     </main>
 
     <script type="module" src="/src/auth-ui.js"></script>
+    <script type="module" src="/src/theme-engine.js"></script>
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <script type="module">
       import { categories } from "/src/data.js";
+      import { scrambleText } from "/src/cinematic-intro.js";
+
+      window.addEventListener('load', () => {
+          const title = document.getElementById('editor-page-title');
+          if (title) scrambleText(title, title.innerText, 2000);
+      });
       
       const userStr = localStorage.getItem("echopress_user");
       const user = userStr ? JSON.parse(userStr) : null;

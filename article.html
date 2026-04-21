@@ -3,62 +3,36 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Article | EchoPress</title>
+    <title>EchoPress | Article</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/src/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/user-v2.css" />
   </head>
   <body>
-    <!-- HEADER -->
+    <div class="bg-orchestrator">
+      <div class="bg-blob"></div>
+      <div class="bg-blob"></div>
+      <div class="bg-blob"></div>
+    </div>
+
     <header class="header">
-      <div class="header-top container">
-        <div class="header-logo">
-          <a href="/">ECHOPRESS</a>
-        </div>
-        <div class="header-meta">
-        </div>
+      <div class="container header-top">
+        <div class="header-logo"><a href="/">ECHOPRESS</a></div>
         <div class="header-actions">
-          <a href="about.html" class="btn-soutien">À Propos</a>
-          <div class="auth-links">
-            <a href="login.html">Se connecter</a>
-          </div>
+           <a href="/" class="btn-soutien">Retour à l'accueil</a>
+           <div class="auth-links"></div>
         </div>
       </div>
     </header>
 
-    <!-- NAVIGATION -->
-    <nav class="main-nav">
-      <div class="container">
-        <ul id="nav-categories">
-          <!-- Populated by JS -->
-        </ul>
-      </div>
-    </nav>
-
-    <!-- ARTICLE FULL VIEW -->
-    <main class="container article-layout">
-      <article class="full-article" id="article-content">
-         <!-- Populated via JS -->
+    <main class="container" style="margin-top: 4rem;">
+      <article class="full-article" id="article-view">
+        <!-- Populated by article.js -->
       </article>
-
-      <!-- RIGHT SIDEBAR -->
-      <aside class="sidebar">
-        <div class="sidebar-widget">
-          <h3>Les plus consultés</h3>
-          <ul class="popular-list" id="popular-list">
-             <!-- Populated by JS -->
-          </ul>
-        </div>
-      </aside>
     </main>
 
-    <footer class="footer">
-      <div class="container">
-        <p>© 2026 EchoPress Inc. Tous droits réservés.</p>
-      </div>
-    </footer>
-
+    <script type="module" src="/src/theme-engine.js"></script>
     <script type="module" src="/src/article.js"></script>
     <script type="module" src="/src/auth-ui.js"></script>
   </body>

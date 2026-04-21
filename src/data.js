@@ -10,16 +10,6 @@ export const categories = [
         subCategories: ['Chroniques', 'Afrique', 'Amérique latine', 'Asie et Océanie', 'Caraïbes', 'États-Unis', 'Europe', 'Moyen-Orient']
     },
     { 
-        id: 'dialogue', 
-        label: 'Dialogue',
-        subCategories: ['Chroniques', 'Opinions', 'Courrier des lecteurs', 'Témoignages']
-    },
-    { 
-        id: 'contexte', 
-        label: 'Contexte',
-        subCategories: ['Chroniques']
-    },
-    { 
         id: 'affaires', 
         label: 'Affaires',
         subCategories: ['Chroniques', 'Économie', 'Marchés', 'Entreprises', 'Marché immobilier', 'Techno', 'Médias', 'Finances personnelles', 'PME', 'Portfolio']
@@ -48,21 +38,6 @@ export const categories = [
         id: 'societe', 
         label: 'Société',
         subCategories: ['Chroniques', 'Santé', 'Famille', 'Mode et beauté', 'Sexualité', 'Animaux']
-    },
-    { 
-        id: 'gourmand', 
-        label: 'Gourmand',
-        subCategories: ['Chroniques', 'Alimentation', 'Recettes', 'Restaurants', 'Alcools']
-    },
-    { 
-        id: 'voyage', 
-        label: 'Voyage',
-        subCategories: ['Chroniques', 'Québec et Canada', 'États-Unis', 'Europe', 'Asie', 'Amérique latine', 'Caraïbes', 'Afrique', 'Océanie', 'Trucs et conseils', 'Plein air']
-    },
-    { 
-        id: 'maison', 
-        label: 'Maison',
-        subCategories: ['Chroniques', 'Immobilier', 'Architecture', 'Décoration', 'Rénovation', 'Cour et jardin']
     }
 ];
 
@@ -94,15 +69,6 @@ export const articles = [
         summary: 'L’équipe a su s’imposer dans les dernières minutes du match grâce à un but spectaculaire.',
         publishedTime: 'Publié à 21 h 45',
         image: 'news_sports.png'
-    },
-    {
-        id: '4',
-        category: 'maison',
-        surtitle: 'Décoration',
-        title: 'Les tendances printanières pour un intérieur apaisant',
-        summary: 'Découvrez comment ramener la nature à l’intérieur avec des plantes et des couleurs douces.',
-        publishedTime: 'Publié hier à 14 h 20',
-        image: 'news_lifestyle.png'
     },
     {
         id: '5',
