@@ -12,6 +12,16 @@
   --gradient: linear-gradient(135deg, #00D1FF 0%, #7000FF 100%);
 }
 
+blockquote {
+  border-left: 4px solid var(--accent);
+  padding: 10px 20px;
+  margin: 20px 0;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  color: var(--text-main);
+}
+
 /* Seasonal Overrides */
 .season-winter {
   --accent: #7DD3FC;

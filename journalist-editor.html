@@ -102,7 +102,20 @@
       .btn-back { background-color: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); margin-right: 15px; text-decoration: none; display: inline-block; padding: 12px 32px; color: var(--text-dim); border-radius: 50px; font-weight: 700; transition: all 0.3s; }
       .btn-back:hover { color: white; border-color: white; }
       #editor-page-title { font-family: 'Outfit'; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 30px; }
-    </style>
+    
+    /* Quill Blockquote Styling */
+    .ql-editor blockquote {
+      border-left: 4px solid var(--accent);
+      padding-left: 20px;
+      margin-left: 0;
+      font-style: italic;
+      color: var(--text-dim);
+      background: rgba(255,255,255,0.03);
+      padding-top: 10px;
+      padding-bottom: 10px;
+      border-radius: 0 8px 8px 0;
+    }
+  </style>
   </head>
   <body>
     <!-- BACKGROUND ORCHESTRATOR -->
@@ -146,16 +159,27 @@
         
         <div style="background: rgba(255,255,255,0.03); color: white; padding: 25px; border-radius: 20px; margin-top: 15px; margin-bottom: 30px; font-size: 14px; border: 1px solid var(--glass-border);">
           <h4 style="margin-bottom: 0; font-weight: 700; font-family: 'Outfit'; display: flex; justify-content: space-between; cursor: pointer;" onclick="document.getElementById('tutorial-content').style.display = document.getElementById('tutorial-content').style.display === 'none' ? 'block' : 'none'; document.getElementById('tutorial-icon').textContent = document.getElementById('tutorial-content').style.display === 'none' ? '▼' : '▲';">
-            <span>ⓘ Tutoriel de rédaction : Astuces et outils</span>
+            <span>🛡️ Guide du Personnel : Maîtriser l'Éditeur</span>
             <span id="tutorial-icon" style="color: var(--accent);">▼</span>
           </h4>
           <div id="tutorial-content" style="display: none; line-height: 1.6; margin-top: 15px; border-top: 1px solid var(--glass-border); padding-top: 15px; color: var(--text-dim);">
-            <ul style="margin-left: 20px; list-style-type: disc;">
-              <li style="margin-bottom: 8px;"><strong style="color: white;">Mise en forme :</strong> Utilisez la barre d'outils de l'éditeur pour ajouter du gras, de l'italique, des listes et bien plus à votre texte.</li>
-              <li style="margin-bottom: 8px;"><strong style="color: white;">Mode Citation :</strong> Tapez simplement le symbole <code>></code> (supérieur à) au tout début d'une ligne dans le contenu. L'éditeur transformera automatiquement la ligne en un bloc de citation élégant. Pour sortir de la citation et écrire du texte normal, appuyez sur <code>Maj + Entrée</code>.</li>
-              <li style="margin-bottom: 8px;"><strong style="color: white;">Image Principale :</strong> Uploadez une image d'en-tête via le champ "Image (fichier uploader)" pour illustrer l'article. Indiquez le "Crédit photo" pour respecter les droits d'auteur.</li>
-              <li style="margin-bottom: 8px;"><strong style="color: white;">Organisation :</strong> Sélectionnez judicieusement une catégorie et une sous-catégorie pour que l'article soit référencé correctement. Le "Surtitre" (ex: Exclusif, Actualité) aide à contextualiser l'information en haut du titre principal.</li>
-            </ul>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <div>
+                <strong style="color: white; display: block; margin-bottom: 8px;">✍️ Rédaction & Style</strong>
+                <ul style="margin-left: 20px; list-style-type: disc;">
+                  <li style="margin-bottom: 4px;">Utilisez le <strong>Surtitre</strong> pour catégoriser l'article (ex: EXCLUSIF, SPORT).</li>
+                  <li style="margin-bottom: 4px;">Le <strong>Résumé</strong> apparaît sur la page d'accueil. Soyez incisif !</li>
+                  <li style="margin-bottom: 4px;">Utilisez les outils de mise en forme pour aérer votre texte.</li>
+                </ul>
+              </div>
+              <div>
+                <strong style="color: white; display: block; margin-bottom: 8px;">💬 Citations & Blocs</strong>
+                <ul style="margin-left: 20px; list-style-type: disc;">
+                  <li style="margin-bottom: 4px;"><strong>Mode Citation :</strong> Tapez <code>></code> au début d'une ligne pour créer une citation élégante.</li>
+                  <li style="margin-bottom: 4px;"><strong>Sortir de Citation :</strong> Appuyez sur <kbd style="background: #333; padding: 2px 4px; border-radius: 4px; color: white;">Maj + Entrée</kbd> pour sortir instantanément du bloc de citation.</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -338,9 +362,12 @@
                 shiftKey: true,
                 format: ['blockquote'],
                 handler: function(range, context) {
+                  // Insert a newline after current cursor
                   this.quill.insertText(range.index, '\n', 'user');
+                  // Remove blockquote format from the new line
+                  this.quill.formatLine(range.index + 1, 1, 'blockquote', false, 'user');
+                  // Move cursor to the new line
                   this.quill.setSelection(range.index + 1, 0, 'silent');
-                  this.quill.format('blockquote', false, 'user');
                   return false;
                 }
               }

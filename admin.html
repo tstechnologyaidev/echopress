@@ -392,6 +392,7 @@
           adminContent.style.display = 'block';
           
           // Initialize dashboard contents
+          document.getElementById('user-management-section').style.display = 'block';
           if (typeof fetchUsers === 'function') fetchUsers();
           if (typeof fetchArticlesAdmin === 'function') fetchArticlesAdmin();
           if (typeof loadAboutAdmin === 'function') loadAboutAdmin();

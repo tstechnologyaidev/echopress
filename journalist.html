@@ -185,7 +185,32 @@
     <main class="container journalist-layout">
       <div class="welcome-card">
         <h1 id="welcome-title">Bienvenue, <span id="journalist-name"></span> !</h1>
-        <a href="journalist-editor.html" class="btn-large">+ Publier un article</a>
+        <div style="display: flex; gap: 10px;">
+           <button class="btn-large" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); box-shadow: none;" onclick="document.getElementById('dash-tutorial').scrollIntoView({behavior: 'smooth'})">📖 Guide</button>
+           <a href="journalist-editor.html" class="btn-large">+ Publier un article</a>
+        </div>
+      </div>
+
+      <!-- DASHBOARD TUTORIAL GUIDE -->
+      <div id="dash-tutorial" style="background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); padding: 30px; border-radius: 24px; margin-bottom: 40px;">
+        <h3 style="font-family: 'Outfit'; font-size: 1.5rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+          <span>📖 Guide Rapide de la Rédaction</span>
+          <span style="font-size: 0.8rem; background: var(--accent); color: black; padding: 2px 8px; border-radius: 4px; font-weight: 800;">TUTORIEL</span>
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+          <div style="background: rgba(255,255,255,0.02); padding: 20px; border-radius: 16px; border: 1px solid var(--glass-border);">
+            <h4 style="color: var(--accent); margin-bottom: 10px;">🚀 Publication</h4>
+            <p style="font-size: 0.9rem; color: var(--text-dim); line-height: 1.5;">Cliquez sur <strong>+ Publier un article</strong> pour ouvrir l'éditeur. Remplissez tous les champs obligatoires (Titre, Catégorie, Résumé).</p>
+          </div>
+          <div style="background: rgba(255,255,255,0.02); padding: 20px; border-radius: 16px; border: 1px solid var(--glass-border);">
+            <h4 style="color: var(--accent); margin-bottom: 10px;">🔍 Citations</h4>
+            <p style="font-size: 0.9rem; color: var(--text-dim); line-height: 1.5;">Dans l'éditeur, tapez <code>></code> au début d'une ligne pour créer une citation. Utilisez <strong>Maj + Entrée</strong> pour sortir du mode citation.</p>
+          </div>
+          <div style="background: rgba(255,255,255,0.02); padding: 20px; border-radius: 16px; border: 1px solid var(--glass-border);">
+            <h4 style="color: var(--accent); margin-bottom: 10px;">📑 Modifications</h4>
+            <p style="font-size: 0.9rem; color: var(--text-dim); line-height: 1.5;">Pour modifier un article qui ne vous appartient pas, utilisez le bouton <strong>Demander une modification</strong>. Attendez l'approbation du propriétaire.</p>
+          </div>
+        </div>
       </div>
 
       <div id="notifications-section" class="notification-banner">
