@@ -735,16 +735,20 @@
       });
       
       async function loadAboutAdmin() {
-        const res = await fetch('/api/settings/about_content');
+        const token = localStorage.getItem('echopress_token');
+        const res = await fetch('/api/settings/about_content', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         const data = await res.json();
         quillAbout.root.innerHTML = data.value || '';
       }
 
       document.getElementById("save-about-btn").addEventListener("click", async () => {
         try {
+          const token = localStorage.getItem('echopress_token');
           const res = await fetch('/api/settings', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ key: 'about_content', value: quillAbout.root.innerHTML })
           });
           if (res.ok) {
