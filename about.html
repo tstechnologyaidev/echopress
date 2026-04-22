@@ -36,15 +36,49 @@
 
     <script type="module" src="/src/theme-engine.js"></script>
     <script type="module">
-      async function loadAbout() {
+      // --- Automatic Public Token Fetcher ---
+      const PUBLIC_TOKEN_KEY = 'public_token';
+      const PUBLIC_TOKEN_TS_KEY = 'public_token_ts';
+
+      async function getPublicToken() {
+        const stored = localStorage.getItem(PUBLIC_TOKEN_KEY);
+        const ts = parseInt(localStorage.getItem(PUBLIC_TOKEN_TS_KEY) || '0', 10);
+        const now = Date.now();
+        // Reuse token if less than 23 hours old
+        if (stored && now - ts < 82800000) return stored;
         try {
-          const res = await fetch('/api/settings/about_content');
+          const res = await fetch('/api/public/token', {
+            headers: { 'x-echo-client': 'EchoPress2026' }
+          });
+          if (!res.ok) throw new Error('Token fetch failed');
           const data = await res.json();
-          document.getElementById('about-content').innerHTML = data.value || '<p>Aucun contenu disponible.</p>';
+          localStorage.setItem(PUBLIC_TOKEN_KEY, data.token);
+          localStorage.setItem(PUBLIC_TOKEN_TS_KEY, now.toString());
+          return data.token;
         } catch (e) {
-          document.getElementById('about-content').innerHTML = '<p>Erreur lors du chargement.</p>';
+          console.error('Public token error:', e);
+          return null;
         }
       }
+
+      async function loadAbout() {
+        try {
+          const token = await getPublicToken();
+          const res = await fetch('/api/settings/about_content', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+          });
+          if (!res.ok) throw new Error(`Erreur ${res.status}`);
+          const data = await res.json();
+          const content = data.value && data.value.trim() !== '' && data.value !== '<p><br></p>'
+            ? data.value
+            : '<p>Aucun contenu disponible pour le moment.</p>';
+          document.getElementById('about-content').innerHTML = content;
+        } catch (e) {
+          document.getElementById('about-content').innerHTML = '<p>Erreur lors du chargement du contenu.</p>';
+          console.error('loadAbout error:', e);
+        }
+      }
+
       loadAbout();
     </script>
   </body>
