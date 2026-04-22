@@ -303,22 +303,7 @@
             <!-- Rendered via JS -->
           </div>
 
-          <div id="about-edit-section" style="margin-top: 40px; border-top: 2px solid var(--lp-black); padding-top: 20px; display: none;">
-            <h3>Modifier la page "À Propos"</h3>
-            <div id="quill-about-editor" style="height: 200px; background-color: var(--lp-white); margin-top: 15px;"></div>
-            <button id="save-about-btn" class="btn" style="margin-top: 15px; background-color: var(--lp-red);">Sauvegarder À Propos</button>
-          </div>
 
-          <div id="edit-requests-section" style="margin-top: 40px; border-top: 2px solid var(--lp-black); padding-top: 20px; display: none;">
-            <h3>📥 Demandes de modification (En attente)</h3>
-            <div id="edit-requests-list" style="margin-top: 20px;"></div>
-          </div>
-
-          <div id="active-approvals-section" style="margin-top: 40px; border-top: 2px solid var(--lp-black); padding-top: 20px; display: none;">
-            <h3>✅ Permissions Actives</h3>
-            <p style="font-size: 13px; color: var(--lp-gray-dark); margin-bottom: 15px;">Révoquez les permissions ici pour forcer le journaliste à redemander l'accès.</p>
-            <div id="active-approvals-list"></div>
-          </div>
         </div>
       </div>
 
@@ -342,6 +327,23 @@
         </div>
         
         <div id="users-list" class="user-list-grid"></div>
+
+        <div id="edit-requests-section" style="margin-top: 40px; border-top: 2px solid var(--glass-border); padding-top: 20px; display: block;">
+          <h3>📥 Demandes de modification (En attente)</h3>
+          <div id="edit-requests-list" style="margin-top: 20px;"></div>
+        </div>
+
+        <div id="active-approvals-section" style="margin-top: 40px; border-top: 2px solid var(--glass-border); padding-top: 20px; display: block;">
+          <h3>✅ Permissions Actives</h3>
+          <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Révoquez les permissions ici pour forcer le journaliste à redemander l'accès.</p>
+          <div id="active-approvals-list"></div>
+        </div>
+
+        <div id="about-edit-section" style="margin-top: 40px; border-top: 2px solid var(--glass-border); padding-top: 20px; display: block;">
+          <h3>Modifier la page "À Propos"</h3>
+          <div id="quill-about-editor" style="height: 200px; background-color: #121212; color: white; margin-top: 15px; border-radius: 12px; border: 1px solid var(--glass-border);"></div>
+          <button id="save-about-btn" class="btn" style="margin-top: 15px; background-color: var(--lp-red);">Sauvegarder À Propos</button>
+        </div>
       </div>
     </main>
   </div>

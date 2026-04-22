@@ -229,8 +229,17 @@ app.post('/api/register', authLimiter, async (req, res) => {
   }
 });
 
+// Public Token Generation (Regenerates every day via 1d expiry)
+app.get('/api/public/token', apiLimiter, (req, res) => {
+  if (req.headers['x-echo-client'] !== 'EchoPress2026') {
+      return res.status(403).json({ error: 'Client non autorisé' });
+  }
+  const token = jwt.sign({ role: 'public' }, JWT_SECRET, { expiresIn: '1d' });
+  res.json({ token });
+});
+
 // Articles API
-app.get('/api/articles', async (req, res) => {
+app.get('/api/articles', authenticateToken, async (req, res) => {
   try {
     const { includePaused } = req.query;
     const articles = await getArticles(includePaused === 'true');
@@ -240,7 +249,7 @@ app.get('/api/articles', async (req, res) => {
   }
 });
 
-app.get('/api/articles/:id', async (req, res) => {
+app.get('/api/articles/:id', authenticateToken, async (req, res) => {
   const id = req.params.id;
   try {
     await incrementArticleViews(id);
@@ -252,7 +261,7 @@ app.get('/api/articles/:id', async (req, res) => {
   }
 });
 
-app.get('/api/popular', async (req, res) => {
+app.get('/api/popular', authenticateToken, async (req, res) => {
   try {
     const articles = await getPopularArticles(3);
     res.json(articles);
@@ -326,7 +335,7 @@ app.put('/api/articles/:id/status', authenticateToken, requireOwner, async (req,
 });
 
 // Settings API
-app.get('/api/settings/:key', async (req, res) => {
+app.get('/api/settings/:key', authenticateToken, async (req, res) => {
   try {
     const row = await getSetting(req.params.key);
     res.json(row || { key: req.params.key, value: '' });
@@ -410,7 +419,7 @@ app.post('/api/edit-requests/:id/fulfill', authenticateToken, async (req, res) =
 let cachedWeather = null;
 let lastWeatherFetch = 0;
 
-app.get('/api/weather', async (req, res) => {
+app.get('/api/weather', authenticateToken, async (req, res) => {
   try {
     const now = Date.now();
     if (cachedWeather && (now - lastWeatherFetch < 5 * 60 * 1000)) {

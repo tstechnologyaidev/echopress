@@ -1,3 +1,38 @@
+// Automatic Public Token Fetcher
+const PUBLIC_TOKEN_KEY = 'public_token';
+const PUBLIC_TOKEN_TS_KEY = 'public_token_ts';
+const PUBLIC_CLIENT_HEADER = 'EchoPress2026';
+
+/**
+ * Retrieves a valid public token, fetching a new one if missing or older than 23 hours.
+ */
+async function getPublicToken() {
+  const stored = localStorage.getItem(PUBLIC_TOKEN_KEY);
+  const ts = parseInt(localStorage.getItem(PUBLIC_TOKEN_TS_KEY) || '0', 10);
+  const now = Date.now();
+  // Refresh if token older than 23h (82800000 ms)
+  if (stored && now - ts < 82800000) {
+    return stored;
+  }
+  try {
+    const res = await fetch('/api/public/token', {
+      method: 'GET',
+      headers: { 'x-echo-client': PUBLIC_CLIENT_HEADER }
+    });
+    if (!res.ok) throw new Error('Failed to fetch public token');
+    const data = await res.json();
+    if (data.token) {
+      localStorage.setItem(PUBLIC_TOKEN_KEY, data.token);
+      localStorage.setItem(PUBLIC_TOKEN_TS_KEY, now.toString());
+      return data.token;
+    }
+    throw new Error('Token not present in response');
+  } catch (e) {
+    console.error('Public token fetch error:', e);
+    return null;
+  }
+}
+
 import { categories } from './data.js';
 
 const initMain = async () => {
