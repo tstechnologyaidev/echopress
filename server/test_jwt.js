@@ -4,7 +4,7 @@ const JWT_SECRET = 'test';
 const userPayload = { username: 'test', role: 'user' };
 
 try {
-  const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '7yr' });
+  const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '7m' });
   console.log("Token with 7yr:", token);
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {
