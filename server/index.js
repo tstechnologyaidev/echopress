@@ -472,6 +472,15 @@ app.post('/api/articles', authenticateToken, requireStaff, async (req, res) => {
   const id = Date.now().toString();
   try {
     const article = await createArticle(id, category, sub_category, author, surtitle, title, summary, published_time, image, image_credit, author_username);
+    
+    // CODE VERT: Alert for creation
+    await createNotification('content_update', `[NOUVEAU] ${author_username} a créé l'article: "${title}"`, 'low', req.user.id, {
+      title,
+      author: author_username,
+      image_preview: image,
+      summary_preview: summary.substring(0, 100) + '...'
+    });
+
     res.status(201).json(article);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -482,6 +491,15 @@ app.put('/api/articles/:id', authenticateToken, requireStaff, async (req, res) =
   const { title, summary, category, sub_category, author, surtitle, image, image_credit, published_time, modified_by } = req.body;
   try {
     await updateArticle(req.params.id, category, sub_category, author, surtitle, title, summary, image, image_credit, published_time, modified_by);
+    
+    // CODE VERT: Alert for modification
+    await createNotification('content_update', `[MODIF] ${modified_by} a mis à jour l'article: "${title}"`, 'low', req.user.id, {
+      title,
+      editor: modified_by,
+      image_preview: image,
+      content_snippet: summary.substring(0, 150) + '...'
+    });
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
