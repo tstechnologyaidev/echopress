@@ -344,6 +344,21 @@
           <div id="quill-about-editor" style="height: 200px; background-color: #121212; color: white; margin-top: 15px; border-radius: 12px; border: 1px solid var(--glass-border);"></div>
           <button id="save-about-btn" class="btn" style="margin-top: 15px; background-color: var(--lp-red);">Sauvegarder À Propos</button>
         </div>
+
+        <div id="maintenance-section" style="margin-top: 40px; border-top: 2px solid var(--glass-border); padding-top: 20px; display: block;">
+          <h3>🚧 Mode Maintenance</h3>
+          <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Activez la maintenance pour bloquer l'accès au site pour tous les utilisateurs sauf vous.</p>
+          <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid var(--glass-border);">
+            <div class="form-group">
+              <label>Motif de la maintenance (MANDATOIRE)</label>
+              <textarea id="maintenance-reason-input" placeholder="Ex: Mise à jour du système, déploiement de nouvelles fonctionnalités..." style="width: 100%; height: 80px; background: #121212; color: white; border: 1px solid var(--glass-border); padding: 10px; border-radius: 8px; font-family: inherit;"></textarea>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 15px;">
+              <div id="maintenance-status" style="font-size: 14px; font-weight: 600;">Statut : <span style="color: #28a745;">OFF</span></div>
+              <button id="toggle-maintenance-btn" class="btn" style="background: #333;">Activer la Maintenance</button>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>
@@ -400,6 +415,7 @@
           if (typeof fetchArticlesAdmin === 'function') fetchArticlesAdmin();
           if (typeof loadAboutAdmin === 'function') loadAboutAdmin();
           if (typeof loadAllRequests === 'function') loadAllRequests();
+          if (typeof loadMaintenanceStatus === 'function') loadMaintenanceStatus();
           
           // Execute title effect
           const title = document.getElementById('admin-title');
@@ -1234,6 +1250,51 @@
         if (isVerified && typeof loadAllRequests === 'function') loadAllRequests();
         if (window.isOwner && typeof fetchUsers === 'function') fetchUsers();
       }, 60000);
+
+      async function loadMaintenanceStatus() {
+        try {
+          const mode = await fetch('/api/settings/maintenance_mode').then(r => r.json());
+          const reason = await fetch('/api/settings/maintenance_reason').then(r => r.json());
+          const isEnabled = mode.value === 'true';
+          const statusEl = document.getElementById('maintenance-status');
+          const btn = document.getElementById('toggle-maintenance-btn');
+          const input = document.getElementById('maintenance-reason-input');
+          if (statusEl) statusEl.innerHTML = `Statut : <span style="color: ${isEnabled ? '#ff4d4d' : '#28a745'}; font-weight:800;">${isEnabled ? 'ACTIF' : 'OFF'}</span>`;
+          if (btn) {
+            btn.textContent = isEnabled ? 'Désactiver la Maintenance' : 'Activer la Maintenance';
+            btn.style.background = isEnabled ? '#28a745' : '#ff4d4d';
+          }
+          if (reason.value && input) input.value = reason.value;
+        } catch (e) { console.error("Load maintenance error:", e); }
+      }
+
+      const maintenanceBtn = document.getElementById('toggle-maintenance-btn');
+      if (maintenanceBtn) {
+        maintenanceBtn.addEventListener('click', async () => {
+          const input = document.getElementById('maintenance-reason-input');
+          const reason = input ? input.value.trim() : '';
+          const statusText = document.getElementById('maintenance-status').textContent;
+          const currentStatus = statusText.includes('ACTIF');
+          const newStatus = !currentStatus;
+          if (newStatus && !reason) { alert("Veuillez entrer un motif de maintenance avant d'activer."); return; }
+          try {
+            maintenanceBtn.disabled = true;
+            maintenanceBtn.textContent = "Mise à jour...";
+            await fetch('/api/settings', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ key: 'maintenance_reason', value: reason })
+            });
+            const res = await fetch('/api/settings', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ key: 'maintenance_mode', value: newStatus.toString() })
+            });
+            maintenanceBtn.disabled = false;
+            if (res.ok) { alert(`Mode Maintenance ${newStatus ? 'ACTIVÉ' : 'DÉSACTIVÉ'}.`); loadMaintenanceStatus(); }
+          } catch (e) { alert("Erreur : " + e.message); maintenanceBtn.disabled = false; }
+        });
+      }
     </script>
   </body>
 </html>

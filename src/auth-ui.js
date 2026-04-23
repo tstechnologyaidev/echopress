@@ -14,6 +14,14 @@ if (token && !window._fetchPatched) {
     }
     const response = await originalFetch.call(this, resource, options);
     
+    // Maintenance Mode redirection
+    if (response.status === 503 && !window.location.pathname.includes('maintenance.html')) {
+       const data = await response.clone().json().catch(() => ({}));
+       const reason = encodeURIComponent(data.reason || 'Le site est en maintenance.');
+       window.location.href = `/maintenance.html?reason=${reason}`;
+       return response;
+    }
+
     // Automatic kickout on suspension or deletion
     if (response.status === 401 || response.status === 403) {
       // Don't kickout if we're already on login/register or public token
@@ -32,8 +40,8 @@ if (token && !window._fetchPatched) {
   };
   window._fetchPatched = true;
 
-  // Heartbeat: Check status every 10 seconds for "immediate" kickout
-  if (token && JSON.parse(localStorage.getItem('echopress_user') || '{}').role !== 'public') {
+  // Heartbeat: Check status every 10 seconds for "immediate" kickout/maintenance
+  if (token) {
     setInterval(() => {
       fetch('/api/auth/check').catch(() => {});
     }, 10000);

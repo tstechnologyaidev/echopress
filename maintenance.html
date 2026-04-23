@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Maintenance | EchoPress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/user-v2.css" />
+    <style>
+      body {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .maintenance-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        padding: 4rem;
+        border-radius: 40px;
+        text-align: center;
+        max-width: 600px;
+        width: 90%;
+        box-shadow: 0 50px 100px rgba(0,0,0,0.5);
+        animation: cardFloat 3s ease-in-out infinite;
+      }
+      @keyframes cardFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+      .maintenance-icon { font-size: 5rem; margin-bottom: 2rem; display: block; }
+      h1 { font-family: 'Outfit'; font-size: 2.5rem; margin-bottom: 1.5rem; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
+      p { color: var(--text-dim); line-height: 1.6; font-size: 1.1rem; margin-bottom: 2.5rem; }
+      .reason-box {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--glass-border);
+        padding: 20px;
+        border-radius: 16px;
+        margin-bottom: 30px;
+        color: white;
+        font-style: italic;
+      }
+      .bypass-link {
+        font-size: 0.8rem;
+        color: rgba(255,255,255,0.2);
+        cursor: pointer;
+        text-decoration: underline;
+        transition: color 0.3s;
+      }
+      .bypass-link:hover { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <!-- BACKGROUND ORCHESTRATOR -->
+    <div class="bg-orchestrator">
+      <div class="bg-blob"></div>
+      <div class="bg-blob"></div>
+      <div class="bg-blob"></div>
+    </div>
+
+    <div class="maintenance-card">
+      <span class="maintenance-icon">🚧</span>
+      <h1>Maintenance en cours</h1>
+      <div id="reason-container">
+        <p>EchoPress se refait une beauté. Nous serons de retour sous peu.</p>
+        <div class="reason-box" id="maintenance-reason">Chargement du motif...</div>
+      </div>
+      <p style="font-size: 0.9rem;">Merci de votre patience. L'équipe technique travaille activement sur le déploiement.</p>
+      
+      <div style="margin-top: 2rem;">
+        <span class="bypass-link" id="bypass-btn">Accès Propriétaire</span>
+      </div>
+    </div>
+
+    <script type="module">
+      const urlParams = new URLSearchParams(window.location.search);
+      const reason = urlParams.get('reason');
+      if (reason) {
+        document.getElementById('maintenance-reason').textContent = decodeURIComponent(reason);
+      } else {
+        // Fallback to fetching it
+        fetch('/api/settings/maintenance_reason')
+          .then(res => res.json())
+          .then(data => {
+            if (data.value) document.getElementById('maintenance-reason').textContent = data.value;
+          })
+          .catch(() => {
+            document.getElementById('maintenance-reason').textContent = "Maintenance technique planifiée.";
+          });
+      }
+
+      document.getElementById('bypass-btn').addEventListener('click', () => {
+        const pass = prompt("Accès sécurisé : Entrez le code de contournement maintenance :");
+        if (pass === "MaintenanceBypass2026!!") {
+          // If the user is an owner, they can just go back. 
+          // If they aren't logged in as owner, the server will still block them on the main page.
+          window.location.href = "/";
+        } else {
+          alert("Code invalide.");
+        }
+      });
+    </script>
+  </body>
+</html>

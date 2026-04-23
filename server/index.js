@@ -70,6 +70,16 @@ const authenticateToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
     
+    // Check for Maintenance Mode
+    const maintenanceMode = await getSetting('maintenance_mode');
+    if (maintenanceMode && maintenanceMode.value === 'true' && decoded.role !== 'owner') {
+      const reason = await getSetting('maintenance_reason');
+      return res.status(503).json({ 
+        error: 'Maintenance en cours', 
+        reason: reason ? reason.value : 'Le site est en maintenance.' 
+      });
+    }
+
     // Security Hardening: Check database status on every request if it's not a 'public' token
     if (decoded.role !== 'public') {
       const user = await getUserByUsername(decoded.username);
@@ -458,6 +468,8 @@ app.get('/api/settings/:key', authenticateToken, async (req, res) => {
 app.post('/api/settings', authenticateToken, requireOwner, async (req, res) => {
   const { key, value } = req.body;
   try {
+    // If enabling maintenance, increment token version for everyone except owner to force kickout? 
+    // Actually, the 503 check in authenticateToken handles it immediately.
     await upsertSetting(key, value);
     res.json({ success: true });
   } catch (err) {
