@@ -1315,9 +1315,14 @@
         }
       }, 5000); // Poll every 5 seconds for "instant" feel
 
+      let currentExpandedNotifId = null;
+
       async function fetchNotifications() {
         try {
-          const res = await fetch('/api/notifications');
+          const token = localStorage.getItem('echopress_token');
+          const res = await fetch('/api/notifications', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
           if (!res.ok) return;
           const notifications = await res.json();
           const list = document.getElementById('notifications-list');
@@ -1328,8 +1333,6 @@
             return;
           }
 
-          const unreadCount = notifications.filter(n => !n.is_read).length;
-
           list.innerHTML = notifications.map(n => {
             let icon = '🔔';
             if (n.type === 'brute_force') icon = '🛡️';
@@ -1338,6 +1341,7 @@
             
             const time = new Date(n.created_at).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
             const isUnread = !n.is_read ? 'unread' : '';
+            const isExpanded = currentExpandedNotifId === String(n.id) ? 'expanded' : '';
             
             const metadata = n.metadata || {};
             const hasMetadata = Object.keys(metadata).length > 0;
@@ -1348,14 +1352,14 @@
               : '';
 
             return `
-              <div id="notif-${n.id}" class="notification-item ${n.severity} ${isUnread}" style="cursor:pointer; display: block;" onclick="toggleNotifDetails('${n.id}')">
+              <div id="notif-${n.id}" class="notification-item ${n.severity} ${isUnread} ${isExpanded}" style="cursor:pointer; display: block;" onclick="toggleNotifDetails('${n.id}')">
                 <div style="display: flex; align-items: center; gap: 15px;">
                   <input type="checkbox" class="notif-select-checkbox" value="${n.id}" onclick="event.stopPropagation()">
                   <div style="flex: 1; display: flex; align-items: center; gap: 15px;">
                     <div class="notification-icon">${icon}</div>
                     <div class="notification-body">
                       <h5>${n.message}</h5>
-                      <p>${n.type.toUpperCase()} • ${n.severity.toUpperCase()} ${hasMetadata ? '<span style="color:var(--accent); font-size:10px; margin-left:10px;">[CLIQUEZ POUR DÉTAILS 🔍]</span>' : ''}</p>
+                      <p>${n.type.toUpperCase()} • ${n.severity.toUpperCase()} ${hasMetadata ? '<span style="color:var(--accent); font-size:10px; margin-left:10px;">[DÉTAILS 🔍]</span>' : ''}</p>
                     </div>
                     <div class="notification-time">${time}</div>
                   </div>
@@ -1369,10 +1373,21 @@
 
       window.toggleNotifDetails = (id) => {
         const el = document.getElementById(`notif-${id}`);
-        if (el) {
-          el.classList.toggle('expanded');
-          const isUnread = el.classList.contains('unread');
-          if (isUnread) {
+        if (!el) return;
+
+        if (currentExpandedNotifId === String(id)) {
+          currentExpandedNotifId = null;
+          el.classList.remove('expanded');
+        } else {
+          // Close old
+          if (currentExpandedNotifId) {
+            const prev = document.getElementById(`notif-${currentExpandedNotifId}`);
+            if (prev) prev.classList.remove('expanded');
+          }
+          currentExpandedNotifId = String(id);
+          el.classList.add('expanded');
+          
+          if (el.classList.contains('unread')) {
             markNotificationRead(id);
             el.classList.remove('unread');
           }
