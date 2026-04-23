@@ -715,27 +715,39 @@ let lastWeatherFetch = 0;
 app.get('/api/weather', authenticateToken, async (req, res) => {
   try {
     const now = Date.now();
-    if (cachedWeather && (now - lastWeatherFetch < 5 * 60 * 1000)) {
+    if (cachedWeather && (now - lastWeatherFetch < 10 * 60 * 1000)) {
       return res.json(cachedWeather);
     }
-    const meteoRes = await fetch("https://api.open-meteo.com/v1/forecast?latitude=45.5088&longitude=-73.5878&current_weather=true");
+    
+    // Fetch current + 7-day forecast
+    const meteoRes = await fetch("https://api.open-meteo.com/v1/forecast?latitude=45.5088&longitude=-73.5878&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=America/Toronto");
     if (!meteoRes.ok) throw new Error("Weather fetch failed");
     const data = await meteoRes.json();
 
-    // Convert WMO Weather code to simple string/emoji for frontend UI
-    let conditionName = "Dégagé ☀️";
-    const code = data.current_weather.weathercode;
-    if (code === 1 || code === 2 || code === 3) conditionName = "Nuageux ⛅";
-    else if (code >= 45 && code <= 48) conditionName = "Brouillard 🌫️";
-    else if (code >= 51 && code <= 67) conditionName = "Pluie 🌧️";
-    else if (code >= 71 && code <= 77) conditionName = "Neige ❄️";
-    else if (code >= 80 && code <= 82) conditionName = "Averses 🌦️";
-    else if (code >= 95 && code <= 99) conditionName = "Orage ⛈️";
+    const getCondition = (code) => {
+      if (code === 0) return "Dégagé ☀️";
+      if (code === 1 || code === 2 || code === 3) return "Nuageux ⛅";
+      if (code >= 45 && code <= 48) return "Brouillard 🌫️";
+      if (code >= 51 && code <= 67) return "Pluie 🌧️";
+      if (code >= 71 && code <= 77) return "Neige ❄️";
+      if (code >= 80 && code <= 82) return "Averses 🌦️";
+      if (code >= 95 && code <= 99) return "Orage ⛈️";
+      return "Variable 🌤️";
+    };
+
+    const forecast = data.daily.time.map((date, i) => ({
+      date,
+      max: Math.round(data.daily.temperature_2m_max[i]),
+      min: Math.round(data.daily.temperature_2m_min[i]),
+      condition: getCondition(data.daily.weathercode[i])
+    }));
 
     cachedWeather = {
-      temperature: data.current_weather.temperature,
-      condition: conditionName
+      temperature: Math.round(data.current_weather.temperature),
+      condition: getCondition(data.current_weather.weathercode),
+      forecast: forecast
     };
+    
     lastWeatherFetch = now;
     res.json(cachedWeather);
   } catch (err) {

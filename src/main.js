@@ -232,14 +232,54 @@ const initMain = async () => {
             const second = timeParts.find(p => p.type === 'second')?.value || '00';
             const timeStr = `${hour}:${minute}:${second}`;
 
-            const weatherStr = weatherData ? ` • ${weatherData.temperature}°C ${weatherData.condition}` : '';
+            headerMeta.style.width = "100%";
+            headerMeta.style.display = "flex";
+            headerMeta.style.justifyContent = "space-between";
+            headerMeta.style.alignItems = "center";
+
+            const weatherHtml = weatherData ? `
+                <div id="weather-widget" style="cursor:pointer; padding: 5px 12px; background: rgba(255,255,255,0.05); border-radius: 20px; transition: all 0.3s;" onclick="window.toggleWeatherForecast()">
+                    <span style="font-weight: 600; color: var(--text-main);">${weatherData.temperature}°C</span> 
+                    <span style="margin-left: 5px;">${weatherData.condition}</span>
+                </div>
+            ` : '';
 
             headerMeta.innerHTML = `
-                <div style="font-size: 0.85rem; color: var(--text-dim); text-align: right;">
-                    <span style="font-weight: 700; color: var(--text-main);">${dateStr}</span><br>
-                    <span>Montréal • ${timeStr}${weatherStr}</span>
+                <div style="font-size: 0.85rem; color: var(--text-dim); text-align: left; display: flex; gap: 15px; align-items: center;">
+                    <span style="font-weight: 700; color: var(--text-main);">${dateStr}</span>
+                    <span style="font-family: monospace; opacity: 0.7;">${timeStr}</span>
+                </div>
+                ${weatherHtml}
+                <div id="weather-expansion" style="display:none; position: absolute; top: 100%; right: 0; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); padding: 20px; border-radius: 24px; z-index: 1000; box-shadow: 0 20px 40px rgba(0,0,0,0.4); min-width: 300px; margin-top: 10px;">
+                    <h4 style="margin: 0 0 15px 0; font-family: 'Outfit'; font-size: 1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">Prévisions de la semaine</h4>
+                    <div id="forecast-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
                 </div>
             `;
+        }
+    };
+
+    window.toggleWeatherForecast = () => {
+        const expansion = document.getElementById('weather-expansion');
+        if (!expansion || !weatherData || !weatherData.forecast) return;
+
+        const isVisible = expansion.style.display === 'block';
+        expansion.style.display = isVisible ? 'none' : 'block';
+
+        if (!isVisible) {
+            const list = document.getElementById('forecast-list');
+            list.innerHTML = weatherData.forecast.map(d => {
+                const dayName = new Date(d.date).toLocaleDateString('fr-CA', { weekday: 'short', day: 'numeric' });
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
+                        <span style="width: 80px; font-weight: 500;">${dayName}</span>
+                        <span style="flex: 1; text-align: center; opacity: 0.8;">${d.condition}</span>
+                        <span style="width: 70px; text-align: right;">
+                            <span style="color: #ff4b2b;">${d.max}°</span>
+                            <span style="color: #3b82f6; margin-left: 5px; opacity: 0.6;">${d.min}°</span>
+                        </span>
+                    </div>
+                `;
+            }).join('');
         }
     };
     
