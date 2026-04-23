@@ -84,6 +84,14 @@
         const authToggleText = document.getElementById('auth-toggle-text');
         const authError = document.getElementById('auth-error');
 
+        // Show error message if redirected with one (e.g., suspension reason)
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        if (error) {
+            authError.textContent = decodeURIComponent(error);
+            authError.style.display = 'block';
+        }
+
         let isLogin = true;
 
         authToggleBtn.addEventListener('click', (e) => {

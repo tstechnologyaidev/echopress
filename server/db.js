@@ -52,12 +52,24 @@ export const deleteMultipleUsers = async (ids) => {
 };
 
 export const updateUserStatus = async (id, status, reason) => {
-  const { error } = await supabase.from('users').update({ status, punishment_reason: reason }).eq('id', id);
+  const { data: user } = await supabase.from('users').select('token_version').eq('id', id).single();
+  const nextVersion = (user?.token_version || 1) + 1;
+  const { error } = await supabase.from('users').update({ 
+    status, 
+    punishment_reason: reason,
+    token_version: nextVersion
+  }).eq('id', id);
   if (error) throw error;
 };
 
 export const resetUserPassword = async (id, newPassword, reason) => {
-  const { error } = await supabase.from('users').update({ password: newPassword, punishment_reason: reason }).eq('id', id);
+  const { data: user } = await supabase.from('users').select('token_version').eq('id', id).single();
+  const nextVersion = (user?.token_version || 1) + 1;
+  const { error } = await supabase.from('users').update({ 
+    password: newPassword, 
+    punishment_reason: reason,
+    token_version: nextVersion
+  }).eq('id', id);
   if (error) throw error;
 };
 

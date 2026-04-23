@@ -45,3 +45,7 @@ CREATE TABLE IF NOT EXISTS archives (
     uploaded_by TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- 6. TOKEN VERSIONING
+-- Ensures all sessions are invalidated on password reset
+ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INTEGER DEFAULT 1;

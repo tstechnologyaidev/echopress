@@ -59,17 +59,48 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_echopress_key_2026';
 
-const authenticateToken = (req, res, next) => {
+const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Accès refusé. Token manquant.' });
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
+  jwt.verify(token, JWT_SECRET, async (err, decoded) => {
     if (err) return res.status(403).json({ error: 'Token invalide ou expiré.' });
-    req.user = user;
+    
+    // Security Hardening: Check database status on every request if it's not a 'public' token
+    if (decoded.role !== 'public') {
+      try {
+        const user = await getUserByUsername(decoded.username);
+        if (!user) {
+          return res.status(401).json({ error: 'Compte inexistant ou supprimé.' });
+        }
+        if (user.status === 'suspended') {
+          return res.status(403).json({ 
+            error: 'Compte suspendu', 
+            reason: user.punishment_reason || 'Aucune raison spécifiée.' 
+          });
+        }
+        
+        // Check token version (invalidation on password reset / status change)
+        if (user.token_version && decoded.token_version && user.token_version > decoded.token_version) {
+          return res.status(401).json({ error: 'Votre session a été invalidée par un administrateur ou suite à un changement de mot de passe.' });
+        }
+
+        req.user = { ...decoded, id: user.id };
+      } catch (dbErr) {
+        return res.status(500).json({ error: 'Erreur de sécurité.' });
+      }
+    } else {
+      req.user = decoded;
+    }
     next();
   });
 };
+
+// Heartbeat check for immediate kickout
+app.get('/api/auth/check', authenticateToken, (req, res) => {
+  res.json({ status: 'active', user: req.user });
+});
 
 const requireOwner = (req, res, next) => {
   if (req.user && req.user.role === 'owner') {
@@ -127,7 +158,7 @@ app.post('/api/login', authLimiter, async (req, res) => {
     if (user.status === 'suspended') {
       return res.status(403).json({ error: `Votre compte est suspendu. Raison : ${user.punishment_reason || 'Aucune raison spécifiée.'}` });
     }
-    const userPayload = { username: user.username, role: user.role };
+    const userPayload = { username: user.username, role: user.role, token_version: user.token_version || 1 };
     const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: userPayload });
   } catch (err) {
@@ -240,7 +271,7 @@ app.post('/api/register', authLimiter, async (req, res) => {
     // Hashing disabled at user request for visibility in admin panel
     await createUser(username, password, role);
 
-    const userPayload = { username, role };
+    const userPayload = { username, role, token_version: 1 };
     const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '7yr' });
     res.status(201).json({ token, user: userPayload });
   } catch (err) {
@@ -260,8 +291,15 @@ app.get('/api/public/token', apiLimiter, (req, res) => {
 // Articles API
 app.get('/api/articles', authenticateToken, async (req, res) => {
   try {
-    const { includePaused } = req.query;
-    const articles = await getArticles(includePaused === 'true');
+    let includePaused = req.query.includePaused === 'true';
+    const isStaff = ['owner', 'supervisor', 'journalist', 'corrector', 'admin'].includes(req.user.role);
+    
+    // Only staff can see paused articles
+    if (includePaused && !isStaff) {
+      includePaused = false;
+    }
+
+    const articles = await getArticles(includePaused);
     res.json(articles);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -274,6 +312,12 @@ app.get('/api/articles/:id', authenticateToken, async (req, res) => {
     await incrementArticleViews(id);
     const article = await getArticleById(id);
     if (!article) return res.status(404).json({ error: 'Article not found' });
+
+    const isStaff = ['owner', 'supervisor', 'journalist', 'corrector', 'admin'].includes(req.user.role);
+    if (article.status === 'paused' && !isStaff) {
+      return res.status(403).json({ error: 'Cet article est temporairement indisponible pour révision.' });
+    }
+
     res.json(article);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -384,9 +428,17 @@ app.delete('/api/archives/:id', authenticateToken, requireOwnerOrSupervisor, asy
 
 // Settings API
 app.get('/api/settings/:key', authenticateToken, async (req, res) => {
+  const { key } = req.params;
+  
+  // Security check for sensitive keys
+  const isStaff = ['owner', 'supervisor', 'journalist', 'corrector', 'admin'].includes(req.user.role);
+  if (key === 'admin_pin' && !isStaff) {
+    return res.status(403).json({ error: 'Accès refusé.' });
+  }
+
   try {
-    const row = await getSetting(req.params.key);
-    res.json(row || { key: req.params.key, value: '' });
+    const row = await getSetting(key);
+    res.json(row || { key, value: '' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

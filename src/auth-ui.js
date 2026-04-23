@@ -13,19 +13,31 @@ if (token && !window._fetchPatched) {
       }
     }
     const response = await originalFetch.call(this, resource, options);
-    // Connection limitation removed: No auto-redirect to login on unauthorized status
-    /*
+    
+    // Automatic kickout on suspension or deletion
     if (response.status === 401 || response.status === 403) {
-      if (resource !== '/api/login' && resource !== '/api/register') {
+      // Don't kickout if we're already on login/register or public token
+      const isAuthRoute = resource.includes('/api/login') || resource.includes('/api/register') || resource.includes('/api/public/token');
+      if (!isAuthRoute && localStorage.getItem('echopress_token')) {
+         const data = await response.clone().json().catch(() => ({}));
+         const reason = data.reason ? ` Raison : ${data.reason}` : '';
+         const errorMsg = encodeURIComponent((data.error || 'Session expirée') + reason);
+         
          localStorage.removeItem('echopress_user');
          localStorage.removeItem('echopress_token');
-         window.location.href = '/login.html';
+         window.location.href = `/login.html?error=${errorMsg}`;
       }
     }
-    */
     return response;
   };
   window._fetchPatched = true;
+
+  // Heartbeat: Check status every 10 seconds for "immediate" kickout
+  if (token && JSON.parse(localStorage.getItem('echopress_user') || '{}').role !== 'public') {
+    setInterval(() => {
+      fetch('/api/auth/check').catch(() => {});
+    }, 10000);
+  }
 }
 
 export function setupAuthUI() {
