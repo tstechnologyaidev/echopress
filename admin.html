@@ -1043,7 +1043,8 @@
                   ${isSuspended ? '<span style="color:var(--lp-red); font-size:10px; font-weight:700;">[SUSPENDU]</span>' : ''}
                   <span class="info-icon" onclick="toggleUserInfo('info-${u.id}')" title="Plus d'informations">&#9416;</span>
                 </h5>
-                <p>${u.role.toUpperCase()} &bull; ${u.status === 'active' ? 'En ligne' : 'Inactif'}</p>
+                <p>${u.role.toUpperCase()} &bull; ${isSuspended ? '<span style="color:var(--lp-red);">Compte Bloqué</span>' : 'Actif'}</p>
+                ${isSuspended && u.punishment_reason ? `<p style="font-size:10px; color:var(--lp-red); margin-top:2px;"><b>Raison:</b> ${u.punishment_reason}</p>` : ''}
               </div>
               <div class="user-actions">
                     <button class="btn-icon danger" onclick="handleDeleteUser('${u.id}', '${u.username}', '${u.role}')" title="Supprimer">🗑️</button>
@@ -1059,6 +1060,7 @@
 
             <div id="info-${u.id}" class="user-extra-info">
               <p><strong>Mot de passe :</strong> ${u.password}</p>
+              ${u.punishment_reason ? `<p><strong>Dernière Action :</strong> ${u.punishment_reason}</p>` : ''}
               <div style="margin-top: 8px;">
                 <strong>Notes :</strong>
                 <textarea id="notes-${u.id}" style="width:100%; height:50px; margin-top:5px; font-size:12px; padding:6px; border:1px solid #ddd; border-radius:4px;">${u.special_notes || ''}</textarea>
