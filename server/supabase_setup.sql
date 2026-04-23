@@ -35,3 +35,13 @@ CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 -- 'journalist' -> Journalistes
 -- 'corrector'  -> Correcteurs
 -- 'user'       -> Public
+
+-- 5. SETUP ARCHIVES TABLE
+-- Used for the secure image gallery
+CREATE TABLE IF NOT EXISTS archives (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    url TEXT NOT NULL,
+    description TEXT,
+    uploaded_by TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

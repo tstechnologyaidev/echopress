@@ -222,3 +222,25 @@ export const getValidApprovalForArticle = async (articleId, requestedBy) => {
     return new Date(r.expires_at) > now;
   });
 };
+
+// Archives API
+export const getArchives = async () => {
+  const { data, error } = await supabase.from('archives').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return data;
+};
+
+export const createArchive = async (url, description, uploadedBy) => {
+  const { data, error } = await supabase.from('archives').insert([{
+    url,
+    description,
+    uploaded_by: uploadedBy
+  }]).select().single();
+  if (error) throw error;
+  return data;
+};
+
+export const deleteArchive = async (id) => {
+  const { error } = await supabase.from('archives').delete().eq('id', id);
+  if (error) throw error;
+};

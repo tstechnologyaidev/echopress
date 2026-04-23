@@ -12,7 +12,8 @@ import {
   getArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus,
   incrementArticleViews, getPopularArticles,
   getSetting, upsertSetting,
-  getEditRequests, getEditRequestsForUser, createEditRequest, updateEditRequestStatus
+  getEditRequests, getEditRequestsForUser, createEditRequest, updateEditRequestStatus,
+  getArchives, createArchive, deleteArchive
 } from './db.js';
 
 import helmet from 'helmet';
@@ -75,6 +76,24 @@ const requireOwner = (req, res, next) => {
     next();
   } else {
     res.status(403).json({ error: 'Accès refusé. Privilèges administrateur requis.' });
+  }
+};
+
+const requireStaff = (req, res, next) => {
+  const staffRoles = ['owner', 'supervisor', 'journalist', 'corrector', 'admin'];
+  if (req.user && staffRoles.includes(req.user.role)) {
+    next();
+  } else {
+    res.status(403).json({ error: 'Accès refusé. Privilèges rédactionnels ou administratifs requis.' });
+  }
+};
+
+const requireOwnerOrSupervisor = (req, res, next) => {
+  const allowed = ['owner', 'supervisor'];
+  if (req.user && allowed.includes(req.user.role)) {
+    next();
+  } else {
+    res.status(403).json({ error: 'Accès refusé. Privilèges superviseur ou administrateur requis.' });
   }
 };
 
@@ -271,7 +290,7 @@ app.get('/api/popular', authenticateToken, async (req, res) => {
 });
 
 // Upload API — stores image in Supabase Storage (persists across Render restarts)
-app.post('/api/upload', authenticateToken, upload.single('image'), async (req, res) => {
+app.post('/api/upload', authenticateToken, requireStaff, upload.single('image'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
@@ -294,7 +313,7 @@ app.post('/api/upload', authenticateToken, upload.single('image'), async (req, r
   }
 });
 
-app.post('/api/articles', authenticateToken, async (req, res) => {
+app.post('/api/articles', authenticateToken, requireStaff, async (req, res) => {
   const { title, summary, category, sub_category, author, surtitle, image, image_credit, published_time, author_username } = req.body;
   const id = Date.now().toString();
   try {
@@ -305,7 +324,7 @@ app.post('/api/articles', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/articles/:id', authenticateToken, async (req, res) => {
+app.put('/api/articles/:id', authenticateToken, requireStaff, async (req, res) => {
   const { title, summary, category, sub_category, author, surtitle, image, image_credit, published_time, modified_by } = req.body;
   try {
     await updateArticle(req.params.id, category, sub_category, author, surtitle, title, summary, image, image_credit, published_time, modified_by);
@@ -315,7 +334,7 @@ app.put('/api/articles/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/articles/:id', authenticateToken, async (req, res) => {
+app.delete('/api/articles/:id', authenticateToken, requireStaff, async (req, res) => {
   try {
     await deleteArticle(req.params.id);
     res.json({ success: true });
@@ -324,10 +343,39 @@ app.delete('/api/articles/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/articles/:id/status', authenticateToken, requireOwner, async (req, res) => {
+app.put('/api/articles/:id/status', authenticateToken, requireOwnerOrSupervisor, async (req, res) => {
   const { status, reason } = req.body;
   try {
     await updateArticleStatus(req.params.id, status, reason);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Archives API
+app.get('/api/archives', authenticateToken, requireStaff, async (req, res) => {
+  try {
+    const archives = await getArchives();
+    res.json(archives);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/archives', authenticateToken, requireOwnerOrSupervisor, async (req, res) => {
+  const { url, description } = req.body;
+  try {
+    const archive = await createArchive(url, description, req.user.username);
+    res.status(201).json(archive);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/archives/:id', authenticateToken, requireOwnerOrSupervisor, async (req, res) => {
+  try {
+    await deleteArchive(req.params.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -374,7 +422,7 @@ app.get('/api/edit-requests/user/:username', authenticateToken, async (req, res)
   }
 });
 
-app.post('/api/edit-requests', authenticateToken, async (req, res) => {
+app.post('/api/edit-requests', authenticateToken, requireStaff, async (req, res) => {
   const { article_id, article_title, requested_by, description } = req.body;
   try {
     const request = await createEditRequest(article_id, article_title, requested_by, description);
@@ -406,7 +454,7 @@ app.get('/api/edit-requests/check-valid', authenticateToken, async (req, res) =>
 });
 
 // For journalist-editor: Mark as used
-app.post('/api/edit-requests/:id/fulfill', authenticateToken, async (req, res) => {
+app.post('/api/edit-requests/:id/fulfill', authenticateToken, requireStaff, async (req, res) => {
   try {
     await updateEditRequestStatus(req.params.id, 'fulfilled');
     res.json({ success: true });

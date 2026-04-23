@@ -74,6 +74,14 @@ export function setupAuthUI() {
       adminBtn.textContent = user.role === 'corrector' ? 'Corriger' : (user.role === 'supervisor' ? 'Superviser' : (user.role === 'journalist' ? 'Écrire' : 'Gestion'));
       
       authLinks.appendChild(adminBtn);
+
+      const archivesBtn = document.createElement('a');
+      archivesBtn.href = '/archives.html';
+      archivesBtn.className = 'btn-soutien';
+      archivesBtn.style.marginLeft = '10px';
+      archivesBtn.style.background = 'rgba(255,255,255,0.05)';
+      archivesBtn.textContent = 'Archives';
+      authLinks.appendChild(archivesBtn);
     }
   }
 }

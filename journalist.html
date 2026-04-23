@@ -316,9 +316,14 @@
              }
           }
 
+          const isSupervisor = user.role === 'supervisor';
+
           let actionHtml = '';
-          if (isOwn) {
-            actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit" style="${isPaused ? 'background: #444; pointer-events: none; opacity: 0.5;' : ''}">${isPaused ? 'En Pause' : 'Modifier'}</a>`;
+          if (isOwn || isSupervisor) {
+            actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit" style="${isPaused && !isSupervisor ? 'background: #444; pointer-events: none; opacity: 0.5;' : ''}">${isPaused && !isSupervisor ? 'En Pause' : 'Modifier'}</a>`;
+            if (isSupervisor) {
+              actionHtml += ` <button class="btn-request" style="margin-left:5px; padding: 8px 12px; background:${isPaused ? 'var(--accent)' : 'rgba(255,255,255,0.05)'}; color: ${isPaused ? 'black' : 'white'};" onclick="window.toggleArticleStatus('${art.id}', '${art.status}')">${isPaused ? '▶' : '⏸'}</button>`;
+            }
           } else if (isApproved) {
             actionHtml = `<a href="journalist-editor.html?id=${art.id}" class="btn-edit">Modifier l'article complet</a><div style="font-size:10px; color:var(--lp-red); margin-top:4px;">${expiryLabel || (req.is_one_time ? 'Une seule fois' : 'Approuvé')}</div>`;
           } else if (status === 'pending') {
@@ -350,6 +355,36 @@
           list.appendChild(div);
         });
       }
+
+      window.toggleArticleStatus = async (id, currentStatus) => {
+        try {
+          if (currentStatus === 'paused') {
+            const res = await fetch(`/api/articles/${id}/status`, {
+              method: 'PUT',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ status: 'published', reason: null })
+            });
+            if (!res.ok) throw new Error(await res.text());
+            loadAll();
+          } else {
+            const reason = prompt("Raison MANDATOIRE de la mise en pause (pour le propriétaire et le journaliste) :");
+            if (reason) {
+              const res = await fetch(`/api/articles/${id}/status`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ status: 'paused', reason })
+              });
+              if (!res.ok) throw new Error(await res.text());
+              loadAll();
+            } else if (reason === "") {
+              alert("La raison est obligatoire pour pauser un article.");
+            }
+          }
+        } catch (err) {
+          console.error("Pause error:", err);
+          alert("Erreur lors de la mise à jour du statut : " + err.message);
+        }
+      };
 
       window.filterArticles = (query) => {
         const q = query.toLowerCase().trim();
