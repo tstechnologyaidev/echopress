@@ -14,7 +14,7 @@ import {
   getSetting, upsertSetting,
   getEditRequests, getEditRequestsForUser, createEditRequest, updateEditRequestStatus, getValidApprovalForArticle,
   getArchives, createArchive, deleteArchive,
-  getNotifications, createNotification, markNotificationRead
+  getNotifications, createNotification, markNotificationRead, deleteNotifications
 } from './db.js';
 
 import helmet from 'helmet';
@@ -660,6 +660,19 @@ app.post('/api/notifications/:id/read', authenticateToken, requireOwner, async (
   try {
     await markNotificationRead(req.params.id);
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/notifications/bulk-delete', authenticateToken, requireOwner, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Aucun ID fourni.' });
+    }
+    await deleteNotifications(ids);
+    res.json({ success: true, count: ids.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

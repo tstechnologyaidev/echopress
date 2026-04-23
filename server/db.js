@@ -276,3 +276,8 @@ export const markNotificationRead = async (id) => {
   const { error } = await supabase.from('notifications').update({ is_read: true }).eq('id', id);
   if (error) throw error;
 };
+
+export const deleteNotifications = async (ids) => {
+  const { error } = await supabase.from('notifications').delete().in('id', ids);
+  if (error) throw error;
+};

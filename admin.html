@@ -335,8 +335,19 @@
       <div id="notification-section" style="margin-top: 40px; border-top: 2px solid var(--glass-border); padding-top: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
            <h3 style="margin: 0;">🔔 Alertes de Sécurité & Notifications</h3>
-           <button class="btn" style="padding: 8px 16px; font-size: 13px; background: rgba(255,255,255,0.05);" onclick="markAllNotificationsRead()">Tout marquer comme lu</button>
+           <div style="display: flex; gap: 10px;">
+             <button class="btn" style="padding: 8px 16px; font-size: 13px; background: rgba(255,255,255,0.05);" onclick="markAllNotificationsRead()">Tout marquer comme lu</button>
+           </div>
         </div>
+
+        <!-- NEW: Notification Action Bar -->
+        <div id="notification-actions" style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 8px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: var(--text-dim);">
+            <input type="checkbox" id="select-all-notifs" onclick="toggleSelectAllNotifs()"> Tout sélectionner
+          </label>
+          <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px; margin-left: auto;" onclick="handleDeleteNotifications()">🗑️ Supprimer la sélection</button>
+        </div>
+
         <div id="notifications-list">
            <!-- Populated via JS -->
            <p style="color: var(--text-dim); text-align: center;">Chargement des alertes...</p>
@@ -1312,18 +1323,59 @@
             const isUnread = !n.is_read ? 'unread' : '';
             
             return `
-              <div class="notification-item ${n.severity} ${isUnread}" onclick="markNotificationRead('${n.id}')" style="cursor:pointer;">
-                <div class="notification-icon">${icon}</div>
-                <div class="notification-body">
-                  <h5>${n.message}</h5>
-                  <p>${n.type.toUpperCase()} • ${n.severity.toUpperCase()}</p>
+              <div class="notification-item ${n.severity} ${isUnread}" style="cursor:pointer; display: flex; align-items: center; gap: 15px;">
+                <input type="checkbox" class="notif-select-checkbox" value="${n.id}" onclick="event.stopPropagation()">
+                <div style="flex: 1; display: flex; align-items: center; gap: 15px;" onclick="markNotificationRead('${n.id}')">
+                  <div class="notification-icon">${icon}</div>
+                  <div class="notification-body">
+                    <h5>${n.message}</h5>
+                    <p>${n.type.toUpperCase()} • ${n.severity.toUpperCase()}</p>
+                  </div>
+                  <div class="notification-time">${time}</div>
                 </div>
-                <div class="notification-time">${time}</div>
               </div>
             `;
           }).join('');
         } catch (e) { console.error("Notif fetch error:", e); }
       }
+
+      window.toggleSelectAllNotifs = () => {
+        const isChecked = document.getElementById('select-all-notifs').checked;
+        document.querySelectorAll('.notif-select-checkbox').forEach(cb => cb.checked = isChecked);
+      };
+
+      window.handleDeleteNotifications = async () => {
+        const checkboxes = document.querySelectorAll('.notif-select-checkbox:checked');
+        const ids = Array.from(checkboxes).map(cb => cb.value);
+
+        if (ids.length === 0) {
+          alert("Veuillez sélectionner au moins une alerte.");
+          return;
+        }
+
+        if (confirm(`Voulez-vous supprimer définitivement ${ids.length} alerte(s) ?`)) {
+          try {
+            const token = localStorage.getItem('echopress_token');
+            const res = await fetch('/api/notifications/bulk-delete', {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ ids })
+            });
+
+            if (res.ok) {
+              fetchNotifications();
+              document.getElementById('select-all-notifs').checked = false;
+            } else {
+              alert("Erreur lors de la suppression.");
+            }
+          } catch (e) {
+            alert("Erreur technique: " + e.message);
+          }
+        }
+      };
 
       window.markNotificationRead = async (id) => {
         try {
