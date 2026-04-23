@@ -578,15 +578,19 @@ app.get('/api/edit-requests/user/:username', authenticateToken, async (req, res)
   }
 });
 
-app.post('/api/edit-requests', authenticateToken, requireStaff, async (req, res) => {
-  const { article_id, article_title, requested_by, description } = req.body;
+app.post('/api/edit-requests', authenticateToken, async (req, res) => {
   try {
-    const request = await createEditRequest(article_id, article_title, requested_by, description);
+    const { article_id, article_title, requested_by, description } = req.body;
+    const newRequest = await createEditRequest(article_id, article_title, requested_by, description);
     
-    // Log Notification for Owners
-    await createNotification('edit_request', `Nouvelle demande de modification par ${requested_by} pour "${article_title}"`, 'low', req.user.id, { article_id });
-    
-    res.status(201).json(request);
+    // INTEGRATION: Create an instant notification for the owner
+    await createNotification(
+      'edit_request',
+      `Nouvelle demande de modification par ${requested_by} sur l'article: "${article_title}"`,
+      'low'
+    );
+
+    res.status(201).json(newRequest);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
