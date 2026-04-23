@@ -3,6 +3,75 @@ const PUBLIC_TOKEN_KEY = 'public_token';
 const PUBLIC_TOKEN_TS_KEY = 'public_token_ts';
 const PUBLIC_CLIENT_HEADER = 'EchoPress2026';
 
+// --- OWNER LIVE NOTIFICATIONS WIDGET ---
+async function initOwnerNotifications() {
+  const userStr = localStorage.getItem('echopress_user');
+  if (!userStr) return;
+  const user = JSON.parse(userStr);
+  if (user.role !== 'owner') return;
+
+  // Create container if it doesn't exist
+  let container = document.getElementById('owner-live-alerts');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'owner-live-alerts';
+    document.body.appendChild(container);
+  }
+  container.style.display = 'flex';
+
+  let lastCheckTime = new Date().toISOString();
+  
+  async function fetchNewAlerts() {
+    try {
+      const token = localStorage.getItem('echopress_token');
+      const res = await fetch(`/api/notifications?unreadOnly=true&since=${lastCheckTime}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+      const notifications = await res.json();
+      
+      if (notifications.length > 0) {
+        notifications.forEach(notif => {
+          showToast(notif);
+        });
+        lastCheckTime = new Date().toISOString();
+      }
+    } catch (e) {
+      console.error('Notification error:', e);
+    }
+  }
+
+  function showToast(notif) {
+    const toast = document.createElement('div');
+    toast.className = `alert-toast ${notif.severity || 'low'}`;
+    
+    const icon = notif.type === 'security' ? '🛡️' : '✉️';
+    const time = new Date(notif.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+    toast.innerHTML = `
+      <h5><span>${icon} ${notif.type.toUpperCase()}</span></h5>
+      <p>${notif.message}</p>
+      <span class="time">${time}</span>
+    `;
+
+    container.prepend(toast);
+
+    // Auto-remove after 8 seconds
+    setTimeout(() => {
+      toast.style.transform = 'translateX(100px)';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 500);
+    }, 8000);
+  }
+
+  // Poll every 5 seconds
+  setInterval(fetchNewAlerts, 5000);
+  fetchNewAlerts(); // Initial check
+}
+
+// Initialize on load
+window.addEventListener('load', initOwnerNotifications);
+
 /**
  * Retrieves a valid public token, fetching a new one if missing or older than 23 hours.
  */

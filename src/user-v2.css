@@ -382,8 +382,43 @@ select option {
   padding: 10px;
 }
 
-/* Fix for Safari/Chrome dropdown background */
-select:focus {
-  outline: none;
+/* --- OWNER NOTIFICATION FLOATING WIDGET --- */
+#owner-live-alerts {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10000;
+  display: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  max-width: 350px;
 }
+
+.alert-toast {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  padding: 16px 20px;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  animation: toastSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-left-width: 6px;
+}
+
+.alert-toast.low { border-left-color: var(--accent); box-shadow: 0 10px 20px var(--accent-glow); }
+.alert-toast.high { border-left-color: #FBBF24; box-shadow: 0 10px 20px rgba(251, 191, 36, 0.2); }
+.alert-toast.critical { border-left-color: #FF4B2B; box-shadow: 0 10px 20px rgba(255, 75, 43, 0.2); }
+
+@keyframes toastSlideIn {
+  from { transform: translateX(50px) scale(0.9); opacity: 0; }
+  to { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+.alert-toast h5 { font-family: 'Outfit'; font-size: 0.9rem; margin: 0; color: white; display: flex; justify-content: space-between; }
+.alert-toast p { font-size: 0.85rem; color: var(--text-dim); margin: 0; }
+.alert-toast .time { font-size: 0.7rem; color: rgba(255,255,255,0.3); align-self: flex-end; }
 
