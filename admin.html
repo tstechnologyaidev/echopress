@@ -141,6 +141,23 @@
       .notification-time { font-size: 0.75rem; color: var(--text-dim); text-align: right; }
       .notification-badge { background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
 
+      .notification-details {
+        display: none;
+        margin-top: 15px;
+        padding: 15px;
+        background: rgba(0,0,0,0.4);
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.05);
+        font-family: 'monospace';
+        font-size: 12px;
+        color: #00ff41; /* Terminal green */
+        line-height: 1.6;
+        overflow-x: auto;
+      }
+      .notification-details b { color: #fff; text-transform: uppercase; margin-right: 5px; }
+      .notification-item.expanded .notification-details { display: block; animation: slideDown 0.3s ease-out; }
+      @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
       /* Security Gatekeeper Overlay */
       #security-gatekeeper {
         position: fixed;
@@ -1322,22 +1339,40 @@
             const time = new Date(n.created_at).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
             const isUnread = !n.is_read ? 'unread' : '';
             
+            const metadata = n.metadata || {};
+            const detailsHtml = Object.keys(metadata).length > 0 
+              ? `<div class="notification-details">
+                  ${Object.entries(metadata).map(([k, v]) => `<div><b>${k.toUpperCase()}:</b> ${v}</div>`).join('')}
+                </div>`
+              : '';
+
             return `
-              <div class="notification-item ${n.severity} ${isUnread}" style="cursor:pointer; display: flex; align-items: center; gap: 15px;">
-                <input type="checkbox" class="notif-select-checkbox" value="${n.id}" onclick="event.stopPropagation()">
-                <div style="flex: 1; display: flex; align-items: center; gap: 15px;" onclick="markNotificationRead('${n.id}')">
-                  <div class="notification-icon">${icon}</div>
-                  <div class="notification-body">
-                    <h5>${n.message}</h5>
-                    <p>${n.type.toUpperCase()} • ${n.severity.toUpperCase()}</p>
+              <div id="notif-${n.id}" class="notification-item ${n.severity} ${isUnread}" style="cursor:pointer; display: block;" onclick="toggleNotifDetails('${n.id}')">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                  <input type="checkbox" class="notif-select-checkbox" value="${n.id}" onclick="event.stopPropagation()">
+                  <div style="flex: 1; display: flex; align-items: center; gap: 15px;">
+                    <div class="notification-icon">${icon}</div>
+                    <div class="notification-body">
+                      <h5>${n.message}</h5>
+                      <p>${n.type.toUpperCase()} • ${n.severity.toUpperCase()}</p>
+                    </div>
+                    <div class="notification-time">${time}</div>
                   </div>
-                  <div class="notification-time">${time}</div>
                 </div>
+                ${detailsHtml}
               </div>
             `;
           }).join('');
         } catch (e) { console.error("Notif fetch error:", e); }
       }
+
+      window.toggleNotifDetails = (id) => {
+        const el = document.getElementById(`notif-${id}`);
+        if (el) {
+          el.classList.toggle('expanded');
+          markNotificationRead(id); // Automatically mark as read when expanded/inspected
+        }
+      };
 
       window.toggleSelectAllNotifs = () => {
         const isChecked = document.getElementById('select-all-notifs').checked;
