@@ -207,52 +207,53 @@ const initMain = async () => {
 
     const updateHeaderTime = () => {
         const headerMeta = document.querySelector('.header-meta');
-        if (headerMeta) {
-            const now = new Date();
-            const dateFormatter = new Intl.DateTimeFormat('fr-CA', {
-                timeZone: 'America/Toronto',
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            });
-            let dateStr = dateFormatter.format(now);
-            dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+        if (!headerMeta) return;
 
-            const timeFormatter = new Intl.DateTimeFormat('fr-CA', {
-                timeZone: 'America/Toronto',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-            });
-            const timeParts = timeFormatter.formatToParts(now);
-            const hour = timeParts.find(p => p.type === 'hour')?.value || '00';
-            const minute = timeParts.find(p => p.type === 'minute')?.value || '00';
-            const second = timeParts.find(p => p.type === 'second')?.value || '00';
-            const timeStr = `${hour}:${minute}:${second}`;
-
+        // Initialize stable structure if not present
+        if (!headerMeta.querySelector('#header-clock-container')) {
             headerMeta.style.width = "100%";
             headerMeta.style.display = "flex";
             headerMeta.style.justifyContent = "space-between";
             headerMeta.style.alignItems = "center";
-
-            const weatherHtml = weatherData ? `
-                <div id="weather-widget" style="cursor:pointer; padding: 5px 12px; background: rgba(255,255,255,0.05); border-radius: 20px; transition: all 0.3s;" onclick="window.toggleWeatherForecast()">
-                    <span style="font-weight: 600; color: var(--text-main);">${weatherData.temperature}°C</span> 
-                    <span style="margin-left: 5px;">${weatherData.condition}</span>
-                </div>
-            ` : '';
+            headerMeta.style.position = "relative";
 
             headerMeta.innerHTML = `
-                <div style="font-size: 0.85rem; color: var(--text-dim); text-align: left; display: flex; gap: 15px; align-items: center;">
-                    <span style="font-weight: 700; color: var(--text-main);">${dateStr}</span>
-                    <span style="font-family: monospace; opacity: 0.7;">${timeStr}</span>
+                <div id="header-clock-container" style="font-size: 0.85rem; color: var(--text-dim); text-align: left; display: flex; gap: 15px; align-items: center;">
+                    <span id="header-date" style="font-weight: 700; color: var(--text-main);"></span>
+                    <span id="header-time" style="font-family: monospace; opacity: 0.7;"></span>
                 </div>
-                ${weatherHtml}
-                <div id="weather-expansion" style="display:none; position: absolute; top: 100%; right: 0; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); padding: 20px; border-radius: 24px; z-index: 1000; box-shadow: 0 20px 40px rgba(0,0,0,0.4); min-width: 300px; margin-top: 10px;">
-                    <h4 style="margin: 0 0 15px 0; font-family: 'Outfit'; font-size: 1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">Prévisions de la semaine</h4>
-                    <div id="forecast-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                <div id="weather-container"></div>
+                <div id="weather-expansion" style="display:none; position: absolute; top: 100%; right: 0; background: var(--glass-bg); backdrop-filter: blur(30px); border: 1px solid var(--glass-border); padding: 25px; border-radius: 24px; z-index: 1000; box-shadow: 0 20px 40px rgba(0,0,0,0.5); min-width: 320px; margin-top: 15px;">
+                    <h4 style="margin: 0 0 20px 0; font-family: 'Outfit'; font-size: 1.1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; color: var(--accent);">Prévisions de la semaine</h4>
+                    <div id="forecast-list" style="display: flex; flex-direction: column; gap: 14px;"></div>
+                </div>
+            `;
+        }
+
+        const now = new Date();
+        const dateFormatter = new Intl.DateTimeFormat('fr-CA', {
+            timeZone: 'America/Toronto',
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+        });
+        let dateStr = dateFormatter.format(now);
+        dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+
+        const timeFormatter = new Intl.DateTimeFormat('fr-CA', {
+            timeZone: 'America/Toronto',
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+        });
+        const timeStr = timeFormatter.format(now);
+
+        document.getElementById('header-date').textContent = dateStr;
+        document.getElementById('header-time').textContent = timeStr;
+
+        // Update Weather Widget if data available
+        const weatherContainer = document.getElementById('weather-container');
+        if (weatherData && weatherContainer && !weatherContainer.innerHTML) {
+            weatherContainer.innerHTML = `
+                <div id="weather-widget" style="cursor:pointer; padding: 6px 16px; background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); border-radius: 50px; transition: all 0.3s;" onclick="window.toggleWeatherForecast()">
+                    <span style="font-weight: 700; color: var(--text-main);">${weatherData.temperature}°C</span> 
+                    <span style="margin-left: 8px;">${weatherData.condition}</span>
                 </div>
             `;
         }
@@ -270,12 +271,12 @@ const initMain = async () => {
             list.innerHTML = weatherData.forecast.map(d => {
                 const dayName = new Date(d.date).toLocaleDateString('fr-CA', { weekday: 'short', day: 'numeric' });
                 return `
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
-                        <span style="width: 80px; font-weight: 500;">${dayName}</span>
-                        <span style="flex: 1; text-align: center; opacity: 0.8;">${d.condition}</span>
-                        <span style="width: 70px; text-align: right;">
-                            <span style="color: #ff4b2b;">${d.max}°</span>
-                            <span style="color: #3b82f6; margin-left: 5px; opacity: 0.6;">${d.min}°</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem;">
+                        <span style="width: 90px; font-weight: 600; color: var(--text-main);">${dayName}</span>
+                        <span style="flex: 1; text-align: center; opacity: 0.8; font-size: 0.85rem;">${d.condition}</span>
+                        <span style="width: 80px; text-align: right;">
+                            <span style="color: #ff4b2b; font-weight: 700;">${d.max}°</span>
+                            <span style="color: #3b82f6; margin-left: 8px; opacity: 0.5;">${d.min}°</span>
                         </span>
                     </div>
                 `;
