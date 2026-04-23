@@ -28,17 +28,13 @@ if (!window._fetchPatched) {
       // Don't kickout if we're already on login/register or public token
       const isAuthRoute = typeof resource === 'string' && (resource.includes('/api/login') || resource.includes('/api/register') || resource.includes('/api/public/token'));
       if (!isAuthRoute && localStorage.getItem('echopress_token')) {
-         const data = await response.clone().json().catch(() => ({}));
-         const isCritical = data.code === 'USER_SUSPENDED' || data.code === 'USER_DELETED';
-         
-         if (isCritical) {
-           const reason = data.reason ? ` Raison : ${data.reason}` : '';
-           const errorMsg = encodeURIComponent((data.error || 'Session expirée') + reason);
-           
-           localStorage.removeItem('echopress_user');
-           localStorage.removeItem('echopress_token');
-           window.location.href = `/login.html?error=${errorMsg}`;
-         }
+        const data = await response.clone().json().catch(() => ({}));
+        const reason = data.reason ? ` Raison : ${data.reason}` : '';
+        const errorMsg = encodeURIComponent((data.error || 'Session expirée ou invalide') + reason);
+        
+        localStorage.removeItem('echopress_user');
+        localStorage.removeItem('echopress_token');
+        window.location.href = `/login.html?error=${errorMsg}`;
       }
     }
     return response;

@@ -108,8 +108,14 @@ const authenticateToken = async (req, res, next) => {
         });
       }
       
-      // We removed the version check to ensure absolute persistence as requested.
-      // Suspension and Password changes still work because we check the DB status above.
+      // RESTORED: Token version check is essential for instant kickout on password change
+      const dbVersion = Number(user.token_version || 1);
+      const tokenVersion = Number(decoded.token_version || 1);
+      
+      if (dbVersion > tokenVersion) {
+        return res.status(401).json({ error: 'Votre session a été invalidée (changement de mot de passe ou de statut).' });
+      }
+
       req.user = { ...decoded, id: user.id };
     } else {
       req.user = decoded;
