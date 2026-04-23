@@ -76,35 +76,55 @@
       .btn-request:hover { border-color: var(--accent); color: var(--accent); background: rgba(255,255,255,0.05); }
       .btn-pending { background: rgba(255,255,255,0.05); color: var(--text-dim); border: 1px solid var(--glass-border); padding: 8px 18px; font-size: 13px; border-radius: 50px; cursor: not-allowed; }
 
-      /* Modal glassmorphism */
+      /* Modal glassmorphism refined */
       .modal-overlay {
-        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(15px);
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(25px); transition: all 0.5s ease;
       }
       .modal-overlay.active { display: flex; }
       .modal {
-        background: var(--bg-deep); border: 1px solid var(--glass-border); border-radius: 32px; padding: 48px; width: 94%; max-width: 600px; box-shadow: 0 30px 60px rgba(0,0,0,0.5); animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 40px; padding: 40px; width: 94%; max-width: 550px; box-shadow: 0 50px 100px rgba(0,0,0,0.5); position: relative; overflow: hidden; animation: modalPop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
       }
-      @keyframes modalPop { from { transform: scale(0.9) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
-      .modal-progress { display: flex; gap: 8px; margin-bottom: 30px; }
-      .modal-progress span { flex: 1; height: 4px; border-radius: 4px; background: rgba(255,255,255,0.1); transition: all 0.4s; }
-      .modal-progress span.done { background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
-      .modal h3 { font-family: 'Outfit'; font-size: 2rem; margin-bottom: 10px; color: white; }
-      .modal-article-label { font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 24px; display: block; overflow: hidden; text-overflow: ellipsis; }
-      .modal-question { font-size: 1rem; color: var(--text-dim); margin-bottom: 20px; }
-      .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+      .modal::before {
+        content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%); pointer-events: none; opacity: 0.3;
+      }
+      @keyframes modalPop { from { transform: scale(0.95) translateY(30px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+      
+      .modal-progress { display: flex; gap: 6px; margin-bottom: 30px; position: relative; z-index: 1; }
+      .modal-progress span { flex: 1; height: 3px; border-radius: 10px; background: rgba(255,255,255,0.05); transition: all 0.5s ease; }
+      .modal-progress span.done { background: var(--gradient); box-shadow: 0 0 15px var(--accent-glow); }
+      
+      .modal-step { display: none; position: relative; z-index: 1; }
+      .modal-step.active { display: block; animation: stepFade 0.4s ease-out; }
+      @keyframes stepFade { from { transform: translateX(10px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+      .modal h3 { font-family: 'Outfit'; font-size: 2.2rem; margin-bottom: 8px; color: white; letter-spacing: -0.03em; }
+      .modal-article-label { font-size: 0.9rem; font-weight: 600; color: var(--accent); margin-bottom: 24px; display: block; opacity: 0.8; }
+      .modal-question { font-size: 1.1rem; color: var(--text-dim); margin-bottom: 24px; line-height: 1.4; }
+      
+      .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
       .choice-btn {
-        padding: 16px; border: 1px solid var(--glass-border); border-radius: 16px; background: rgba(255,255,255,0.03); color: var(--text-dim); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s;
+        padding: 20px 16px; border: 1px solid var(--glass-border); border-radius: 20px; background: rgba(255,255,255,0.02); color: var(--text-dim); font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; gap: 8px;
       }
-      .choice-btn:hover { border-color: var(--accent); color: white; background: rgba(255,255,255,0.06); }
-      .choice-btn.selected { border-color: var(--accent); background: var(--accent-glow); color: white; box-shadow: inset 0 0 15px rgba(255,255,255,0.05); }
+      .choice-btn:hover { border-color: rgba(255,255,255,0.2); color: white; background: rgba(255,255,255,0.05); transform: translateY(-2px); }
+      .choice-btn.selected { border-color: var(--accent); background: rgba(0, 209, 255, 0.1); color: white; box-shadow: 0 0 20px var(--accent-glow); }
+      .choice-btn span { font-size: 1.5rem; }
+
+      .urgency-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+
       .modal textarea {
-        width: 100%; min-height: 140px; padding: 16px; font-family: inherit; font-size: 15px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); color: white; border-radius: 16px; resize: vertical; transition: all 0.3s;
+        width: 100%; min-height: 150px; padding: 20px; font-family: inherit; font-size: 1rem; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; border-radius: 20px; resize: none; transition: all 0.3s;
       }
-      .modal textarea:focus { outline: none; border-color: var(--accent); background: rgba(255,255,255,0.06); }
-      .btn-cancel { background: transparent; color: var(--text-dim); border: 1px solid var(--glass-border); padding: 12px 24px; border-radius: 50px; cursor: pointer; font-weight: 600; }
-      .btn-cancel:hover { color: white; border-color: white; }
-      .btn-next, .btn-submit-req { background: var(--gradient); color: white; border: none; padding: 12px 28px; border-radius: 50px; cursor: pointer; font-weight: 700; box-shadow: 0 4px 15px var(--accent-glow); }
-      .btn-next:disabled { opacity: 0.3; cursor: not-allowed; transform: none !important; }
+      .modal textarea:focus { outline: none; border-color: var(--accent); background: rgba(0,0,0,0.3); box-shadow: 0 0 0 4px var(--accent-glow); }
+      
+      .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+      .btn-cancel { background: transparent; color: var(--text-dim); border: none; padding: 12px 0; cursor: pointer; font-weight: 600; transition: color 0.3s; }
+      .btn-cancel:hover { color: white; }
+      
+      .btn-next, .btn-submit-req { 
+        background: var(--gradient); color: white; border: none; padding: 14px 32px; border-radius: 50px; cursor: pointer; font-weight: 700; font-size: 1rem; transition: all 0.3s; box-shadow: 0 10px 20px var(--accent-glow); 
+      }
+      .btn-next:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
+      .btn-next:not(:disabled):hover { transform: scale(1.05) translateY(-2px); box-shadow: 0 15px 30px var(--accent-glow); }
     </style>
   </head>
   <body>
@@ -137,46 +157,46 @@
 
         <!-- STEP 1: Type of modification -->
         <div class="modal-step active" id="modal-step-1">
-          <h3>Demander une modification</h3>
+          <h3>Modification</h3>
           <span class="modal-article-label" id="modal-article-name"></span>
-          <p class="modal-question">Quel type de modification souhaitez-vous apporter ?</p>
+          <p class="modal-question">Quel aspect de l'article souhaitez-vous corriger ?</p>
           <div class="choice-grid">
-            <button class="choice-btn" data-group="type" data-val="Correction factuelle">🔍 Correction factuelle</button>
-            <button class="choice-btn" data-group="type" data-val="Mise à jour d'info">🔄 Mise à jour d'info</button>
-            <button class="choice-btn" data-group="type" data-val="Amélioration du style">✍️ Style / rédaction</button>
-            <button class="choice-btn" data-group="type" data-val="Autre">💬 Autre</button>
+            <button class="choice-btn" data-group="type" data-val="Correction factuelle"><span>🔍</span> Faits / Données</button>
+            <button class="choice-btn" data-group="type" data-val="Mise à jour d'info"><span>🔄</span> Actualisation</button>
+            <button class="choice-btn" data-group="type" data-val="Amélioration du style"><span>✍️</span> Style / Orthographe</button>
+            <button class="choice-btn" data-group="type" data-val="Autre"><span>💬</span> Autre raison</button>
           </div>
           <div class="modal-actions">
-            <button class="btn-cancel" id="modal-cancel-btn">Annuler</button>
-            <button class="btn-next" id="step1-next" disabled>Suivant →</button>
+            <button class="btn-cancel" id="modal-cancel-btn">Abandonner</button>
+            <button class="btn-next" id="step1-next" disabled>Continuer →</button>
           </div>
         </div>
 
         <!-- STEP 2: Urgency -->
         <div class="modal-step" id="modal-step-2">
-          <h3>Niveau d'urgence</h3>
+          <h3>Urgence</h3>
           <span class="modal-article-label" id="modal-article-name-2"></span>
-          <p class="modal-question">Quelle est l'urgence de cette modification ?</p>
+          <p class="modal-question">À quel point cette modification est-elle prioritaire ?</p>
           <div class="urgency-grid">
-            <button class="choice-btn" data-group="urgency" data-val="Basse">🟢 Basse</button>
-            <button class="choice-btn" data-group="urgency" data-val="Normale">🟡 Normale</button>
-            <button class="choice-btn" data-group="urgency" data-val="Haute">🔴 Haute</button>
+            <button class="choice-btn" data-group="urgency" data-val="Basse"><span>🟢</span> Basse</button>
+            <button class="choice-btn" data-group="urgency" data-val="Normale"><span>🟡</span> Normale</button>
+            <button class="choice-btn" data-group="urgency" data-val="Haute"><span>🔴</span> Haute</button>
           </div>
           <div class="modal-actions">
-            <button class="btn-cancel" id="step2-back">← Retour</button>
-            <button class="btn-next" id="step2-next" disabled>Suivant →</button>
+            <button class="btn-cancel" id="step2-back">← Précédent</button>
+            <button class="btn-next" id="step2-next" disabled>Continuer →</button>
           </div>
         </div>
 
         <!-- STEP 3: Description -->
         <div class="modal-step" id="modal-step-3">
-          <h3>Décrivez votre demande</h3>
+          <h3>Détails</h3>
           <span class="modal-article-label" id="modal-article-name-3"></span>
-          <p class="modal-question">Expliquez en détail pourquoi cette modification est nécessaire et en quoi elle améliore l'article :</p>
-          <textarea id="request-description" placeholder="Ex: Le paragraphe 2 contient une erreur factuelle sur la date de l'événement. La date correcte est le 14 mars 2025 selon..."></textarea>
+          <p class="modal-question">Précisez les changements nécessaires :</p>
+          <textarea id="request-description" placeholder="Expliquez ici ce qui doit être modifié..."></textarea>
           <div class="modal-actions">
-            <button class="btn-cancel" id="step3-back">← Retour</button>
-            <button class="btn-submit-req" id="submit-request-btn">✉️ Envoyer la demande</button>
+            <button class="btn-cancel" id="step3-back">← Précédent</button>
+            <button class="btn-submit-req" id="submit-request-btn">Envoyer la requête</button>
           </div>
         </div>
       </div>
