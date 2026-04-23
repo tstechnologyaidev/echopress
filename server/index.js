@@ -692,6 +692,15 @@ app.post('/api/notifications/bulk-delete', authenticateToken, requireOwner, asyn
   }
 });
 
+app.post('/api/test-security-alert', authenticateToken, requireOwner, async (req, res) => {
+  try {
+    await logSecurityAlert(req, 'security_alert', '🧪 TEST DU SYSTÈME : Alerte de sécurité simulée pour vérification des métadonnées.', 'high');
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Weather API
 let cachedWeather = null;
 let lastWeatherFetch = 0;

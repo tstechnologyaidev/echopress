@@ -363,6 +363,7 @@
             <input type="checkbox" id="select-all-notifs" onclick="toggleSelectAllNotifs()"> Tout sélectionner
           </label>
           <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px; margin-left: auto;" onclick="handleDeleteNotifications()">🗑️ Supprimer la sélection</button>
+          <button class="btn" style="padding: 6px 12px; font-size: 12px; background: var(--lp-red);" onclick="triggerTestAlert()">🔥 Tester Alerte Sécurité</button>
         </div>
 
         <div id="notifications-list">
@@ -1345,11 +1346,11 @@
             
             const metadata = n.metadata || {};
             const hasMetadata = Object.keys(metadata).length > 0;
-            const detailsHtml = hasMetadata 
-              ? `<div class="notification-details">
-                  ${Object.entries(metadata).map(([k, v]) => `<div><b>${k.toUpperCase()}:</b> ${v}</div>`).join('')}
-                </div>`
-              : '';
+            const detailsHtml = `<div class="notification-details">
+              ${hasMetadata 
+                ? Object.entries(metadata).map(([k, v]) => `<div><b>${k.toUpperCase()}:</b> ${v}</div>`).join('') 
+                : '<div style="color: #ffb86c;">⚠️ Aucune donnée technique disponible pour cette alerte ancienne.</div>'}
+            </div>`;
 
             return `
               <div id="notif-${n.id}" class="notification-item ${n.severity} ${isUnread} ${isExpanded}" style="cursor:pointer; display: block;" onclick="toggleNotifDetails('${n.id}')">
@@ -1359,7 +1360,7 @@
                     <div class="notification-icon">${icon}</div>
                     <div class="notification-body">
                       <h5>${n.message}</h5>
-                      <p>${n.type.toUpperCase()} • ${n.severity.toUpperCase()} ${hasMetadata ? '<span style="color:var(--accent); font-size:10px; margin-left:10px;">[DÉTAILS 🔍]</span>' : ''}</p>
+                      <p>${n.type.toUpperCase()} • ${n.severity.toUpperCase()} <span style="color:var(--accent); font-size:10px; margin-left:10px;">[CLIQUEZ POUR INVESTIGUER 🔍]</span></p>
                     </div>
                     <div class="notification-time">${time}</div>
                   </div>
@@ -1370,6 +1371,15 @@
           }).join('');
         } catch (e) { console.error("Notif fetch error:", e); }
       }
+
+      window.triggerTestAlert = async () => {
+        const token = localStorage.getItem('echopress_token');
+        await fetch('/api/test-security-alert', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        fetchNotifications();
+      };
 
       window.toggleNotifDetails = (id) => {
         const el = document.getElementById(`notif-${id}`);
