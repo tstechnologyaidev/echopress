@@ -109,10 +109,12 @@ const authenticateToken = async (req, res, next) => {
       }
       
       // Robust token version check
-      const dbVersion = user.token_version || 1;
-      const tokenVersion = decoded.token_version || 1;
+      const dbVersion = Number(user.token_version || 1);
+      const tokenVersion = Number(decoded.token_version || 1);
       
-      if (dbVersion > tokenVersion) {
+      // SECURITY EXCEPTION: The owner is exempt from version kickouts to ensure 100% persistence
+      if (dbVersion > tokenVersion && decoded.role !== 'owner') {
+        console.log(`[AUTH KICKOUT] Version mismatch for ${decoded.username} (DB: ${dbVersion}, Token: ${tokenVersion})`);
         return res.status(401).json({ error: 'Votre session a été invalidée (changement de mot de passe ou de statut).' });
       }
 
