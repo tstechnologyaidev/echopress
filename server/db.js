@@ -42,11 +42,17 @@ export const createUser = async (username, password, role) => {
 };
 
 export const deleteUser = async (id) => {
+  // First, delete associated notifications to avoid foreign key violation
+  await supabase.from('notifications').delete().eq('user_id', id);
+  
   const { error } = await supabase.from('users').delete().eq('id', id);
   if (error) throw error;
 };
 
 export const deleteMultipleUsers = async (ids) => {
+  // First, delete associated notifications for all targeted users
+  await supabase.from('notifications').delete().in('user_id', ids);
+
   const { error } = await supabase.from('users').delete().in('id', ids);
   if (error) throw error;
 };
