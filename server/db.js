@@ -256,3 +256,23 @@ export const deleteArchive = async (id) => {
   const { error } = await supabase.from('archives').delete().eq('id', id);
   if (error) throw error;
 };
+
+// Notifications API
+export const getNotifications = async (limit = 50) => {
+  const { data, error } = await supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(limit);
+  if (error) throw error;
+  return data;
+};
+
+export const createNotification = async (type, message, severity, userId = null, metadata = {}) => {
+  const { data, error } = await supabase.from('notifications').insert([{
+    type, message, severity, user_id: userId, metadata, is_read: false
+  }]).select().single();
+  if (error) throw error;
+  return data;
+};
+
+export const markNotificationRead = async (id) => {
+  const { error } = await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+  if (error) throw error;
+};

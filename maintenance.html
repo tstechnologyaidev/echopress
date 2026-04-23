@@ -96,13 +96,21 @@
       document.getElementById('bypass-btn').addEventListener('click', () => {
         const pass = prompt("Accès sécurisé : Entrez le code de contournement maintenance :");
         if (pass === "MaintenanceBypass2026!!") {
-          // If the user is an owner, they can just go back. 
-          // If they aren't logged in as owner, the server will still block them on the main page.
           window.location.href = "/";
         } else {
           alert("Code invalide.");
         }
       });
+
+      // Auto-redirect back when maintenance is over
+      setInterval(async () => {
+        try {
+          const res = await fetch('/api/public/token', { headers: { 'x-echo-client': 'EchoPress2026' } });
+          if (res.status === 200) {
+            window.location.href = "/";
+          }
+        } catch (e) {}
+      }, 5000);
     </script>
   </body>
 </html>

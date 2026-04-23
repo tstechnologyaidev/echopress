@@ -126,7 +126,15 @@ const initMain = async () => {
         }
     }
 
-    // 5. Update Header Time
+    // 5. Update Header Time & Weather
+    let weatherData = null;
+    const fetchWeather = async () => {
+        try {
+            const res = await fetch('/api/weather');
+            if (res.ok) weatherData = await res.json();
+        } catch (e) {}
+    };
+
     const updateHeaderTime = () => {
         const headerMeta = document.querySelector('.header-meta');
         if (headerMeta) {
@@ -154,17 +162,21 @@ const initMain = async () => {
             const second = timeParts.find(p => p.type === 'second')?.value || '00';
             const timeStr = `${hour}:${minute}:${second}`;
 
+            const weatherStr = weatherData ? ` • ${weatherData.temperature}°C ${weatherData.condition}` : '';
+
             headerMeta.innerHTML = `
                 <div style="font-size: 0.85rem; color: var(--text-dim); text-align: right;">
                     <span style="font-weight: 700; color: var(--text-main);">${dateStr}</span><br>
-                    <span>Montréal • ${timeStr}</span>
+                    <span>Montréal • ${timeStr}${weatherStr}</span>
                 </div>
             `;
         }
     };
     
+    await fetchWeather();
     updateHeaderTime();
     setInterval(updateHeaderTime, 1000);
+    setInterval(fetchWeather, 300000); // Update weather every 5 min
 };
 
 if (document.readyState === 'loading') {

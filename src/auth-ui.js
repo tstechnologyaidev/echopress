@@ -1,5 +1,5 @@
 // Sync patching of fetch
-const token = localStorage.getItem('echopress_token');
+const token = localStorage.getItem('echopress_token') || localStorage.getItem('public_token');
 if (!window._fetchPatched) {
   const originalFetch = window.fetch;
   window.fetch = async function(resource, options) {
@@ -47,9 +47,13 @@ if (!window._fetchPatched) {
   
   // Don't run heartbeat if already on maintenance page
   if (!window.location.pathname.includes('maintenance.html')) {
-    setInterval(() => {
+    const checkStatus = () => {
       fetch(heartbeatEndpoint, { headers: { 'x-echo-client': 'EchoPress2026' } }).catch(() => {});
-    }, 10000);
+    };
+    
+    // Initial check on load for immediate redirection
+    checkStatus();
+    setInterval(checkStatus, 10000);
   }
 }
 

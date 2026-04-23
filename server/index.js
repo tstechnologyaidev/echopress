@@ -13,7 +13,8 @@ import {
   incrementArticleViews, getPopularArticles,
   getSetting, upsertSetting,
   getEditRequests, getEditRequestsForUser, createEditRequest, updateEditRequestStatus,
-  getArchives, createArchive, deleteArchive
+  getArchives, createArchive, deleteArchive,
+  getNotifications, createNotification, markNotificationRead
 } from './db.js';
 
 import helmet from 'helmet';
@@ -47,8 +48,20 @@ const apiLimiter = rateLimit({
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 requests per 15 mins for login/register
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  handler: async (req, res, next, options) => {
+    await createNotification('brute_force', `Tentative de brute force détectée depuis l'IP ${req.ip}`, 'critical', null, { ip: req.ip });
+    
+    // Increment attack counter for brute force too
+    attackCounter++;
+    if (attackCounter >= 2) {
+      await upsertSetting('maintenance_mode', 'true');
+      await upsertSetting('maintenance_reason', "Site Web est en cours d'attack de cybersécurité et est en train de régler la situation au plus vite.");
+    }
+
+    res.status(options.statusCode).send(options.message);
+  },
   message: { error: 'Trop de tentatives de connexion, veuillez réessayer dans 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -123,29 +136,67 @@ app.get('/api/auth/check', authenticateToken, (req, res) => {
   res.json({ status: 'active', user: req.user });
 });
 
-const requireOwner = (req, res, next) => {
+const requireOwner = async (req, res, next) => {
   if (req.user && req.user.role === 'owner') {
     next();
   } else {
+    const userDisplay = req.user ? `${req.user.username} (${req.user.role})` : 'Utilisateur inconnu';
+    await logSecurityAlert(req, 'unauthorized_access', `Tentative d'accès OWNER par ${userDisplay} sur ${req.path}`, 'critical');
     res.status(403).json({ error: 'Accès refusé. Privilèges administrateur requis.' });
   }
 };
 
-const requireStaff = (req, res, next) => {
+const requireStaff = async (req, res, next) => {
   const staffRoles = ['owner', 'supervisor', 'journalist', 'corrector', 'admin'];
   if (req.user && staffRoles.includes(req.user.role)) {
     next();
   } else {
+    const userDisplay = req.user ? `${req.user.username} (${req.user.role})` : 'Utilisateur inconnu';
+    await logSecurityAlert(req, 'unauthorized_access', `Tentative d'accès STAFF par ${userDisplay} sur ${req.path}`, 'high');
     res.status(403).json({ error: 'Accès refusé. Privilèges rédactionnels ou administratifs requis.' });
   }
 };
 
-const requireOwnerOrSupervisor = (req, res, next) => {
+const requireOwnerOrSupervisor = async (req, res, next) => {
   const allowed = ['owner', 'supervisor'];
   if (req.user && allowed.includes(req.user.role)) {
     next();
   } else {
+    const userDisplay = req.user ? `${req.user.username} (${req.user.role})` : 'Utilisateur inconnu';
+    await logSecurityAlert(req, 'unauthorized_access', `Tentative d'accès SUPERVISEUR/OWNER par ${userDisplay} sur ${req.path}`, 'high');
     res.status(403).json({ error: 'Accès refusé. Privilèges superviseur ou administrateur requis.' });
+  }
+};
+
+let attackCounter = 0;
+
+const logSecurityAlert = async (req, type, message, severity = 'high') => {
+  try {
+    const userId = req.user ? req.user.id : null;
+    const metadata = {
+      ip: req.ip,
+      path: req.path,
+      method: req.method,
+      role: req.user ? req.user.role : 'guest'
+    };
+    await createNotification(type, message, severity, userId, metadata);
+    
+    // Auto-suspend for critical hack attempts if it's a registered user
+    if (severity === 'critical' && userId && req.user.role !== 'owner') {
+      await updateUserStatus(userId, 'suspended', 'Activité suspecte détectée : Tentative de violation des privilèges système.');
+    }
+
+    // AUTO-MAINTENANCE PROTOCOL
+    if (severity === 'critical' || severity === 'high') {
+      attackCounter++;
+      if (attackCounter >= 2) {
+        await upsertSetting('maintenance_mode', 'true');
+        await upsertSetting('maintenance_reason', "Site Web est en cours d'attack de cybersécurité et est en train de régler la situation au plus vite.");
+        console.log("!!! ATTACK DETECTED: AUTO-MAINTENANCE ACTIVATED !!!");
+      }
+    }
+  } catch (err) {
+    console.error('Security alert logging failed:', err);
   }
 };
 
@@ -478,8 +529,11 @@ app.get('/api/settings/:key', authenticateToken, async (req, res) => {
 app.post('/api/settings', authenticateToken, requireOwner, async (req, res) => {
   const { key, value } = req.body;
   try {
-    // If enabling maintenance, increment token version for everyone except owner to force kickout? 
-    // Actually, the 503 check in authenticateToken handles it immediately.
+    // Reset attack counter if owner manually disables maintenance
+    if (key === 'maintenance_mode' && value === 'false') {
+      attackCounter = 0;
+      console.log("[SECURITY] Attack counter reset by owner.");
+    }
     await upsertSetting(key, value);
     res.json({ success: true });
   } catch (err) {
@@ -499,8 +553,18 @@ app.get('/api/edit-requests', authenticateToken, requireOwner, async (req, res) 
 });
 
 app.get('/api/edit-requests/user/:username', authenticateToken, async (req, res) => {
+  const { username } = req.params;
+  
+  // Security check: Only allow users to see their own requests, unless they are owner/supervisor
+  const isSelf = req.user.username === username;
+  const isAdmin = ['owner', 'supervisor'].includes(req.user.role);
+  
+  if (!isSelf && !isAdmin) {
+    return res.status(403).json({ error: 'Accès refusé.' });
+  }
+
   try {
-    const requests = await getEditRequestsForUser(req.params.username);
+    const requests = await getEditRequestsForUser(username);
     res.json(requests);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -511,6 +575,10 @@ app.post('/api/edit-requests', authenticateToken, requireStaff, async (req, res)
   const { article_id, article_title, requested_by, description } = req.body;
   try {
     const request = await createEditRequest(article_id, article_title, requested_by, description);
+    
+    // Log Notification for Owners
+    await createNotification('edit_request', `Nouvelle demande de modification par ${requested_by} pour "${article_title}"`, 'low', req.user.id, { article_id });
+    
     res.status(201).json(request);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -530,6 +598,12 @@ app.put('/api/edit-requests/:id', authenticateToken, requireOwner, async (req, r
 // For journalist-editor: Check if an approval exists
 app.get('/api/edit-requests/check-valid', authenticateToken, async (req, res) => {
   const { article_id, requested_by } = req.query;
+  
+  // Security check: User can only check their own permissions
+  if (requested_by !== req.user.username && !['owner', 'supervisor'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Accès refusé.' });
+  }
+
   try {
     const approval = await getValidApprovalForArticle(article_id, requested_by);
     res.json({ approval });
@@ -542,6 +616,25 @@ app.get('/api/edit-requests/check-valid', authenticateToken, async (req, res) =>
 app.post('/api/edit-requests/:id/fulfill', authenticateToken, requireStaff, async (req, res) => {
   try {
     await updateEditRequestStatus(req.params.id, 'fulfilled');
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Notifications API
+app.get('/api/notifications', authenticateToken, requireOwner, async (req, res) => {
+  try {
+    const notifications = await getNotifications();
+    res.json(notifications);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/notifications/:id/read', authenticateToken, requireOwner, async (req, res) => {
+  try {
+    await markNotificationRead(req.params.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -116,6 +116,31 @@
       .modal-content { background: var(--bg-deep); padding: 40px; border-radius: 32px; width: 450px; border: 1px solid var(--glass-border); box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
       .modal-content h3 { font-family: 'Outfit'; margin-bottom: 20px; }
 
+      /* Notifications Styling */
+      .notification-item {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--glass-border);
+        padding: 15px 20px;
+        border-radius: 16px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        transition: all 0.3s;
+        animation: slideIn 0.3s ease-out;
+      }
+      @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+      .notification-item.critical { border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.05); }
+      .notification-item.high { border-left: 4px solid #f97316; background: rgba(249, 115, 22, 0.05); }
+      .notification-item.low { border-left: 4px solid #3b82f6; }
+      .notification-item.unread { border-right: 2px solid var(--accent); }
+      .notification-icon { font-size: 1.5rem; }
+      .notification-body { flex: 1; }
+      .notification-body h5 { margin: 0; font-size: 0.95rem; font-family: 'Outfit'; color: white; }
+      .notification-body p { margin: 2px 0 0 0; font-size: 0.8rem; color: var(--text-dim); }
+      .notification-time { font-size: 0.75rem; color: var(--text-dim); text-align: right; }
+      .notification-badge { background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
+
       /* Security Gatekeeper Overlay */
       #security-gatekeeper {
         position: fixed;
@@ -304,6 +329,17 @@
           </div>
 
 
+        </div>
+      </div>
+
+      <div id="notification-section" style="margin-top: 40px; border-top: 2px solid var(--glass-border); padding-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+           <h3 style="margin: 0;">🔔 Alertes de Sécurité & Notifications</h3>
+           <button class="btn" style="padding: 8px 16px; font-size: 13px; background: rgba(255,255,255,0.05);" onclick="markAllNotificationsRead()">Tout marquer comme lu</button>
+        </div>
+        <div id="notifications-list">
+           <!-- Populated via JS -->
+           <p style="color: var(--text-dim); text-align: center;">Chargement des alertes...</p>
         </div>
       </div>
 
@@ -1243,13 +1279,61 @@
         }
       };
 
-      // Initial load was moved to revealAdmin for security
-      // Refresh active status every minute
       setInterval(() => {
         const isVerified = sessionStorage.getItem('admin_verified') === 'true';
         if (isVerified && typeof loadAllRequests === 'function') loadAllRequests();
         if (window.isOwner && typeof fetchUsers === 'function') fetchUsers();
-      }, 60000);
+        if (window.isOwner && typeof fetchNotifications === 'function') fetchNotifications();
+      }, 5000); // Poll every 5 seconds for "instant" feel
+
+      async function fetchNotifications() {
+        try {
+          const res = await fetch('/api/notifications');
+          if (!res.ok) return;
+          const notifications = await res.json();
+          const list = document.getElementById('notifications-list');
+          if (!list) return;
+          
+          if (notifications.length === 0) {
+            list.innerHTML = '<p style="color: var(--text-dim); text-align: center;">Aucune alerte récente.</p>';
+            return;
+          }
+
+          const unreadCount = notifications.filter(n => !n.is_read).length;
+
+          list.innerHTML = notifications.map(n => {
+            let icon = '🔔';
+            if (n.type === 'brute_force') icon = '🛡️';
+            if (n.type === 'unauthorized_access') icon = '🚨';
+            if (n.type === 'edit_request') icon = '📥';
+            
+            const time = new Date(n.created_at).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+            const isUnread = !n.is_read ? 'unread' : '';
+            
+            return `
+              <div class="notification-item ${n.severity} ${isUnread}" onclick="markNotificationRead('${n.id}')" style="cursor:pointer;">
+                <div class="notification-icon">${icon}</div>
+                <div class="notification-body">
+                  <h5>${n.message}</h5>
+                  <p>${n.type.toUpperCase()} • ${n.severity.toUpperCase()}</p>
+                </div>
+                <div class="notification-time">${time}</div>
+              </div>
+            `;
+          }).join('');
+        } catch (e) { console.error("Notif fetch error:", e); }
+      }
+
+      window.markNotificationRead = async (id) => {
+        try {
+          await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+          fetchNotifications();
+        } catch (e) {}
+      };
+
+      window.markAllNotificationsRead = async () => {
+        fetchNotifications();
+      };
 
       async function loadMaintenanceStatus() {
         try {
