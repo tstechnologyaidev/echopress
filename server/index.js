@@ -180,11 +180,25 @@ let attackCounter = 0;
 const logSecurityAlert = async (req, type, message, severity = 'high') => {
   try {
     const userId = req.user ? req.user.id : null;
+    const ip = req.ip || req.headers['x-forwarded-for'] || 'IP Inconnue';
+    
+    let location = 'Localisation indisponible';
+    try {
+      // Free IP Geolocation lookup
+      const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+      if (geoRes.ok) {
+        const geoData = await geoRes.json();
+        location = `${geoData.city || 'Ville inconnue'}, ${geoData.country_name || 'Pays inconnu'}`;
+      }
+    } catch (e) { console.log("Geo lookup failed (likely local dev)"); }
+
     const metadata = {
-      ip: req.ip,
+      ip: ip,
+      location: location,
       path: req.path,
       method: req.method,
-      role: req.user ? req.user.role : 'guest'
+      role: req.user ? req.user.role : 'guest',
+      timestamp: new Date().toLocaleString('fr-CA')
     };
     await createNotification(type, message, severity, userId, metadata);
     
