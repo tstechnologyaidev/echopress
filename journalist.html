@@ -583,6 +583,8 @@
       });
 
       loadAll();
+      // Auto-refresh article list every 5 seconds for instant approval feedback
+      setInterval(loadAll, 5000);
     </script>
   </body>
 </html>

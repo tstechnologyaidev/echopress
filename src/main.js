@@ -19,12 +19,13 @@ async function initOwnerNotifications() {
   }
   container.style.display = 'flex';
 
-  let lastCheckTime = new Date().toISOString();
+  // Initialize to 24h ago to show recent unread alerts on load
+  let lastCheckTime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   
   async function fetchNewAlerts() {
     try {
       const token = localStorage.getItem('echopress_token');
-      const res = await fetch(`/api/notifications?unreadOnly=true&since=${lastCheckTime}`, {
+      const res = await fetch(`/api/notifications?unreadOnly=true&since=${encodeURIComponent(lastCheckTime)}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) return;
