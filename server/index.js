@@ -12,7 +12,7 @@ import {
   getArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus,
   incrementArticleViews, getPopularArticles,
   getSetting, upsertSetting,
-  getEditRequests, getEditRequestsForUser, createEditRequest, updateEditRequestStatus,
+  getEditRequests, getEditRequestsForUser, createEditRequest, updateEditRequestStatus, getValidApprovalForArticle,
   getArchives, createArchive, deleteArchive,
   getNotifications, createNotification, markNotificationRead
 } from './db.js';
@@ -154,7 +154,7 @@ const requireOwner = async (req, res, next) => {
 };
 
 const requireStaff = async (req, res, next) => {
-  const staffRoles = ['owner', 'supervisor', 'journalist', 'corrector', 'admin'];
+  const staffRoles = ['owner', 'supervisor', 'journalist', 'corrector'];
   if (req.user && staffRoles.includes(req.user.role)) {
     next();
   } else {
@@ -578,7 +578,7 @@ app.get('/api/edit-requests/user/:username', authenticateToken, async (req, res)
   }
 });
 
-app.post('/api/edit-requests', authenticateToken, async (req, res) => {
+app.post('/api/edit-requests', authenticateToken, requireStaff, async (req, res) => {
   try {
     const { article_id, article_title, requested_by, description } = req.body;
     const newRequest = await createEditRequest(article_id, article_title, requested_by, description);
@@ -636,8 +636,21 @@ app.post('/api/edit-requests/:id/fulfill', authenticateToken, requireStaff, asyn
 // Notifications API
 app.get('/api/notifications', authenticateToken, requireOwner, async (req, res) => {
   try {
-    const notifications = await getNotifications();
-    res.json(notifications);
+    const { unreadOnly, since } = req.query;
+    let query = supabase.from('notifications').select('*');
+    
+    if (unreadOnly === 'true') {
+      query = query.eq('is_read', false);
+    }
+    
+    if (since) {
+      query = query.gt('created_at', since);
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    res.json(data || []);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
