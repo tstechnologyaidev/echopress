@@ -3,14 +3,30 @@ const token = localStorage.getItem('echopress_token') || localStorage.getItem('p
 if (!window._fetchPatched) {
   const originalFetch = window.fetch;
   window.fetch = async function(resource, options) {
-    // Only add token if it exists
-    if (token && typeof resource === 'string' && resource.startsWith('/api/') && !resource.startsWith('/api/weather') && !resource.startsWith('/api/popular')) {
+    let url = typeof resource === 'string' ? resource : (resource.url || '');
+    let currentToken = localStorage.getItem('echopress_token');
+    
+    // Auto-fetch public token if completely missing
+    if (!currentToken && url.includes('/api/') && !url.includes('/api/public/token')) {
+      try {
+        const pubRes = await originalFetch('/api/public/token', { headers: { 'x-echo-client': 'EchoPress2026' } });
+        if (pubRes.ok) {
+           const pubData = await pubRes.json();
+           currentToken = pubData.token;
+           localStorage.setItem('echopress_token', currentToken);
+        }
+      } catch (e) {}
+    }
+
+    // Add token if it exists and it's an API call
+    if (currentToken && currentToken !== 'null' && url.includes('/api/')) {
       options = options || {};
       options.headers = options.headers || {};
+      const authVal = `Bearer ${currentToken}`;
       if (options.headers instanceof Headers) {
-        options.headers.append('Authorization', `Bearer ${token}`);
+        options.headers.set('Authorization', authVal);
       } else {
-        options.headers['Authorization'] = `Bearer ${token}`;
+        options.headers['Authorization'] = authVal;
       }
     }
     const response = await originalFetch.call(this, resource, options);

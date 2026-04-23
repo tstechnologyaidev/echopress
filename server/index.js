@@ -77,7 +77,13 @@ const authenticateToken = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     
-    if (!token) {
+    // If no token or explicitly null/undefined, we assign a temporary public role for non-sensitive GET requests
+    if (!token || token === 'null' || token === 'undefined') {
+      const isSensitive = req.path.includes('/admin') || req.path.includes('/users') || req.path.includes('/notifications') || req.path.includes('/settings');
+      if (req.method === 'GET' && !isSensitive) {
+        req.user = { role: 'public' };
+        return next();
+      }
       return res.status(401).json({ error: 'Accès refusé. Token manquant.' });
     }
 
@@ -95,9 +101,11 @@ const authenticateToken = async (req, res, next) => {
 
     // Security Hardening: Check database status on every request if it's not a 'public' token
     if (decoded.role !== 'public') {
+      console.log(`[AUTH CHECK] User: ${decoded.username}, Role: ${decoded.role}`);
       const user = await getUserByUsername(decoded.username);
       
       if (!user) {
+        console.log(`[AUTH FAIL] User not found: ${decoded.username}`);
         return res.status(401).json({ error: 'Compte inexistant ou supprimé.' });
       }
 
@@ -113,6 +121,7 @@ const authenticateToken = async (req, res, next) => {
       const tokenVersion = Number(decoded.token_version || 1);
       
       if (dbVersion > tokenVersion) {
+        console.log(`[AUTH FAIL] Version mismatch for ${decoded.username}`);
         return res.status(401).json({ error: 'Votre session a été invalidée (changement de mot de passe ou de statut).' });
       }
 
