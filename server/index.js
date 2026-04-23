@@ -60,41 +60,52 @@ const upload = multer({ storage: multer.memoryStorage() });
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_echopress_key_2026';
 
 const authenticateToken = async (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Accès refusé. Token manquant.' });
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Accès refusé. Token manquant.' });
+    }
 
-  jwt.verify(token, JWT_SECRET, async (err, decoded) => {
-    if (err) return res.status(403).json({ error: 'Token invalide ou expiré.' });
+    const decoded = jwt.verify(token, JWT_SECRET);
     
     // Security Hardening: Check database status on every request if it's not a 'public' token
     if (decoded.role !== 'public') {
-      try {
-        const user = await getUserByUsername(decoded.username);
-        if (!user) {
-          return res.status(401).json({ error: 'Compte inexistant ou supprimé.' });
-        }
-        if (user.status === 'suspended') {
-          return res.status(403).json({ 
-            error: 'Compte suspendu', 
-            reason: user.punishment_reason || 'Aucune raison spécifiée.' 
-          });
-        }
-        
-        // Check token version (invalidation on password reset / status change)
-        if (user.token_version && decoded.token_version && user.token_version > decoded.token_version) {
-          return res.status(401).json({ error: 'Votre session a été invalidée par un administrateur ou suite à un changement de mot de passe.' });
-        }
-
-        req.user = { ...decoded, id: user.id };
-      } catch (dbErr) {
-        return res.status(500).json({ error: 'Erreur de sécurité.' });
+      const user = await getUserByUsername(decoded.username);
+      
+      if (!user) {
+        return res.status(401).json({ error: 'Compte inexistant ou supprimé.' });
       }
+
+      if (user.status === 'suspended') {
+        return res.status(403).json({ 
+          error: 'Compte suspendu', 
+          reason: user.punishment_reason || 'Aucune raison spécifiée.' 
+        });
+      }
+      
+      // Robust token version check
+      const dbVersion = user.token_version || 1;
+      const tokenVersion = decoded.token_version || 1;
+      
+      if (dbVersion > tokenVersion) {
+        return res.status(401).json({ error: 'Votre session a été invalidée (changement de mot de passe ou de statut).' });
+      }
+
+      req.user = { ...decoded, id: user.id };
     } else {
       req.user = decoded;
     }
+    
     next();
-  });
+  } catch (err) {
+    console.error('[AUTH ERROR]', err.message);
+    if (err.name === 'TokenExpiredError') {
+      return res.status(403).json({ error: 'Session expirée. Veuillez vous reconnecter.' });
+    }
+    return res.status(403).json({ error: 'Token invalide ou erreur de sécurité.' });
+  }
 };
 
 // Heartbeat check for immediate kickout
