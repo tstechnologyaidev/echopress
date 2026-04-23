@@ -1280,10 +1280,11 @@
       };
 
       setInterval(() => {
-        const isVerified = sessionStorage.getItem('admin_verified') === 'true';
-        if (isVerified && typeof loadAllRequests === 'function') loadAllRequests();
-        if (window.isOwner && typeof fetchUsers === 'function') fetchUsers();
-        if (window.isOwner && typeof fetchNotifications === 'function') fetchNotifications();
+        if (window.isOwner) {
+          if (typeof loadAllRequests === 'function') loadAllRequests();
+          if (typeof fetchUsers === 'function') fetchUsers();
+          if (typeof fetchNotifications === 'function') fetchNotifications();
+        }
       }, 5000); // Poll every 5 seconds for "instant" feel
 
       async function fetchNotifications() {
