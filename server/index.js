@@ -180,44 +180,59 @@ let attackCounter = 0;
 const logSecurityAlert = async (req, type, message, severity = 'high') => {
   try {
     const userId = req.user ? req.user.id : null;
-    const ip = req.ip || req.headers['x-forwarded-for'] || 'IP Inconnue';
     
-    let location = 'Localisation indisponible';
+    // ISO Isolation: REMOTE_ADDR + X-FORWARDED-FOR for Proxy detection
+    const forwarded = req.headers['x-forwarded-for'];
+    const ip = forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress;
+    
+    let geoInfo = {
+      ip: ip,
+      city: 'Inconnue',
+      country: 'Inconnu',
+      isp: 'Inconnu',
+      proxy: 'Inconnu'
+    };
+
     try {
-      // Free IP Geolocation lookup
-      const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+      // Querying ip-api.com for deep inspection (City, Country, ISP)
+      const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,city,isp,proxy`);
       if (geoRes.ok) {
-        const geoData = await geoRes.json();
-        location = `${geoData.city || 'Ville inconnue'}, ${geoData.country_name || 'Pays inconnu'}`;
+        const data = await geoRes.json();
+        if (data.status === 'success') {
+          geoInfo.city = data.city;
+          geoInfo.country = data.country;
+          geoInfo.isp = data.isp;
+          geoInfo.proxy = data.proxy ? 'OUI' : 'NON';
+        }
       }
-    } catch (e) { console.log("Geo lookup failed (likely local dev)"); }
+    } catch (e) { console.log("Geo lookup offline (local dev or API limit)"); }
 
     const metadata = {
-      ip: ip,
-      location: location,
-      path: req.path,
-      method: req.method,
-      role: req.user ? req.user.role : 'guest',
-      timestamp: new Date().toLocaleString('fr-CA')
+      IP_ADDRESS: geoInfo.ip,
+      LOCATION: `${geoInfo.city}, ${geoInfo.country}`,
+      PROVIDER_ISP: geoInfo.isp,
+      PROXY_DETECTED: geoInfo.proxy,
+      PATH_ATTEMPTED: req.path,
+      HTTP_METHOD: req.method,
+      USER_ROLE: req.user ? req.user.role : 'unauthenticated',
+      TIMESTAMP: new Date().toISOString()
     };
+
     await createNotification(type, message, severity, userId, metadata);
     
-    // Auto-suspend for critical hack attempts if it's a registered user
     if (severity === 'critical' && userId && req.user.role !== 'owner') {
-      await updateUserStatus(userId, 'suspended', 'Activité suspecte détectée : Tentative de violation des privilèges système.');
+      await updateUserStatus(userId, 'suspended', 'DÉFENSE ACTIVE : Violation critique des protocoles de sécurité.');
     }
 
-    // AUTO-MAINTENANCE PROTOCOL
     if (severity === 'critical' || severity === 'high') {
       attackCounter++;
       if (attackCounter >= 2) {
         await upsertSetting('maintenance_mode', 'true');
-        await upsertSetting('maintenance_reason', "Site Web est en cours d'attack de cybersécurité et est en train de régler la situation au plus vite.");
-        console.log("!!! ATTACK DETECTED: AUTO-MAINTENANCE ACTIVATED !!!");
+        await upsertSetting('maintenance_reason', "ALERTE SÉCURITÉ : Protocoles de protection activés suite à une tentative d'intrusion détectée.");
       }
     }
   } catch (err) {
-    console.error('Security alert logging failed:', err);
+    console.error('Security Protocol Failure:', err);
   }
 };
 
