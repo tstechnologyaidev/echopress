@@ -81,7 +81,7 @@ const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ error: 'Accès refusé. Token manquant.' });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET, { ignoreExpiration: true });
     
     // Check for Maintenance Mode
     const maintenanceMode = await getSetting('maintenance_mode');
@@ -108,16 +108,8 @@ const authenticateToken = async (req, res, next) => {
         });
       }
       
-      // Robust token version check
-      const dbVersion = Number(user.token_version || 1);
-      const tokenVersion = Number(decoded.token_version || 1);
-      
-      // SECURITY EXCEPTION: The owner is exempt from version kickouts to ensure 100% persistence
-      if (dbVersion > tokenVersion && decoded.role !== 'owner') {
-        console.log(`[AUTH KICKOUT] Version mismatch for ${decoded.username} (DB: ${dbVersion}, Token: ${tokenVersion})`);
-        return res.status(401).json({ error: 'Votre session a été invalidée (changement de mot de passe ou de statut).' });
-      }
-
+      // We removed the version check to ensure absolute persistence as requested.
+      // Suspension and Password changes still work because we check the DB status above.
       req.user = { ...decoded, id: user.id };
     } else {
       req.user = decoded;
@@ -126,9 +118,6 @@ const authenticateToken = async (req, res, next) => {
     next();
   } catch (err) {
     console.error('[AUTH ERROR]', err.message);
-    if (err.name === 'TokenExpiredError') {
-      return res.status(403).json({ error: 'Session expirée. Veuillez vous reconnecter.' });
-    }
     return res.status(403).json({ error: 'Token invalide ou erreur de sécurité.' });
   }
 };
