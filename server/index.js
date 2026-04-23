@@ -233,7 +233,7 @@ app.post('/api/login', authLimiter, async (req, res) => {
       return res.status(403).json({ error: `Votre compte est suspendu. Raison : ${user.punishment_reason || 'Aucune raison spécifiée.'}` });
     }
     const userPayload = { username: user.username, role: user.role, token_version: user.token_version || 1 };
-    const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '100y' });
+    const token = jwt.sign(userPayload, JWT_SECRET);
     res.json({ token, user: userPayload });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -346,7 +346,7 @@ app.post('/api/register', authLimiter, async (req, res) => {
     await createUser(username, password, role);
 
     const userPayload = { username, role, token_version: 1 };
-    const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '100y' });
+    const token = jwt.sign(userPayload, JWT_SECRET);
     res.status(201).json({ token, user: userPayload });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -368,7 +368,7 @@ app.get('/api/public/token', apiLimiter, async (req, res) => {
   if (req.headers['x-echo-client'] !== 'EchoPress2026') {
       return res.status(403).json({ error: 'Client non autorisé' });
   }
-  const token = jwt.sign({ role: 'public' }, JWT_SECRET, { expiresIn: '100y' });
+  const token = jwt.sign({ role: 'public' }, JWT_SECRET);
   res.json({ token });
 });
 
