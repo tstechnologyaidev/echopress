@@ -1,9 +1,10 @@
 // Sync patching of fetch
 const token = localStorage.getItem('echopress_token');
-if (token && !window._fetchPatched) {
+if (!window._fetchPatched) {
   const originalFetch = window.fetch;
   window.fetch = async function(resource, options) {
-    if (typeof resource === 'string' && resource.startsWith('/api/') && !resource.startsWith('/api/weather') && !resource.startsWith('/api/popular')) {
+    // Only add token if it exists
+    if (token && typeof resource === 'string' && resource.startsWith('/api/') && !resource.startsWith('/api/weather') && !resource.startsWith('/api/popular')) {
       options = options || {};
       options.headers = options.headers || {};
       if (options.headers instanceof Headers) {
@@ -14,7 +15,7 @@ if (token && !window._fetchPatched) {
     }
     const response = await originalFetch.call(this, resource, options);
     
-    // Maintenance Mode redirection
+    // Maintenance Mode redirection (Apply to ALL users)
     if (response.status === 503 && !window.location.pathname.includes('maintenance.html')) {
        const data = await response.clone().json().catch(() => ({}));
        const reason = encodeURIComponent(data.reason || 'Le site est en maintenance.');
@@ -25,7 +26,7 @@ if (token && !window._fetchPatched) {
     // Automatic kickout on suspension or deletion
     if (response.status === 401 || response.status === 403) {
       // Don't kickout if we're already on login/register or public token
-      const isAuthRoute = resource.includes('/api/login') || resource.includes('/api/register') || resource.includes('/api/public/token');
+      const isAuthRoute = typeof resource === 'string' && (resource.includes('/api/login') || resource.includes('/api/register') || resource.includes('/api/public/token'));
       if (!isAuthRoute && localStorage.getItem('echopress_token')) {
          const data = await response.clone().json().catch(() => ({}));
          const reason = data.reason ? ` Raison : ${data.reason}` : '';
@@ -40,10 +41,14 @@ if (token && !window._fetchPatched) {
   };
   window._fetchPatched = true;
 
-  // Heartbeat: Check status every 10 seconds for "immediate" kickout/maintenance
-  if (token) {
+  // Heartbeat: Check status for everyone to ensure maintenance kickout works
+  // We use /api/public/token as a lightweight heartbeat for non-logged users
+  const heartbeatEndpoint = token ? '/api/auth/check' : '/api/public/token';
+  
+  // Don't run heartbeat if already on maintenance page
+  if (!window.location.pathname.includes('maintenance.html')) {
     setInterval(() => {
-      fetch('/api/auth/check').catch(() => {});
+      fetch(heartbeatEndpoint, { headers: { 'x-echo-client': 'EchoPress2026' } }).catch(() => {});
     }, 10000);
   }
 }

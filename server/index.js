@@ -301,7 +301,17 @@ app.post('/api/register', authLimiter, async (req, res) => {
 });
 
 // Public Token Generation (Regenerates every day via 1d expiry)
-app.get('/api/public/token', apiLimiter, (req, res) => {
+app.get('/api/public/token', apiLimiter, async (req, res) => {
+  // Global Maintenance Check for Public Users
+  const maintenanceMode = await getSetting('maintenance_mode');
+  if (maintenanceMode && maintenanceMode.value === 'true') {
+    const reason = await getSetting('maintenance_reason');
+    return res.status(503).json({ 
+      error: 'Maintenance en cours', 
+      reason: reason ? reason.value : 'Le site est en maintenance.' 
+    });
+  }
+
   if (req.headers['x-echo-client'] !== 'EchoPress2026') {
       return res.status(403).json({ error: 'Client non autorisé' });
   }
