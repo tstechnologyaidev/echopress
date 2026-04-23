@@ -51,15 +51,7 @@ const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   handler: async (req, res, next, options) => {
-    await createNotification('brute_force', `Tentative de brute force détectée depuis l'IP ${req.ip}`, 'critical', null, { ip: req.ip });
-    
-    // Increment attack counter for brute force too
-    attackCounter++;
-    if (attackCounter >= 2) {
-      await upsertSetting('maintenance_mode', 'true');
-      await upsertSetting('maintenance_reason', "Site Web est en cours d'attack de cybersécurité et est en train de régler la situation au plus vite.");
-    }
-
+    await logSecurityAlert(req, 'brute_force', `Tentative de brute force (connexions répétées) détectée.`, 'critical');
     res.status(options.statusCode).send(options.message);
   },
   message: { error: 'Trop de tentatives de connexion, veuillez réessayer dans 15 minutes.' },
@@ -147,9 +139,9 @@ const requireOwner = async (req, res, next) => {
   if (req.user && req.user.role === 'owner') {
     next();
   } else {
-    const userDisplay = req.user ? `${req.user.username} (${req.user.role})` : 'Utilisateur inconnu';
-    await logSecurityAlert(req, 'unauthorized_access', `Tentative d'accès OWNER par ${userDisplay} sur ${req.path}`, 'critical');
-    res.status(403).json({ error: 'Accès refusé. Privilèges administrateur requis.' });
+    const userDisplay = req.user ? `${req.user.username} (${req.user.role})` : 'Utilisateur non-authentifié';
+    await logSecurityAlert(req, 'unauthorized_access', `Tentative d'accès ADMIN refusée pour ${userDisplay}`, 'critical');
+    res.status(403).json({ error: 'Accès refusé. Propriétaire requis.' });
   }
 };
 
@@ -158,9 +150,9 @@ const requireStaff = async (req, res, next) => {
   if (req.user && staffRoles.includes(req.user.role)) {
     next();
   } else {
-    const userDisplay = req.user ? `${req.user.username} (${req.user.role})` : 'Utilisateur inconnu';
-    await logSecurityAlert(req, 'unauthorized_access', `Tentative d'accès STAFF par ${userDisplay} sur ${req.path}`, 'high');
-    res.status(403).json({ error: 'Accès refusé. Privilèges rédactionnels ou administratifs requis.' });
+    const userDisplay = req.user ? `${req.user.username} (${req.user.role})` : 'Utilisateur non-authentifié';
+    await logSecurityAlert(req, 'unauthorized_access', `Tentative d'accès STAFF refusée pour ${userDisplay}`, 'high');
+    res.status(403).json({ error: 'Accès refusé. Privilèges rédactionnels requis.' });
   }
 };
 
@@ -169,9 +161,9 @@ const requireOwnerOrSupervisor = async (req, res, next) => {
   if (req.user && allowed.includes(req.user.role)) {
     next();
   } else {
-    const userDisplay = req.user ? `${req.user.username} (${req.user.role})` : 'Utilisateur inconnu';
-    await logSecurityAlert(req, 'unauthorized_access', `Tentative d'accès SUPERVISEUR/OWNER par ${userDisplay} sur ${req.path}`, 'high');
-    res.status(403).json({ error: 'Accès refusé. Privilèges superviseur ou administrateur requis.' });
+    const userDisplay = req.user ? `${req.user.username} (${req.user.role})` : 'Utilisateur non-authentifié';
+    await logSecurityAlert(req, 'unauthorized_access', `Tentative d'accès SUPERVISEUR refusée pour ${userDisplay}`, 'high');
+    res.status(403).json({ error: 'Accès refusé. Propriétaire ou Superviseur requis.' });
   }
 };
 
