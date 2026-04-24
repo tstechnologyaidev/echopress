@@ -329,7 +329,10 @@
             <div class="form-group" id="group-article-content">
               <label>Résumé / Contenu initial</label>
               <div id="quill-editor" style="height: 200px; background-color: var(--lp-white);"></div>
-              <textarea id="art-video-desc" rows="6" placeholder="Description de la vidéo (optionnelle)" style="width: 100%; padding: 12px; font-family: inherit; border: 1px solid var(--glass-border); border-radius: 12px; background: #121212; color: white; display: none;"></textarea>
+              <div id="group-video-desc" style="display: none; margin-top: 15px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--accent); text-transform: uppercase; font-size: 11px; letter-spacing: 1px;">Description de la vidéo</label>
+                <textarea id="art-video-desc" rows="6" placeholder="Description de la vidéo (optionnelle)" style="width: 100%; padding: 12px; font-family: inherit; border: 1px solid var(--glass-border); border-radius: 12px; background: #121212; color: white;"></textarea>
+              </div>
             </div>
             
             <div id="upload-progress-container" style="display: none; margin-top: 20px;">
@@ -598,18 +601,18 @@
         const videoUrlInput = document.getElementById('art-video-url');
         const creditGroup = document.getElementById('group-image-credit');
         const quillContainer = document.querySelector('.ql-toolbar') ? document.querySelector('.ql-toolbar').parentElement : null;
-        const videoDesc = document.getElementById('art-video-desc');
+        const videoDescGroup = document.getElementById('group-video-desc');
 
         if (catVal === 'videos') {
           imgLabel.textContent = 'Lien Vidéo YouTube';
           fileInput.style.display = 'none';
           videoUrlInput.style.display = 'block';
-          creditGroup.style.display = 'none';
+          creditGroup.style.display = 'block'; // On affiche maintenant les crédits
           
           // Hide Quill
           if (quillContainer) quillContainer.style.display = 'none';
           document.getElementById('quill-editor').style.display = 'none';
-          videoDesc.style.display = 'block';
+          videoDescGroup.style.display = 'block';
           document.getElementById('image-preview-container').style.display = 'none';
         } else {
           imgLabel.textContent = 'Image (fichier uploader)';
@@ -620,7 +623,7 @@
           // Show Quill
           if (quillContainer) quillContainer.style.display = 'block';
           document.getElementById('quill-editor').style.display = 'block';
-          videoDesc.style.display = 'none';
+          videoDescGroup.style.display = 'none';
           document.getElementById('youtube-preview-container').style.display = 'none';
         }
       });
