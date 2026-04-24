@@ -63,14 +63,8 @@ const initArticle = async () => {
                 const ytId = extractYouTubeId(articleData.image);
                 if (ytId) {
                     mediaHtml = `
-                        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--glass-border); background: #000;">
-                            <iframe 
-                                src="https://www.youtube-nocookie.com/embed/${ytId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3" 
-                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
-                                frameborder="0" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                                allowfullscreen>
-                            </iframe>
+                        <div style="margin-bottom: 2rem; display: flex; justify-content: center; background: #000; border-radius: 12px; overflow: hidden;">
+                            <iframe width="560" height="315" src="https://www.youtube.com/embed/${ytId}?si=WbEbJXa3wuo0Sei-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                         </div>`;
                 } else {
                     mediaHtml = `<video src="${articleData.image.startsWith('http') ? articleData.image : '/' + articleData.image}" class="main-img" controls autoplay style="border-radius: 12px; margin-bottom: 2rem;"></video>`;

@@ -45,6 +45,7 @@ app.use(helmet({
     },
   },
   crossOriginEmbedderPolicy: false,
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" }
 }));
 app.use(cors());
 app.use(express.json({ limit: '1000gb' }));
