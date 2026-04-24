@@ -616,9 +616,8 @@
         const iframe = document.getElementById('youtube-preview-iframe');
         
         if (id) {
-          // Added origin for better compatibility with local/dev servers
-          const origin = window.location.origin;
-          iframe.src = `https://www.youtube.com/embed/${id}?rel=0&origin=${origin}`;
+          // Use youtube-nocookie.com for maximum compatibility
+          iframe.src = `https://www.youtube-nocookie.com/embed/${id}`;
           container.style.display = "block";
         } else {
           container.style.display = 'none';
