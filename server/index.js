@@ -33,13 +33,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      "frame-src": ["'self'", "https://www.youtube.com", "https://youtube.com"],
-      "img-src": ["'self'", "data:", "https://img.youtube.com", "https://i.ytimg.com"],
-    },
-  },
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
 }));
 app.use(cors());
