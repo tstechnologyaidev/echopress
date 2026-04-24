@@ -1,5 +1,3 @@
-import Plyr from 'plyr';
-import 'plyr/dist/plyr.css';
 import { categories } from './data.js';
 
 function getDisplayName(username) {
@@ -65,8 +63,14 @@ const initArticle = async () => {
                 const ytId = extractYouTubeId(articleData.image);
                 if (ytId) {
                     mediaHtml = `
-                        <div class="plyr__video-embed" id="player" style="border-radius: 12px; overflow: hidden; margin-bottom: 2rem; border: 1px solid var(--lp-gray-mid);">
-                            <iframe src="https://www.youtube-nocookie.com/embed/${ytId}?origin=${window.location.origin}&amp;iv_load_policy=3&amp;modestbranding=1&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;enablejsapi=1" allowfullscreen allowtransparency allow="autoplay"></iframe>
+                        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--glass-border); background: #000;">
+                            <iframe 
+                                src="https://www.youtube-nocookie.com/embed/${ytId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3" 
+                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                allowfullscreen>
+                            </iframe>
                         </div>`;
                 } else {
                     mediaHtml = `<video src="${articleData.image.startsWith('http') ? articleData.image : '/' + articleData.image}" class="main-img" controls autoplay style="border-radius: 12px; margin-bottom: 2rem;"></video>`;
@@ -95,14 +99,6 @@ const initArticle = async () => {
                 </div>
             </div>
         `;
-        
-        // Initialize Plyr if it's a video
-        if (articleData.category === 'videos' && typeof Plyr !== 'undefined') {
-            new Plyr('#player', {
-                settings: ['quality', 'speed'],
-                youtube: { noCookie: true, rel: 0, showinfo: 0, iv_load_policy: 3, modestbranding: 1 }
-            });
-        }
     } else if (contentContainer) {
         contentContainer.innerHTML = `<h1>Article introuvable</h1><p>Désolé, l'article demandé n'existe pas.</p>`;
     }
