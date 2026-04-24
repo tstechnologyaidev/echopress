@@ -930,11 +930,7 @@
           if (fileInput.files.length > 0) {
             const file = fileInput.files[0];
             
-            // Check for 50MB limit (Supabase free tier limit)
-            if (file.size > 50 * 1024 * 1024) {
-              throw new Error("Le fichier est trop volumineux (max 50 Mo pour la version actuelle). Veuillez compresser la vidéo.");
-            }
-
+            // No limit as requested
             imageUrl = await uploadMediaWithProgress(file);
           }
 

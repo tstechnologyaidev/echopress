@@ -36,8 +36,8 @@ app.use(helmet({
   contentSecurityPolicy: false, // disabled for inline scripts/styles if needed by Quill or frontend
 }));
 app.use(cors());
-app.use(express.json({ limit: '50000mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50000mb' }));
+app.use(express.json({ limit: '1000gb' }));
+app.use(express.urlencoded({ extended: true, limit: '1000gb' }));
 app.use(express.static(path.join(__dirname, '../dist')));
 
 const apiLimiter = rateLimit({
