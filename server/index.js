@@ -747,8 +747,8 @@ app.get('/api/weather', authenticateToken, async (req, res) => {
       return res.json(cachedWeather);
     }
 
-    // Fetch current + 7-day forecast
-    const meteoRes = await fetch("https://api.open-meteo.com/v1/forecast?latitude=45.5088&longitude=-73.5878&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=America/Toronto");
+    // Fetch current + 7-day forecast for Montreal
+    const meteoRes = await fetch("https://api.open-meteo.com/v1/forecast?latitude=45.5017&longitude=-73.5673&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=America/Toronto");
     if (!meteoRes.ok) throw new Error("Weather fetch failed");
     const data = await meteoRes.json();
 
