@@ -66,9 +66,6 @@ const initArticle = async () => {
                         <div style="margin: 20px 0; text-align: center;">
                             <iframe width="560" height="315" src="https://www.youtube.com/embed/${ytId}?si=WbEbJXa3wuo0Sei-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                             ${articleData.image_credit ? `<p class="img-credit" style="margin-top: 10px; opacity: 0.8;">Crédit vidéo : ${articleData.image_credit}</p>` : ''}
-                        </div>
-                        <div style="margin-top: 2rem; margin-bottom: 1rem;">
-                            <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid var(--glass-border); padding-bottom: 8px; display: inline-block;">Description</h3>
                         </div>`;
                 } else {
                     mediaHtml = `<video src="${articleData.image.startsWith('http') ? articleData.image : '/' + articleData.image}" class="main-img" controls autoplay style="border-radius: 12px; margin-bottom: 2rem;"></video>`;
