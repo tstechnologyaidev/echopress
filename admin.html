@@ -559,7 +559,7 @@
         const imgLabel = document.getElementById('label-image-file');
         const fileInput = document.getElementById('art-image-file');
         const creditGroup = document.getElementById('group-image-credit');
-        const quillContainer = document.querySelector('.ql-toolbar').parentElement;
+        const quillContainer = document.querySelector('.ql-toolbar') ? document.querySelector('.ql-toolbar').parentElement : null;
         const videoDesc = document.getElementById('art-video-desc');
 
         if (catVal === 'videos') {
@@ -655,7 +655,10 @@
           if (currentStatus === 'paused') {
             const res = await fetch(`/api/articles/${id}/status`, {
               method: 'PUT',
-              headers: {'Content-Type': 'application/json'},
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('echopress_token') || ''}`
+              },
               body: JSON.stringify({ status: 'published', reason: null })
             });
             if (!res.ok) throw new Error(await res.text());
@@ -665,7 +668,10 @@
             if (reason !== null) {
               const res = await fetch(`/api/articles/${id}/status`, {
                 method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${localStorage.getItem('echopress_token') || ''}`
+                },
                 body: JSON.stringify({ status: 'paused', reason })
               });
               if (!res.ok) throw new Error(await res.text());
@@ -690,14 +696,23 @@
       };
 
       async function fetchArticlesAdmin() {
-        const res = await fetch("/api/articles?includePaused=true");
+        const res = await fetch("/api/articles?includePaused=true", {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('echopress_token') || ''}`
+          }
+        });
         allArticles = await res.json();
         renderArticleList(allArticles);
       }
 
       window.deleteArticle = async (id) => {
         if(confirm("Êtes-vous sûr de vouloir supprimer cet article ?")) {
-          await fetch("/api/articles/" + id, { method: "DELETE" });
+          await fetch("/api/articles/" + id, { 
+            method: "DELETE",
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('echopress_token') || ''}`
+            }
+          });
           fetchArticlesAdmin();
         }
       };
@@ -838,7 +853,7 @@
         const fileInput = document.getElementById("art-image-file");
         if (fileInput.files.length > 0) {
           const formData = new FormData();
-          formData.append("media", fileInput.files[0]); // changed from image to media
+          formData.append("media", fileInput.files[0]);
           const uploadRes = await fetch("/api/upload", { 
             method: "POST", 
             headers: {
@@ -876,7 +891,10 @@
 
         const res = await fetch(url, {
           method: method,
-          headers: {"Content-Type": "application/json"},
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem('echopress_token') || ''}`
+          },
           body: JSON.stringify(payload)
         });
         if(res.ok) {
