@@ -238,6 +238,36 @@
       padding-bottom: 10px;
       border-radius: 0 8px 8px 0;
     }
+
+    /* Custom Context Menu */
+    #image-context-menu {
+      display: none;
+      position: absolute;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      z-index: 100000;
+      overflow: hidden;
+      min-width: 200px;
+    }
+    .ctx-item {
+      padding: 12px 20px;
+      cursor: pointer;
+      color: white;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .ctx-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .ctx-item-danger {
+      color: #ff4b2b;
+    }
+    .ctx-item-danger:hover {
+      background: rgba(255, 75, 43, 0.1);
+    }
   </style>
 </head>
 
@@ -337,6 +367,7 @@
               <option value="arts">Arts</option>
               <option value="cinema">Cinéma</option>
               <option value="societe">Société</option>
+              <option value="videos" id="cat-videos">Vidéos</option>
             </select>
           </div>
           <div class="form-group">
@@ -495,9 +526,137 @@
       }
     });
 
+    if (!window.isOwner) {
+      const vidOpt = document.getElementById('cat-videos');
+      if (vidOpt) {
+        vidOpt.disabled = true;
+        vidOpt.title = "Réservé aux propriétaires";
+      }
+    }
+
+    const BlockEmbed = Quill.import('blots/block/embed');
+    class VideoBlot extends BlockEmbed {
+      static create(value) {
+        let node = super.create();
+        node.setAttribute('src', value);
+        node.setAttribute('controls', true);
+        node.setAttribute('width', '100%');
+        node.style.borderRadius = '8px';
+        node.style.marginTop = '10px';
+        node.style.marginBottom = '10px';
+        return node;
+      }
+      static value(node) {
+        return node.getAttribute('src');
+      }
+    }
+    VideoBlot.blotName = 'customVideo';
+    VideoBlot.tagName = 'video';
+    Quill.register(VideoBlot);
+
+    const ImageBlot = Quill.import('formats/image');
+    class CustomImage extends ImageBlot {
+      static formats(node) {
+        return {
+          float: node.style.float,
+          width: node.style.width,
+          margin: node.style.margin,
+          display: node.style.display
+        };
+      }
+      format(name, value) {
+        if (['float', 'width', 'margin', 'display'].includes(name)) {
+          if (value) {
+            this.domNode.style[name] = value;
+          } else {
+            this.domNode.style[name] = '';
+          }
+        } else {
+          super.format(name, value);
+        }
+      }
+    }
+    Quill.register(CustomImage, true);
+
+    async function handleMediaUpload(file) {
+      const formData = new FormData();
+      formData.append('media', file);
+      
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('echopress_token') || ''}`
+        },
+        body: formData
+      });
+      
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || 'Erreur lors du téléversement');
+      }
+      const data = await res.json();
+      return data.url;
+    }
+
+    function imageHandler() {
+      const input = document.createElement('input');
+      input.setAttribute('type', 'file');
+      input.setAttribute('accept', 'image/*');
+      input.click();
+
+      input.onchange = async () => {
+        const file = input.files[0];
+        if (file) {
+          try {
+            const url = await handleMediaUpload(file);
+            const range = quill.getSelection(true);
+            quill.insertEmbed(range.index, 'image', url);
+            quill.setSelection(range.index + 1);
+          } catch (e) {
+            alert(e.message);
+          }
+        }
+      };
+    }
+
+    function videoHandler() {
+      const input = document.createElement('input');
+      input.setAttribute('type', 'file');
+      input.setAttribute('accept', 'video/*');
+      input.click();
+
+      input.onchange = async () => {
+        const file = input.files[0];
+        if (file) {
+          try {
+            const url = await handleMediaUpload(file);
+            const range = quill.getSelection(true);
+            quill.insertEmbed(range.index, 'customVideo', url);
+            quill.setSelection(range.index + 1);
+          } catch (e) {
+            alert(e.message);
+          }
+        }
+      };
+    }
+
     const quill = new Quill("#quill-editor", {
       theme: "snow",
       modules: {
+        toolbar: {
+          container: [
+            ['bold', 'italic', 'underline', 'strike'],
+            ['blockquote'],
+            [{ 'header': 1 }, { 'header': 2 }],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['link', 'image', 'video'],
+            ['clean']
+          ],
+          handlers: {
+            image: imageHandler,
+            video: videoHandler
+          }
+        },
         keyboard: {
           bindings: {
             'exit-blockquote': {
@@ -529,6 +688,85 @@
         if (text === '>') {
           quill.deleteText(selection.index - 1, 1);
           quill.formatLine(selection.index - 1, 1, 'blockquote', true);
+        }
+      }
+    });
+
+    // Custom context menu logic
+    let targetImageNode = null;
+    const contextMenu = document.createElement('div');
+    contextMenu.id = 'image-context-menu';
+    contextMenu.innerHTML = `
+      <div class="ctx-item" id="ctx-full">Mettre en pleine largeur</div>
+      <div class="ctx-item" id="ctx-left">Aligner à gauche</div>
+      <div class="ctx-item" id="ctx-right">Aligner à droite</div>
+      <div class="ctx-item ctx-item-danger" id="ctx-delete">Supprimer l'image</div>
+    `;
+    document.body.appendChild(contextMenu);
+
+    document.addEventListener('click', () => {
+      contextMenu.style.display = 'none';
+    });
+
+    document.getElementById('quill-editor').addEventListener('contextmenu', (e) => {
+      if (e.target.tagName === 'IMG') {
+        e.preventDefault();
+        targetImageNode = e.target;
+        
+        // Use getSelection() to position correctly, or just use mouse coordinates
+        contextMenu.style.display = 'block';
+        contextMenu.style.left = e.pageX + 'px';
+        contextMenu.style.top = e.pageY + 'px';
+      }
+    });
+
+    function getQuillBlot(node) {
+      return Quill.find(node);
+    }
+
+    document.getElementById('ctx-full').addEventListener('click', () => {
+      if (targetImageNode) {
+        const blot = getQuillBlot(targetImageNode);
+        if (blot) {
+          blot.format('float', 'none');
+          blot.format('width', '100%');
+          blot.format('margin', '10px 0');
+          blot.format('display', 'block');
+        }
+      }
+    });
+
+    document.getElementById('ctx-left').addEventListener('click', () => {
+      if (targetImageNode) {
+        const blot = getQuillBlot(targetImageNode);
+        if (blot) {
+          blot.format('float', 'left');
+          blot.format('width', '50%');
+          blot.format('margin', '10px 15px 10px 0');
+          blot.format('display', 'block');
+        }
+      }
+    });
+
+    document.getElementById('ctx-right').addEventListener('click', () => {
+      if (targetImageNode) {
+        const blot = getQuillBlot(targetImageNode);
+        if (blot) {
+          blot.format('float', 'right');
+          blot.format('width', '50%');
+          blot.format('margin', '10px 0 10px 15px');
+          blot.format('display', 'block');
+        }
+      }
+    });
+
+    document.getElementById('ctx-delete').addEventListener('click', () => {
+      if (targetImageNode) {
+        const blot = getQuillBlot(targetImageNode);
+        if (blot) {
+          blot.deleteAt(0, 1);
+        } else {
+          targetImageNode.remove();
         }
       }
     });
@@ -644,8 +882,14 @@
       const fileInput = document.getElementById("art-image-file");
       if (fileInput.files.length > 0) {
         const formData = new FormData();
-        formData.append("image", fileInput.files[0]);
-        const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+        formData.append("media", fileInput.files[0]);
+        const uploadRes = await fetch("/api/upload", { 
+          method: "POST", 
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('echopress_token') || ''}`
+          },
+          body: formData 
+        });
         if (uploadRes.ok) {
           const data = await uploadRes.json();
           imageUrl = data.url;

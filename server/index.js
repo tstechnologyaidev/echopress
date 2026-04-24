@@ -59,8 +59,12 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Configure Multer (memory storage — buffer sent directly to Supabase, no disk write)
-const upload = multer({ storage: multer.memoryStorage() });
+// Configure Multer (disk storage to support large videos)
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+const upload = multer({ dest: uploadDir });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_echopress_key_2026';
 
@@ -443,32 +447,47 @@ app.get('/api/popular', authenticateToken, async (req, res) => {
   }
 });
 
-// Upload API — stores image in Supabase Storage (persists across Render restarts)
-app.post('/api/upload', authenticateToken, requireStaff, upload.single('image'), async (req, res) => {
+// Upload API — stores media in Supabase Storage (persists across Render restarts)
+app.post('/api/upload', authenticateToken, requireStaff, upload.single('media'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
   try {
     const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(req.file.originalname)}`;
+    const fileBuffer = fs.readFileSync(req.file.path);
     const { data, error } = await supabase.storage
       .from('images')
-      .upload(uniqueName, req.file.buffer, {
+      .upload(uniqueName, fileBuffer, {
         contentType: req.file.mimetype,
         upsert: false
       });
+      
+    // Clean up temp file
+    if (fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    
     if (error) {
       console.error('Supabase upload error:', error.message);
-      return res.status(500).json({ error: 'Image upload to Supabase failed: ' + error.message });
+      return res.status(500).json({ error: 'Upload to Supabase failed: ' + error.message });
     }
     const { data: publicData } = supabase.storage.from('images').getPublicUrl(uniqueName);
     res.json({ url: publicData.publicUrl });
   } catch (err) {
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
     res.status(500).json({ error: err.message });
   }
 });
 
 app.post('/api/articles', authenticateToken, requireStaff, async (req, res) => {
   const { title, summary, category, sub_category, author, surtitle, image, image_credit, published_time, author_username } = req.body;
+  
+  if (category === 'videos' && req.user.role !== 'owner') {
+    return res.status(403).json({ error: 'Seuls les propriétaires peuvent publier dans la catégorie Vidéos.' });
+  }
+
   const id = Date.now().toString();
   try {
     const article = await createArticle(id, category, sub_category, author, surtitle, title, summary, published_time, image, image_credit, author_username);
@@ -489,6 +508,11 @@ app.post('/api/articles', authenticateToken, requireStaff, async (req, res) => {
 
 app.put('/api/articles/:id', authenticateToken, requireStaff, async (req, res) => {
   const { title, summary, category, sub_category, author, surtitle, image, image_credit, published_time, modified_by } = req.body;
+  
+  if (category === 'videos' && req.user.role !== 'owner') {
+    return res.status(403).json({ error: 'Seuls les propriétaires peuvent publier dans la catégorie Vidéos.' });
+  }
+
   try {
     await updateArticle(req.params.id, category, sub_category, author, surtitle, title, summary, image, image_credit, published_time, modified_by);
 

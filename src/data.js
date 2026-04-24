@@ -38,6 +38,11 @@ export const categories = [
         id: 'societe', 
         label: 'Société',
         subCategories: ['Chroniques', 'Santé', 'Famille', 'Mode et beauté', 'Sexualité', 'Animaux']
+    },
+    {
+        id: 'videos',
+        label: 'Vidéos',
+        subCategories: ['Reportages', 'Entrevues', 'En direct', 'Documentaires']
     }
 ];
 
