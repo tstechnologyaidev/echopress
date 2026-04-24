@@ -573,22 +573,51 @@
           const modText = a.modified_at ? ` &bull; Modifié le ${a.modified_at}${a.modified_by ? ' par ' + a.modified_by : ''}` : '';
           const reasonText = isPaused && a.suspension_reason ? `<div style="font-size:11px; color:#ff4d4d; margin-top:4px;"><strong>Raison de pause :</strong> ${a.suspension_reason}</div>` : '';
 
+          const priority = a.priority || 0;
+
           div.innerHTML = `
-            <div>
+            <div style="flex: 1;">
               <h4 style="${isPaused ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${a.title} ${isPaused ? '<small>(PAUSÉ)</small>' : ''}</h4>
               <span style="font-size:12px; color:#666;">${a.category}${a.sub_category ? ' / ' + a.sub_category : ''} &mdash; Par ${authorText}</span>
               <div style="font-size:11px; color:#999; margin-top:4px;">${pubText}${modText}</div>
               ${reasonText}
             </div>
-            <div style="display: flex; gap: 5px;">
-              <button class="btn" style="padding: 6px 12px; font-size: 14px; background: ${isPaused ? '#444' : ''};" onclick="window.toggleArticleStatus('${a.id}', '${a.status}')">${isPaused ? '▶ Reprendre' : '⏸ Pauser'}</button>
-              <button class="btn" style="padding: 6px 12px; font-size: 14px;" onclick="window.editArticle('${a.id}')">&#9998; Éditer</button>
-              <button class="btn btn-danger" style="padding: 6px 12px; font-size: 14px;" onclick="window.deleteArticle('${a.id}')">Supprimer</button>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+               <div style="display: flex; align-items: center; gap: 8px;">
+                 <span style="font-size: 11px; color: var(--text-dim);">Priorité:</span>
+                 <input type="number" id="prio-${a.id}" value="${priority}" style="width: 45px; padding: 4px; border-radius: 4px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; text-align: center; font-size: 12px;">
+                 <button class="btn" style="padding: 4px 8px; font-size: 11px; background: #2ecc7133; color: #2ecc71; border: 1px solid #2ecc7133;" onclick="window.updateArticlePriority('${a.id}')">⭐</button>
+               </div>
+               <div style="display: flex; gap: 5px;">
+                 <button class="btn" style="padding: 6px 12px; font-size: 12px; background: ${isPaused ? '#444' : ''};" onclick="window.toggleArticleStatus('${a.id}', '${a.status}')">${isPaused ? '▶ Reprendre' : '⏸ Pauser'}</button>
+                 <button class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="window.editArticle('${a.id}')">&#9998; Éditer</button>
+                 <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;" onclick="window.deleteArticle('${a.id}')">Supprimer</button>
+               </div>
             </div>
           `;
           list.appendChild(div);
         });
       }
+
+      window.updateArticlePriority = async (id) => {
+        const priority = document.getElementById(`prio-${id}`).value;
+        const token = localStorage.getItem('echopress_token');
+        try {
+          const res = await fetch(`/api/articles/${id}/priority`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ priority })
+          });
+          if (res.ok) {
+            fetchArticlesAdmin();
+          } else {
+            alert("Erreur lors de la mise à jour de l'ordre.");
+          }
+        } catch (e) { alert("Erreur: " + e.message); }
+      };
 
       window.toggleArticleStatus = async (id, currentStatus) => {
         try {

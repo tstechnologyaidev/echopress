@@ -525,6 +525,16 @@ app.put('/api/articles/:id/status', authenticateToken, requireOwnerOrSupervisor,
   }
 });
 
+app.put('/api/articles/:id/priority', authenticateToken, requireOwnerOrSupervisor, async (req, res) => {
+  const { priority } = req.body;
+  try {
+    await updateArticlePriority(req.params.id, Number(priority));
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Archives API
 app.get('/api/archives', authenticateToken, requireStaff, async (req, res) => {
   try {

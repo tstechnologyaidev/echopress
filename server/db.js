@@ -86,7 +86,8 @@ export const updateUserNotes = async (id, notes) => {
 
 // Articles API
 export const getArticles = async (includePaused = true) => {
-  let query = supabase.from('articles').select('*').order('id', { ascending: false });
+  // Primary sort: priority (high to low), Secondary sort: id (newest first)
+  let query = supabase.from('articles').select('*').order('priority', { ascending: false }).order('id', { ascending: false });
   if (!includePaused) {
     query = query.eq('status', 'published');
   }
@@ -164,6 +165,11 @@ export const incrementArticleViews = async (id) => {
   const { data: article } = await supabase.from('articles').select('views').eq('id', id).single();
   const newViews = (article?.views || 0) + 1;
   const { error } = await supabase.from('articles').update({ views: newViews }).eq('id', id);
+  if (error) throw error;
+};
+
+export const updateArticlePriority = async (id, priority) => {
+  const { error } = await supabase.from('articles').update({ priority }).eq('id', id);
   if (error) throw error;
 };
 
