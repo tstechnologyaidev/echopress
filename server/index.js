@@ -33,7 +33,14 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(helmet({
-  contentSecurityPolicy: false, // disabled for inline scripts/styles if needed by Quill or frontend
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "frame-src": ["'self'", "https://www.youtube.com", "https://youtube.com"],
+      "img-src": ["'self'", "data:", "https://img.youtube.com", "https://i.ytimg.com"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
 }));
 app.use(cors());
 app.use(express.json({ limit: '1000gb' }));
