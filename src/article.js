@@ -60,8 +60,8 @@ const initArticle = async () => {
                    Modifié par <strong>${getDisplayName(articleData.modified_by)}</strong> • ${articleData.modified_at}
                  </div>` : ''}
             </div>
-            ${articleData.image ? `<img src="${articleData.image.startsWith('http') ? articleData.image : '/' + articleData.image}" alt="${articleData.title}" class="main-img">` : ''}
-            ${articleData.image_credit ? `<p style="font-size: 0.75rem; color: var(--text-dim); margin-top: -1rem; margin-bottom: 2rem; text-align: right;">Photo: ${articleData.image_credit}</p>` : ''}
+            ${articleData.image ? (articleData.category === 'videos' ? `<video src="${articleData.image.startsWith('http') ? articleData.image : '/' + articleData.image}" class="main-img" controls autoplay style="border-radius: 12px; margin-bottom: 2rem;"></video>` : `<img src="${articleData.image.startsWith('http') ? articleData.image : '/' + articleData.image}" alt="${articleData.title}" class="main-img">`) : ''}
+            ${articleData.image_credit ? `<p style="font-size: 0.75rem; color: var(--text-dim); margin-top: -1rem; margin-bottom: 2rem; text-align: right;">Photo/Vidéo: ${articleData.image_credit}</p>` : ''}
             <div class="content">
                 <div style="font-weight: 500; font-size: 1.2rem; color: var(--text-main); margin-bottom: 2rem; border-left: 4px solid var(--accent); padding-left: 1.5rem;">
                    ${articleData.summary}

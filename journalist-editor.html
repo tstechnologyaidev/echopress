@@ -376,21 +376,23 @@
               <option value="">-- Sélectionner une catégorie d'abord --</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>Image (fichier uploader)</label>
+          <div class="form-group" id="group-image-file">
+            <label id="label-image-file">Image (fichier uploader)</label>
             <input type="file" id="art-image-file" accept="image/*">
             <div id="image-preview-container" style="margin-top: 10px; display: none;">
               <img id="image-preview" src=""
                 style="max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid var(--lp-gray-mid);">
             </div>
+            <video id="video-preview" src="" controls style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid var(--glass-border); display: none; margin-top: 10px;"></video>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="group-image-credit">
             <label>Crédit photo (optionnel)</label>
             <input type="text" id="art-image-credit" placeholder="ex: Agence QMI">
           </div>
-          <div class="form-group">
+          <div class="form-group" id="group-article-content">
             <label>Contenu de l'article</label>
             <div id="quill-editor" style="height: 300px; background-color: var(--lp-white);"></div>
+            <textarea id="art-video-desc" rows="6" placeholder="Description de la vidéo (optionnelle)" style="width: 100%; padding: 12px; font-family: inherit; border: 1px solid var(--glass-border); border-radius: 12px; background: #121212; color: white; display: none;"></textarea>
           </div>
           <div style="margin-top: 30px;">
             <a href="journalist.html" class="btn-back">Annuler</a>
@@ -511,7 +513,8 @@
     const subCategorySelect = document.getElementById("art-sub-category");
 
     categorySelect.addEventListener("change", (e) => {
-      const cat = categories.find(c => c.id === e.target.value);
+      const catVal = e.target.value;
+      const cat = categories.find(c => c.id === catVal);
       subCategorySelect.innerHTML = "<option value=''>-- Sélectionner une sous-catégorie --</option>";
       if (cat && cat.subCategories) {
         cat.subCategories.forEach(sub => {
@@ -523,6 +526,33 @@
         subCategorySelect.disabled = false;
       } else {
         subCategorySelect.disabled = true;
+      }
+
+      // Handle video mode toggle
+      const imgLabel = document.getElementById('label-image-file');
+      const fileInput = document.getElementById('art-image-file');
+      const creditGroup = document.getElementById('group-image-credit');
+      const quillContainer = document.querySelector('.ql-toolbar').parentElement;
+      const videoDesc = document.getElementById('art-video-desc');
+
+      if (catVal === 'videos') {
+        imgLabel.textContent = 'Fichier Vidéo (obligatoire)';
+        fileInput.accept = 'video/*';
+        creditGroup.style.display = 'none';
+        
+        // Hide Quill
+        if (quillContainer) quillContainer.style.display = 'none';
+        document.getElementById('quill-editor').style.display = 'none';
+        videoDesc.style.display = 'block';
+      } else {
+        imgLabel.textContent = 'Image (fichier uploader)';
+        fileInput.accept = 'image/*';
+        creditGroup.style.display = 'block';
+        
+        // Show Quill
+        if (quillContainer) quillContainer.style.display = 'block';
+        document.getElementById('quill-editor').style.display = 'block';
+        videoDesc.style.display = 'none';
       }
     });
 
@@ -773,8 +803,21 @@
 
     document.getElementById("art-image-file").addEventListener("change", (e) => {
       if (e.target.files && e.target.files[0]) {
-        document.getElementById("image-preview").src = URL.createObjectURL(e.target.files[0]);
-        document.getElementById("image-preview-container").style.display = "block";
+        const file = e.target.files[0];
+        const isVideo = file.type.startsWith('video/');
+        const url = URL.createObjectURL(file);
+        
+        if (isVideo) {
+          document.getElementById("image-preview-container").style.display = "none";
+          const vidPreview = document.getElementById("video-preview");
+          vidPreview.src = url;
+          vidPreview.style.display = "block";
+        } else {
+          document.getElementById("video-preview").style.display = "none";
+          const imgPreview = document.getElementById("image-preview");
+          imgPreview.src = url;
+          document.getElementById("image-preview-container").style.display = "block";
+        }
       }
     });
 
@@ -822,6 +865,9 @@
         document.getElementById('art-category').value = art.category || '';
         document.getElementById('art-image-credit').value = art.image_credit || '';
 
+        // Manually dispatch change event to trigger UI changes for 'videos'
+        categorySelect.dispatchEvent(new Event('change'));
+
         // Trigger sub-category population
         const cat = categories.find(c => c.id === art.category);
         const subCategorySelect = document.getElementById('art-sub-category');
@@ -837,12 +883,22 @@
           subCategorySelect.disabled = false;
         }
 
-        quill.root.innerHTML = art.summary || '';
+        if (art.category === 'videos') {
+          document.getElementById('art-video-desc').value = art.summary || '';
+        } else {
+          quill.root.innerHTML = art.summary || '';
+        }
 
         if (art.image) {
           const imgSrc = art.image.startsWith('http') ? art.image : '/' + art.image;
-          document.getElementById('image-preview').src = imgSrc;
-          document.getElementById('image-preview-container').style.display = 'block';
+          if (art.category === 'videos') {
+            const vidPreview = document.getElementById("video-preview");
+            vidPreview.src = imgSrc;
+            vidPreview.style.display = "block";
+          } else {
+            document.getElementById('image-preview').src = imgSrc;
+            document.getElementById('image-preview-container').style.display = 'block';
+          }
         }
 
         // Check if this edit is via an approval request
@@ -904,7 +960,7 @@
         sub_category: document.getElementById("art-sub-category").value,
         image: imageUrl,
         image_credit: document.getElementById("art-image-credit").value,
-        summary: quill.root.innerHTML,
+        summary: document.getElementById("art-category").value === 'videos' ? document.getElementById("art-video-desc").value : quill.root.innerHTML,
         published_time: editingId ? originalPublishedTime : getFormattedTimestamp()
       };
 
