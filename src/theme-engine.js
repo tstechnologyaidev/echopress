@@ -1,3 +1,5 @@
+import './widgets.js';
+
 const getSeason = () => {
     // Get month in Montreal time (1-12)
     const montrealMonthStr = new Intl.DateTimeFormat('en-US', { 
