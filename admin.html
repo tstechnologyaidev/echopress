@@ -328,6 +328,16 @@
               <div id="quill-editor" style="height: 200px; background-color: var(--lp-white);"></div>
               <textarea id="art-video-desc" rows="6" placeholder="Description de la vidéo (optionnelle)" style="width: 100%; padding: 12px; font-family: inherit; border: 1px solid var(--glass-border); border-radius: 12px; background: #121212; color: white; display: none;"></textarea>
             </div>
+            
+            <div id="upload-progress-container" style="display: none; margin-top: 20px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-size: 13px; color: var(--text-dim);" id="upload-status-text">Téléversement : 0%</span>
+                <span style="font-size: 13px; color: var(--text-dim);" id="upload-progress-percent">0%</span>
+              </div>
+              <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                <div id="upload-progress-bar" style="width: 0%; height: 100%; background: var(--gradient); transition: width 0.3s ease;"></div>
+              </div>
+            </div>
             <button type="submit" id="submit-btn-form" class="btn" style="margin-top: 20px;">Publier l'article</button>
           </form>
 
@@ -846,38 +856,87 @@
         return `Publié le ${dateStr} à ${timeStr}`;
       }
 
+      function uploadMediaWithProgress(file) {
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          const formData = new FormData();
+          formData.append("media", file);
+
+          const progressContainer = document.getElementById("upload-progress-container");
+          const progressBar = document.getElementById("upload-progress-bar");
+          const progressText = document.getElementById("upload-progress-percent");
+          const statusText = document.getElementById("upload-status-text");
+
+          progressContainer.style.display = "block";
+          statusText.textContent = "Téléversement vers le serveur...";
+
+          xhr.upload.addEventListener("progress", (e) => {
+            if (e.lengthComputable) {
+              const percent = Math.round((e.loaded / e.total) * 100);
+              progressBar.style.width = percent + "%";
+              progressText.textContent = percent + "%";
+              
+              if (percent === 100) {
+                statusText.textContent = "Traitement final par le serveur (patientez)...";
+              }
+            }
+          });
+
+          xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4) {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  const data = JSON.parse(xhr.responseText);
+                  resolve(data.url);
+                } catch (e) {
+                  reject("Erreur de réponse du serveur");
+                }
+              } else {
+                let errorMsg = "Erreur de téléversement";
+                try {
+                  const data = JSON.parse(xhr.responseText);
+                  errorMsg = data.error || errorMsg;
+                } catch (e) {}
+                reject(errorMsg);
+              }
+            }
+          };
+
+          xhr.onerror = () => reject("Erreur réseau");
+          
+          xhr.open("POST", "/api/upload");
+          xhr.setRequestHeader("Authorization", `Bearer ${localStorage.getItem('echopress_token') || ''}`);
+          xhr.send(formData);
+        });
+      }
+
       document.getElementById("create-article-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         
         const submitBtn = document.getElementById("submit-btn-form");
         const originalBtnText = submitBtn.textContent;
+        const progressContainer = document.getElementById("upload-progress-container");
+        const progressBar = document.getElementById("upload-progress-bar");
+        const progressText = document.getElementById("upload-progress-percent");
+
         submitBtn.disabled = true;
-        submitBtn.textContent = "⏳ Téléversement en cours, veuillez patienter...";
+        submitBtn.textContent = "⏳ Action en cours...";
         submitBtn.style.opacity = "0.7";
-        submitBtn.style.cursor = "not-allowed";
 
         try {
           let imageUrl = document.getElementById("art-existing-image").value;
-        const fileInput = document.getElementById("art-image-file");
-        if (fileInput.files.length > 0) {
-          const formData = new FormData();
-          formData.append("media", fileInput.files[0]);
-          const uploadRes = await fetch("/api/upload", { 
-            method: "POST", 
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('echopress_token') || ''}`
-            },
-            body: formData 
-          });
-          if(uploadRes.ok) {
-            const data = await uploadRes.json();
-            imageUrl = data.url;
-          } else {
-            let errMsg = 'Erreur inconnue';
-            try { const d = await uploadRes.json(); errMsg = d.error || d; } catch(ex) {}
-            throw new Error('Échec du téléversement du média : ' + errMsg);
+          const fileInput = document.getElementById("art-image-file");
+          
+          if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            
+            // Check for 50MB limit (Supabase free tier limit)
+            if (file.size > 50 * 1024 * 1024) {
+              throw new Error("Le fichier est trop volumineux (max 50 Mo pour la version actuelle). Veuillez compresser la vidéo.");
+            }
+
+            imageUrl = await uploadMediaWithProgress(file);
           }
-        }
 
         const editingId = document.getElementById("art-id").value;
         const method = editingId ? "PUT" : "POST";
@@ -917,6 +976,8 @@
           document.getElementById("submit-btn-form").textContent = "Publier l'article";
           document.getElementById("form-title-display").textContent = "Créer un nouvel article";
           document.getElementById("image-preview-container").style.display = "none";
+          document.getElementById("video-preview").style.display = "none";
+          progressContainer.style.display = "none";
           subCategorySelect.innerHTML = '<option value="">-- Sélectionner une catégorie d\'abord --</option>';
           subCategorySelect.disabled = true;
           quill.setContents([]);
@@ -931,13 +992,19 @@
         
         } catch (error) {
           console.error(error);
-          alert('Une erreur est survenue pendant le téléversement.');
+          alert('Erreur : ' + (error.message || error));
         } finally {
           // Restore button state
           submitBtn.disabled = false;
           submitBtn.textContent = originalBtnText;
           submitBtn.style.opacity = "1";
           submitBtn.style.cursor = "pointer";
+          // We keep the progress bar visible if it failed so user sees where it stopped
+          if (submitBtn.textContent === originalBtnText) {
+             // actually hide it if we are done or failed
+             progressContainer.style.display = "none";
+             progressBar.style.width = "0%";
+          }
         }
       });
 

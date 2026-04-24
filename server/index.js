@@ -36,7 +36,8 @@ app.use(helmet({
   contentSecurityPolicy: false, // disabled for inline scripts/styles if needed by Quill or frontend
 }));
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50000mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50000mb' }));
 app.use(express.static(path.join(__dirname, '../dist')));
 
 const apiLimiter = rateLimit({
@@ -454,7 +455,7 @@ app.post('/api/upload', authenticateToken, requireStaff, upload.single('media'),
   }
   try {
     const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(req.file.originalname)}`;
-    
+
     // Use stream to prevent Out-Of-Memory errors with large videos
     const fileStream = fs.createReadStream(req.file.path);
     const { data, error } = await supabase.storage
@@ -464,12 +465,12 @@ app.post('/api/upload', authenticateToken, requireStaff, upload.single('media'),
         upsert: false,
         duplex: 'half'
       });
-      
+
     // Clean up temp file
     if (fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
-    
+
     if (error) {
       console.error('Supabase upload error:', error.message);
       return res.status(500).json({ error: 'Upload to Supabase failed: ' + error.message });
@@ -486,7 +487,7 @@ app.post('/api/upload', authenticateToken, requireStaff, upload.single('media'),
 
 app.post('/api/articles', authenticateToken, requireStaff, async (req, res) => {
   const { title, summary, category, sub_category, author, surtitle, image, image_credit, published_time, author_username } = req.body;
-  
+
   if (category === 'videos' && req.user.role !== 'owner') {
     return res.status(403).json({ error: 'Seuls les propriétaires peuvent publier dans la catégorie Vidéos.' });
   }
@@ -511,7 +512,7 @@ app.post('/api/articles', authenticateToken, requireStaff, async (req, res) => {
 
 app.put('/api/articles/:id', authenticateToken, requireStaff, async (req, res) => {
   const { title, summary, category, sub_category, author, surtitle, image, image_credit, published_time, modified_by } = req.body;
-  
+
   if (category === 'videos' && req.user.role !== 'owner') {
     return res.status(403).json({ error: 'Seuls les propriétaires peuvent publier dans la catégorie Vidéos.' });
   }
@@ -823,6 +824,11 @@ app.use((req, res, next) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server API listening on port ${PORT}`);
 });
+
+// Set global timeout to 10 minutes for large video uploads
+server.timeout = 600000;
+server.keepAliveTimeout = 600000;
+server.headersTimeout = 610000;
