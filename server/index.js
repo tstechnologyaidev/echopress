@@ -37,14 +37,15 @@ app.use(helmet({
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
       "img-src": ["'self'", "data:", "blob:", "https://*.supabase.co", "https://*.youtube.com", "https://*.ytimg.com"],
-      "script-src": ["'self'", "'unsafe-inline'", "https://*.youtube.com", "https://www.youtube.com", "https://s.ytimg.com"],
-      "frame-src": ["'self'", "https://*.youtube.com", "https://www.youtube-nocookie.com", "https://*.youtube-nocookie.com"],
+      "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.youtube.com", "https://www.youtube.com", "https://s.ytimg.com", "https://cdn.quilljs.com"],
+      "frame-src": ["'self'", "https://*.youtube.com", "https://www.youtube.com", "https://www.youtube-nocookie.com"],
       "connect-src": ["'self'", "https://*.supabase.co", "https://vitals.vercel-insights.com"],
       "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
-      "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"]
+      "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.quilljs.com"]
     },
   },
   crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
   referrerPolicy: { policy: "strict-origin-when-cross-origin" }
 }));
 app.use(cors());

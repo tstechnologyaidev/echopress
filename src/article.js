@@ -63,7 +63,7 @@ const initArticle = async () => {
                 const ytId = extractYouTubeId(articleData.image);
                 if (ytId) {
                     mediaHtml = `
-                        <div style="margin-bottom: 2rem; display: flex; justify-content: center; background: #000; border-radius: 12px; overflow: hidden;">
+                        <div style="margin: 20px 0; text-align: center;">
                             <iframe width="560" height="315" src="https://www.youtube.com/embed/${ytId}?si=WbEbJXa3wuo0Sei-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                         </div>`;
                 } else {
