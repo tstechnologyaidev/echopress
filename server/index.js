@@ -32,10 +32,20 @@ console.log("Process started. Initializing server...");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// app.use(helmet({
-//   contentSecurityPolicy: false,
-//   crossOriginEmbedderPolicy: false,
-// }));
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "img-src": ["'self'", "data:", "blob:", "https://*.supabase.co", "https://*.youtube.com", "https://*.ytimg.com"],
+      "script-src": ["'self'", "'unsafe-inline'", "https://*.youtube.com", "https://www.youtube.com", "https://s.ytimg.com"],
+      "frame-src": ["'self'", "https://*.youtube.com", "https://www.youtube-nocookie.com", "https://*.youtube-nocookie.com"],
+      "connect-src": ["'self'", "https://*.supabase.co", "https://vitals.vercel-insights.com"],
+      "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
+      "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"]
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
 app.use(cors());
 app.use(express.json({ limit: '1000gb' }));
 app.use(express.urlencoded({ extended: true, limit: '1000gb' }));
