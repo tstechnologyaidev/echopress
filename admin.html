@@ -616,8 +616,9 @@
         const iframe = document.getElementById('youtube-preview-iframe');
         
         if (id) {
-          iframe.src = `https://www.youtube.com/embed/${id}`;
-          container.style.display = 'block';
+          // Added rel=0 to show only related videos from the same channel
+          iframe.src = `https://www.youtube.com/embed/${id}?rel=0`;
+          container.style.display = "block";
         } else {
           container.style.display = 'none';
           iframe.src = '';

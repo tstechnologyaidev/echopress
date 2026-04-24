@@ -32,6 +32,7 @@ export default defineConfig({
         'journalist-editor': path.resolve(__dirname, 'journalist-editor.html'),
         archives: path.resolve(__dirname, 'archives.html'),
         maintenance: path.resolve(__dirname, 'maintenance.html'),
+        normes: path.resolve(__dirname, 'normes.html'),
       }
     }
   }

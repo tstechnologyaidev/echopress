@@ -64,7 +64,7 @@ const initArticle = async () => {
                 if (ytId) {
                     mediaHtml = `
                         <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--lp-gray-mid);">
-                            <iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            <iframe src="https://www.youtube.com/embed/${ytId}?rel=0" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                         </div>`;
                 } else {
                     mediaHtml = `<video src="${articleData.image.startsWith('http') ? articleData.image : '/' + articleData.image}" class="main-img" controls autoplay style="border-radius: 12px; margin-bottom: 2rem;"></video>`;
