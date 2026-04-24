@@ -32,10 +32,10 @@ console.log("Process started. Initializing server...");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false,
-}));
+// app.use(helmet({
+//   contentSecurityPolicy: false,
+//   crossOriginEmbedderPolicy: false,
+// }));
 app.use(cors());
 app.use(express.json({ limit: '1000gb' }));
 app.use(express.urlencoded({ extended: true, limit: '1000gb' }));
