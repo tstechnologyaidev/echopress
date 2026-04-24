@@ -68,7 +68,7 @@ const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    
+
     // If no token or explicitly null/undefined, we assign a temporary public role for non-sensitive GET requests
     if (!token || token === 'null' || token === 'undefined') {
       const isSensitive = req.path.includes('/admin') || req.path.includes('/users') || req.path.includes('/notifications') || req.path.includes('/settings');
@@ -80,14 +80,14 @@ const authenticateToken = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET, { ignoreExpiration: true });
-    
+
     // Check for Maintenance Mode
     const maintenanceMode = await getSetting('maintenance_mode');
     if (maintenanceMode && maintenanceMode.value === 'true' && decoded.role !== 'owner') {
       const reason = await getSetting('maintenance_reason');
-      return res.status(503).json({ 
-        error: 'Maintenance en cours', 
-        reason: reason ? reason.value : 'Le site est en maintenance.' 
+      return res.status(503).json({
+        error: 'Maintenance en cours',
+        reason: reason ? reason.value : 'Le site est en maintenance.'
       });
     }
 
@@ -95,23 +95,23 @@ const authenticateToken = async (req, res, next) => {
     if (decoded.role !== 'public') {
       console.log(`[AUTH CHECK] User: ${decoded.username}, Role: ${decoded.role}`);
       const user = await getUserByUsername(decoded.username);
-      
+
       if (!user) {
         console.log(`[AUTH FAIL] User not found: ${decoded.username}`);
         return res.status(401).json({ error: 'Compte inexistant ou supprimé.' });
       }
 
       if (user.status === 'suspended') {
-        return res.status(403).json({ 
-          error: 'Compte suspendu', 
-          reason: user.punishment_reason || 'Aucune raison spécifiée.' 
+        return res.status(403).json({
+          error: 'Compte suspendu',
+          reason: user.punishment_reason || 'Aucune raison spécifiée.'
         });
       }
-      
+
       // RESTORED: Token version check is essential for instant kickout on password change
       const dbVersion = Number(user.token_version || 1);
       const tokenVersion = Number(decoded.token_version || 1);
-      
+
       if (dbVersion > tokenVersion) {
         console.log(`[AUTH FAIL] Version mismatch for ${decoded.username}`);
         return res.status(401).json({ error: 'Votre session a été invalidée (changement de mot de passe ou de statut).' });
@@ -121,12 +121,12 @@ const authenticateToken = async (req, res, next) => {
     } else {
       req.user = decoded;
     }
-    
+
     next();
   } catch (err) {
     // We are being "less severe": only log the error, don't kickout unless absolutely necessary
     console.log('[AUTH ADVISORY]', err.message);
-    next(); 
+    next();
   }
 };
 
@@ -172,11 +172,11 @@ let attackCounter = 0;
 const logSecurityAlert = async (req, type, message, severity = 'high') => {
   try {
     const userId = req.user ? req.user.id : null;
-    
+
     // ISO Isolation: REMOTE_ADDR + X-FORWARDED-FOR for Proxy detection
     const forwarded = req.headers['x-forwarded-for'];
     const ip = forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress;
-    
+
     let geoInfo = {
       ip: ip,
       city: 'Inconnue',
@@ -211,7 +211,7 @@ const logSecurityAlert = async (req, type, message, severity = 'high') => {
     };
 
     await createNotification(type, message, severity, userId, metadata);
-    
+
     if (severity === 'critical' && userId && req.user.role !== 'owner') {
       await updateUserStatus(userId, 'suspended', 'DÉFENSE ACTIVE : Violation critique des protocoles de sécurité.');
     }
@@ -278,7 +278,7 @@ app.get('/api/users', authenticateToken, requireOwner, async (req, res) => {
 app.delete('/api/users/:id', authenticateToken, requireOwner, async (req, res) => {
   try {
     const { data: targetUser } = await supabase.from('users').select('role').eq('id', req.params.id).single();
-    
+
     // Skip PIN check if it's a Public user (role: 'user'), otherwise require PIN
     if (targetUser && targetUser.role !== 'user') {
       const adminPin = req.headers['x-admin-pin'];
@@ -287,7 +287,7 @@ app.delete('/api/users/:id', authenticateToken, requireOwner, async (req, res) =
         return res.status(403).json({ error: 'Code PIN invalide. Accès refusé pour ce type de compte.' });
       }
     }
-    
+
     await deleteUser(req.params.id);
     res.json({ success: true });
   } catch (err) {
@@ -304,7 +304,7 @@ app.post('/api/users/bulk-delete', authenticateToken, requireOwner, async (req, 
 
     // Check if any of the target users have a role higher than 'user' (Public)
     const { data: targetUsers } = await supabase.from('users').select('role').in('id', ids);
-    
+
     // Determine if we need a PIN (if anyone is NOT a Public user)
     const needsPin = targetUsers && targetUsers.some(u => u.role !== 'user');
 
@@ -358,7 +358,7 @@ app.post('/api/register', authLimiter, async (req, res) => {
   const { username: rawUsername, password: rawPassword } = req.body;
   const username = (rawUsername || '').trim();
   const password = (rawPassword || '').trim();
-  
+
   try {
     const existingUser = await getUserByUsername(username);
     if (existingUser) return res.status(400).json({ error: 'Username already exists' });
@@ -385,14 +385,14 @@ app.get('/api/public/token', apiLimiter, async (req, res) => {
   const maintenanceMode = await getSetting('maintenance_mode');
   if (maintenanceMode && maintenanceMode.value === 'true') {
     const reason = await getSetting('maintenance_reason');
-    return res.status(503).json({ 
-      error: 'Maintenance en cours', 
-      reason: reason ? reason.value : 'Le site est en maintenance.' 
+    return res.status(503).json({
+      error: 'Maintenance en cours',
+      reason: reason ? reason.value : 'Le site est en maintenance.'
     });
   }
 
   if (req.headers['x-echo-client'] !== 'EchoPress2026') {
-      return res.status(403).json({ error: 'Client non autorisé' });
+    return res.status(403).json({ error: 'Client non autorisé' });
   }
   const token = jwt.sign({ role: 'public' }, JWT_SECRET);
   res.json({ token });
@@ -403,7 +403,7 @@ app.get('/api/articles', authenticateToken, async (req, res) => {
   try {
     let includePaused = req.query.includePaused === 'true';
     const isStaff = ['owner', 'supervisor', 'journalist', 'corrector', 'admin'].includes(req.user.role);
-    
+
     // Only staff can see paused articles
     if (includePaused && !isStaff) {
       includePaused = false;
@@ -472,7 +472,7 @@ app.post('/api/articles', authenticateToken, requireStaff, async (req, res) => {
   const id = Date.now().toString();
   try {
     const article = await createArticle(id, category, sub_category, author, surtitle, title, summary, published_time, image, image_credit, author_username);
-    
+
     // CODE VERT: Alert for creation
     await createNotification('content_update', `[NOUVEAU] ${author_username} a créé l'article: "${title}"`, 'low', req.user.id, {
       title,
@@ -491,7 +491,7 @@ app.put('/api/articles/:id', authenticateToken, requireStaff, async (req, res) =
   const { title, summary, category, sub_category, author, surtitle, image, image_credit, published_time, modified_by } = req.body;
   try {
     await updateArticle(req.params.id, category, sub_category, author, surtitle, title, summary, image, image_credit, published_time, modified_by);
-    
+
     // CODE VERT: Alert for modification
     await createNotification('content_update', `[MODIF] ${modified_by} a mis à jour l'article: "${title}"`, 'low', req.user.id, {
       title,
@@ -557,7 +557,7 @@ app.delete('/api/archives/:id', authenticateToken, requireOwnerOrSupervisor, asy
 // Settings API
 app.get('/api/settings/:key', authenticateToken, async (req, res) => {
   const { key } = req.params;
-  
+
   // Security check for sensitive keys
   const isStaff = ['owner', 'supervisor', 'journalist', 'corrector', 'admin'].includes(req.user.role);
   if (key === 'admin_pin' && !isStaff) {
@@ -600,11 +600,11 @@ app.get('/api/edit-requests', authenticateToken, requireOwner, async (req, res) 
 
 app.get('/api/edit-requests/user/:username', authenticateToken, async (req, res) => {
   const { username } = req.params;
-  
+
   // Security check: Only allow users to see their own requests, unless they are owner/supervisor
   const isSelf = req.user.username === username;
   const isAdmin = ['owner', 'supervisor'].includes(req.user.role);
-  
+
   if (!isSelf && !isAdmin) {
     return res.status(403).json({ error: 'Accès refusé.' });
   }
@@ -621,7 +621,7 @@ app.post('/api/edit-requests', authenticateToken, requireStaff, async (req, res)
   try {
     const { article_id, article_title, requested_by, description } = req.body;
     const newRequest = await createEditRequest(article_id, article_title, requested_by, description);
-    
+
     // INTEGRATION: Create an instant notification for the owner
     await createNotification(
       'edit_request',
@@ -648,7 +648,7 @@ app.put('/api/edit-requests/:id', authenticateToken, requireOwner, async (req, r
 // For journalist-editor: Check if an approval exists
 app.get('/api/edit-requests/check-valid', authenticateToken, async (req, res) => {
   const { article_id, requested_by } = req.query;
-  
+
   // Security check: User can only check their own permissions
   if (requested_by !== req.user.username && !['owner', 'supervisor'].includes(req.user.role)) {
     return res.status(403).json({ error: 'Accès refusé.' });
@@ -677,17 +677,17 @@ app.get('/api/notifications', authenticateToken, requireOwner, async (req, res) 
   try {
     const { unreadOnly, since } = req.query;
     let query = supabase.from('notifications').select('*');
-    
+
     if (unreadOnly === 'true') {
       query = query.eq('is_read', false);
     }
-    
+
     if (since) {
       query = query.gt('created_at', since);
     }
-    
+
     const { data, error } = await query.order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     res.json(data || []);
   } catch (err) {
@@ -736,7 +736,7 @@ app.get('/api/weather', authenticateToken, async (req, res) => {
     if (cachedWeather && (now - lastWeatherFetch < 10 * 60 * 1000)) {
       return res.json(cachedWeather);
     }
-    
+
     // Fetch current + 7-day forecast
     const meteoRes = await fetch("https://api.open-meteo.com/v1/forecast?latitude=45.5088&longitude=-73.5878&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=America/Toronto");
     if (!meteoRes.ok) throw new Error("Weather fetch failed");
@@ -765,7 +765,7 @@ app.get('/api/weather', authenticateToken, async (req, res) => {
       condition: getCondition(data.current_weather.weathercode),
       forecast: forecast
     };
-    
+
     lastWeatherFetch = now;
     res.json(cachedWeather);
   } catch (err) {
