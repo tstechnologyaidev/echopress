@@ -849,7 +849,15 @@
       document.getElementById("create-article-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         
-        let imageUrl = document.getElementById("art-existing-image").value;
+        const submitBtn = document.getElementById("submit-btn-form");
+        const originalBtnText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = "⏳ Téléversement en cours, veuillez patienter...";
+        submitBtn.style.opacity = "0.7";
+        submitBtn.style.cursor = "not-allowed";
+
+        try {
+          let imageUrl = document.getElementById("art-existing-image").value;
         const fileInput = document.getElementById("art-image-file");
         if (fileInput.files.length > 0) {
           const formData = new FormData();
@@ -915,6 +923,17 @@
           let errMsg = 'Erreur inconnue';
           try { const d = await res.json(); errMsg = d.error || JSON.stringify(d); } catch(ex) {}
           alert('Erreur lors de la sauvegarde: ' + errMsg);
+        }
+        
+        } catch (error) {
+          console.error(error);
+          alert('Une erreur est survenue pendant le téléversement.');
+        } finally {
+          // Restore button state
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalBtnText;
+          submitBtn.style.opacity = "1";
+          submitBtn.style.cursor = "pointer";
         }
       });
 
