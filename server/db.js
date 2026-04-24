@@ -86,14 +86,30 @@ export const updateUserNotes = async (id, notes) => {
 
 // Articles API
 export const getArticles = async (includePaused = true) => {
-  // Primary sort: priority (high to low), Secondary sort: id (newest first)
-  let query = supabase.from('articles').select('*').order('priority', { ascending: false }).order('id', { ascending: false });
-  if (!includePaused) {
-    query = query.eq('status', 'published');
+  try {
+    // Try primary sort: priority, Secondary sort: id
+    let query = supabase.from('articles').select('*').order('priority', { ascending: false }).order('id', { ascending: false });
+    if (!includePaused) {
+      query = query.eq('status', 'published');
+    }
+    const { data, error } = await query;
+    
+    // If priority column is missing (PGRST100 or similar error), fallback to standard sort
+    if (error) {
+      console.warn("Priority sorting failed (column likely missing), falling back to standard sort:", error.message);
+      let fallbackQuery = supabase.from('articles').select('*').order('id', { ascending: false });
+      if (!includePaused) {
+        fallbackQuery = fallbackQuery.eq('status', 'published');
+      }
+      const { data: fbData, error: fbError } = await fallbackQuery;
+      if (fbError) throw fbError;
+      return fbData;
+    }
+    return data;
+  } catch (err) {
+    console.error("Critical error in getArticles:", err.message);
+    throw err;
   }
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
 };
 
 export const getArticleById = async (id) => {
