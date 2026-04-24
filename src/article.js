@@ -46,12 +46,12 @@ const initArticle = async () => {
         }
     }
 
-    // YouTube ID Extractor Helper
+    // Improved YouTube ID Extractor Helper
     function extractYouTubeId(url) {
         if (!url) return null;
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const regExp = /^.*(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
         const match = url.match(regExp);
-        return (match && match[2].length === 11) ? match[2] : null;
+        return (match && match[1].length === 11) ? match[1] : null;
     }
 
     const contentContainer = document.getElementById('article-view');

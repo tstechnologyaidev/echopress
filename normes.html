@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Normes Journalistiques | EchoPress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;800;900&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/user-v2.css">
+    <style>
+        :root {
+            --primary-gold: #c5a059;
+            --legal-gray: #888888;
+        }
+
+        body {
+            background-color: #050505;
+            color: #e0e0e0;
+            line-height: 1.8;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .standards-container {
+            max-width: 900px;
+            margin: 80px auto;
+            padding: 60px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 40px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+            backdrop-filter: blur(20px);
+        }
+
+        .legal-header {
+            text-align: center;
+            margin-bottom: 60px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 40px;
+        }
+
+        .legal-header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff 0%, #888 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+        }
+
+        .copyright-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: rgba(197, 160, 89, 0.1);
+            border: 1px solid var(--primary-gold);
+            color: var(--primary-gold);
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 100px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 20px;
+        }
+
+        .standards-section {
+            margin-bottom: 50px;
+        }
+
+        .standards-section h2 {
+            font-family: 'Outfit', sans-serif;
+            color: #fff;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .standards-section h2::before {
+            content: "";
+            width: 30px;
+            height: 2px;
+            background: var(--primary-gold);
+            display: inline-block;
+        }
+
+        .standards-section p {
+            font-family: 'PT Serif', serif;
+            font-size: 1.15rem;
+            color: #bbb;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+
+        .highlight-box {
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 4px solid var(--primary-gold);
+            padding: 30px;
+            margin: 30px 0;
+            font-style: italic;
+            border-radius: 0 20px 20px 0;
+        }
+
+        .footer-legal {
+            margin-top: 80px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--legal-gray);
+        }
+
+        .btn-back {
+            position: fixed;
+            top: 40px;
+            left: 40px;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0.5;
+            transition: 0.3s;
+        }
+
+        .btn-back:hover { opacity: 1; }
+
+        @media (max-width: 768px) {
+            .standards-container { margin: 20px; padding: 30px; }
+            .legal-header h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="/" class="btn-back">← Retour à l'accueil</a>
+
+    <div class="standards-container">
+        <header class="legal-header">
+            <div class="copyright-badge">Document Officiel</div>
+            <h1>Normes Journalistiques</h1>
+            <p style="color: var(--legal-gray); font-size: 0.9rem;">Dernière mise à jour : 24 Avril 2026</p>
+        </header>
+
+        <section class="standards-section">
+            <h2>I. Mission et Engagement</h2>
+            <p>EchoPress est un organe de presse indépendant dont la mission première est d'informer le public avec rigueur, honnêteté et célérité. Nous croyons que l'accès à une information vérifiée est le fondement d'une société libre et éclairée.</p>
+            <div class="highlight-box">
+                "La vérité n'est pas une option, c'est notre unique boussole."
+            </div>
+        </section>
+
+        <section class="standards-section">
+            <h2>II. Exactitude et Vérification</h2>
+            <p>Chaque fait rapporté par EchoPress doit être vérifié auprès de sources fiables. Les journalistes ont l'obligation de multiplier les sources avant toute publication d'information sensible. L'utilisation de l'intelligence artificielle pour la rédaction brute est strictement encadrée et doit toujours faire l'objet d'une validation humaine finale par un correcteur ou un superviseur.</p>
+        </section>
+
+        <section class="standards-section">
+            <h2>III. Indépendance Éthique</h2>
+            <p>Les journalistes d'EchoPress ne doivent accepter aucun présent, faveur ou avantage financier susceptible d'influencer leur traitement d'une nouvelle. Les conflits d'intérêts, qu'ils soient réels ou perçus, doivent être déclarés immédiatement à la direction d'EchoLight Innovations.</p>
+        </section>
+
+        <section class="standards-section">
+            <h2>IV. Protection des Sources</h2>
+            <p>Le secret professionnel est absolu. EchoPress s'engage à protéger l'identité de ses sources confidentielles par tous les moyens légaux à sa disposition. L'anonymat ne doit cependant être accordé que si l'information est d'intérêt public majeur et ne peut être obtenue autrement.</p>
+        </section>
+
+        <section class="standards-section">
+            <h2>V. Équité et Droit de Réponse</h2>
+            <p>Nous nous efforçons de présenter les différents points de vue sur des sujets controversés. Toute personne ou organisation faisant l'objet d'accusations graves dans nos colonnes dispose d'un droit de réponse, lequel sera publié avec la même visibilité que l'article original.</p>
+        </section>
+
+        <section class="standards-section">
+            <h2>VI. Propriété Intellectuelle</h2>
+            <p>L'intégralité du contenu publié sur EchoPress (textes, images, vidéos, logos, interfaces) est la propriété exclusive de <strong>EchoLight Innovations</strong>. Toute reproduction, même partielle, est strictement interdite sans une autorisation écrite préalable de la direction.</p>
+        </section>
+
+        <footer class="footer-legal">
+            <p>&copy; 2026 EchoLight Innovations. Tous droits réservés.</p>
+            <p style="font-size: 0.7rem; margin-top: 10px;">Le non-respect de ce code par un membre du personnel rédactionnel peut entraîner des mesures disciplinaires allant jusqu'au licenciement immédiat.</p>
+        </footer>
+    </div>
+
+</body>
+</html>
