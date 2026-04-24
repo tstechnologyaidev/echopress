@@ -475,12 +475,18 @@
     <script type="module" src="/src/auth-ui.js"></script>
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script type="module">
-      import { categories } from "./src/data.js";
+      import { categories } from "/src/data.js";
+      import { scrambleText } from "/src/cinematic-intro.js";
       
+      // Inject scrambleText to window so it's accessible everywhere
+      window.scrambleText = scrambleText;
+
       const userStr = localStorage.getItem("echopress_user");
-      const user = userStr ? JSON.parse(userStr) : null;
+      let user = null;
+      try {
+        user = userStr ? JSON.parse(userStr) : null;
+      } catch (e) { console.error("Session corrompue", e); }
       
-      // Define global flags for original platform logic
       window.isOwner = user && user.role === 'owner';
       window.isJournalist = user && user.role === 'journalist';
 
@@ -494,23 +500,41 @@
       const securityError = document.getElementById('security-error-msg');
 
       function revealAdmin() {
-        gatekeeper.style.opacity = '0';
-        setTimeout(() => {
-          gatekeeper.style.display = 'none';
-          adminContent.style.display = 'block';
-          
-          // Initialize dashboard contents
-          document.getElementById('user-management-section').style.display = 'block';
-          if (typeof fetchUsers === 'function') fetchUsers();
-          if (typeof fetchArticlesAdmin === 'function') fetchArticlesAdmin();
-          if (typeof loadAboutAdmin === 'function') loadAboutAdmin();
-          if (typeof loadAllRequests === 'function') loadAllRequests();
-          if (typeof loadMaintenanceStatus === 'function') loadMaintenanceStatus();
-          
-          // Execute title effect
-          const title = document.getElementById('admin-title');
-          if (title && window.scrambleText) window.scrambleText(title, "Panneau d'administration", 2000);
-        }, 500);
+        try {
+          gatekeeper.style.opacity = '0';
+          setTimeout(() => {
+            gatekeeper.style.display = 'none';
+            adminContent.style.display = 'block';
+            
+            console.log("Initialisation du tableau de bord...");
+            
+            // Initialize dashboard contents safely
+            document.getElementById('user-management-section').style.display = 'block';
+            
+            const tasks = [
+              { name: 'Utilisateurs', fn: typeof fetchUsers === 'function' ? fetchUsers : null },
+              { name: 'Articles', fn: typeof fetchArticlesAdmin === 'function' ? fetchArticlesAdmin : null },
+              { name: 'À Propos', fn: typeof loadAboutAdmin === 'function' ? loadAboutAdmin : null },
+              { name: 'Demandes', fn: typeof loadAllRequests === 'function' ? loadAllRequests : null },
+              { name: 'Maintenance', fn: typeof loadMaintenanceStatus === 'function' ? loadMaintenanceStatus : null }
+            ];
+
+            tasks.forEach(task => {
+              if (task.fn) {
+                try { task.fn(); } catch (e) { console.error(`Erreur chargement ${task.name}:`, e); }
+              }
+            });
+            
+            // Execute title effect safely
+            const title = document.getElementById('admin-title');
+            if (title && typeof scrambleText === 'function') {
+              scrambleText(title, "Panneau d'administration", 2000);
+            }
+          }, 500);
+        } catch (err) {
+          console.error("Échec de l'affichage admin:", err);
+          adminContent.style.display = 'block'; // Fallback display
+        }
       }
 
       function checkSecurity() {
@@ -760,29 +784,29 @@
         }
       };
 
-      const quill = new Quill("#quill-editor", {
-        theme: "snow",
-        modules: {
-          keyboard: {
-            bindings: {
-              'exit-blockquote': {
-                key: 13, // Enter
-                shiftKey: true,
-                format: ['blockquote'],
-                handler: function(range, context) {
-                  // Insert a newline after current cursor
-                  this.quill.insertText(range.index, '\n', 'user');
-                  // Move cursor to the new line
-                  this.quill.setSelection(range.index + 1, 0, 'silent');
-                  // Remove blockquote format from the new line only
-                  this.quill.format('blockquote', false, 'user');
-                  return false;
+      let quill;
+      try {
+        quill = new Quill("#quill-editor", {
+          theme: "snow",
+          modules: {
+            keyboard: {
+              bindings: {
+                'exit-blockquote': {
+                  key: 13, // Enter
+                  shiftKey: true,
+                  format: ['blockquote'],
+                  handler: function(range, context) {
+                    this.quill.insertText(range.index, '\n', 'user');
+                    this.quill.setSelection(range.index + 1, 0, 'silent');
+                    this.quill.format('blockquote', false, 'user');
+                    return false;
+                  }
                 }
               }
             }
           }
-        }
-      });
+        });
+      } catch (e) { console.error("Échec initialisation Quill Article", e); }
 
       // Citation shortcut: typing '>' at the start of a line
       quill.on('text-change', (delta, oldDelta, source) => {
@@ -1035,26 +1059,29 @@
       fetchArticlesAdmin();
 
       // About Content Logic
-      const quillAbout = new Quill("#quill-about-editor", { 
-        theme: "snow",
-        modules: {
-          keyboard: {
-            bindings: {
-              'exit-blockquote': {
-                key: 13, // Enter
-                shiftKey: true,
-                format: ['blockquote'],
-                handler: function(range, context) {
-                  this.quill.insertText(range.index, '\n', 'user');
-                  this.quill.setSelection(range.index + 1, 0, 'silent');
-                  this.quill.format('blockquote', false, 'user');
-                  return false;
+      let quillAbout;
+      try {
+        quillAbout = new Quill("#quill-about-editor", { 
+          theme: "snow",
+          modules: {
+            keyboard: {
+              bindings: {
+                'exit-blockquote': {
+                  key: 13, // Enter
+                  shiftKey: true,
+                  format: ['blockquote'],
+                  handler: function(range, context) {
+                    this.quill.insertText(range.index, '\n', 'user');
+                    this.quill.setSelection(range.index + 1, 0, 'silent');
+                    this.quill.format('blockquote', false, 'user');
+                    return false;
+                  }
                 }
               }
             }
           }
-        }
-      });
+        });
+      } catch (e) { console.error("Échec initialisation Quill About", e); }
       
       async function loadAboutAdmin() {
         const token = localStorage.getItem('echopress_token');
@@ -1481,8 +1508,8 @@
         }
 
         if (confirm("⚠️ ATTENTION : Vous êtes sur le point de supprimer TOUS les comptes Publics de la base de données. Cette action est irréversible. Continuer ?")) {
-          // Select all users in the 'user' tab (we have the 'users' array globally)
-          const regularUsers = users.filter(u => u.role === 'user');
+          // Fix: Use allUsers instead of undefined users
+          const regularUsers = allUsers.filter(u => u.role === 'user');
           const ids = regularUsers.map(u => u.id);
           
           if (ids.length === 0) {
