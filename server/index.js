@@ -454,12 +454,15 @@ app.post('/api/upload', authenticateToken, requireStaff, upload.single('media'),
   }
   try {
     const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(req.file.originalname)}`;
-    const fileBuffer = fs.readFileSync(req.file.path);
+    
+    // Use stream to prevent Out-Of-Memory errors with large videos
+    const fileStream = fs.createReadStream(req.file.path);
     const { data, error } = await supabase.storage
       .from('images')
-      .upload(uniqueName, fileBuffer, {
+      .upload(uniqueName, fileStream, {
         contentType: req.file.mimetype,
-        upsert: false
+        upsert: false,
+        duplex: 'half'
       });
       
     // Clean up temp file

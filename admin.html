@@ -872,6 +872,10 @@
           if(uploadRes.ok) {
             const data = await uploadRes.json();
             imageUrl = data.url;
+          } else {
+            let errMsg = 'Erreur inconnue';
+            try { const d = await uploadRes.json(); errMsg = d.error || d; } catch(ex) {}
+            throw new Error('Échec du téléversement du média : ' + errMsg);
           }
         }
 
