@@ -301,6 +301,7 @@
                 <option value="arts">Arts</option>
                 <option value="cinema">Cinéma</option>
                 <option value="societe">Société</option>
+                <option value="videos" id="cat-videos">Vidéos</option>
               </select>
             </div>
             <div class="form-group">
@@ -309,21 +310,23 @@
                 <option value="">-- Sélectionner une catégorie d'abord --</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>Image (fichier uploader)</label>
+            <div class="form-group" id="group-image-file">
+              <label id="label-image-file">Image (fichier uploader)</label>
               <input type="file" id="art-image-file" accept="image/*">
               <input type="hidden" id="art-existing-image">
               <div id="image-preview-container" style="margin-top: 10px; display: none;">
                 <img id="image-preview" src="" style="max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid var(--lp-gray-mid);">
               </div>
+              <video id="video-preview" src="" controls style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid var(--glass-border); display: none; margin-top: 10px;"></video>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="group-image-credit">
               <label>Crédit photo (optionnel)</label>
               <input type="text" id="art-image-credit" placeholder="ex: Agence QMI">
             </div>
-            <div class="form-group">
+            <div class="form-group" id="group-article-content">
               <label>Résumé / Contenu initial</label>
               <div id="quill-editor" style="height: 200px; background-color: var(--lp-white);"></div>
+              <textarea id="art-video-desc" rows="6" placeholder="Description de la vidéo (optionnelle)" style="width: 100%; padding: 12px; font-family: inherit; border: 1px solid var(--glass-border); border-radius: 12px; background: #121212; color: white; display: none;"></textarea>
             </div>
             <button type="submit" id="submit-btn-form" class="btn" style="margin-top: 20px;">Publier l'article</button>
           </form>
@@ -549,7 +552,35 @@
       }
 
       categorySelect.addEventListener("change", (e) => {
-        updateSubCategories(e.target.value);
+        const catVal = e.target.value;
+        updateSubCategories(catVal);
+
+        // Handle video mode toggle
+        const imgLabel = document.getElementById('label-image-file');
+        const fileInput = document.getElementById('art-image-file');
+        const creditGroup = document.getElementById('group-image-credit');
+        const quillContainer = document.querySelector('.ql-toolbar').parentElement;
+        const videoDesc = document.getElementById('art-video-desc');
+
+        if (catVal === 'videos') {
+          imgLabel.textContent = 'Fichier Vidéo (obligatoire)';
+          fileInput.accept = 'video/*';
+          creditGroup.style.display = 'none';
+          
+          // Hide Quill
+          if (quillContainer) quillContainer.style.display = 'none';
+          document.getElementById('quill-editor').style.display = 'none';
+          videoDesc.style.display = 'block';
+        } else {
+          imgLabel.textContent = 'Image (fichier uploader)';
+          fileInput.accept = 'image/*';
+          creditGroup.style.display = 'block';
+          
+          // Show Quill
+          if (quillContainer) quillContainer.style.display = 'block';
+          document.getElementById('quill-editor').style.display = 'block';
+          videoDesc.style.display = 'none';
+        }
       });
 
       let allArticles = [];
@@ -725,16 +756,34 @@
         
         document.getElementById("art-image-credit").value = art.image_credit || "";
         document.getElementById("art-existing-image").value = art.image || "";
-        quill.root.innerHTML = art.summary || "";
+        
+        // Dispatch change event to toggle video form layout
+        categorySelect.dispatchEvent(new Event('change'));
+
+        if (art.category === 'videos') {
+          document.getElementById('art-video-desc').value = art.summary || '';
+        } else {
+          quill.root.innerHTML = art.summary || '';
+        }
+
         document.getElementById("submit-btn-form").textContent = "Mettre à jour l'article";
         document.getElementById("form-title-display").textContent = "Éditer l'article";
         
         if (art.image) {
           const imgSrc = art.image.startsWith("http") ? art.image : "/" + art.image;
-          document.getElementById("image-preview").src = imgSrc;
-          document.getElementById("image-preview-container").style.display = "block";
+          if (art.category === 'videos') {
+            const vidPreview = document.getElementById("video-preview");
+            vidPreview.src = imgSrc;
+            vidPreview.style.display = "block";
+            document.getElementById("image-preview-container").style.display = "none";
+          } else {
+            document.getElementById("image-preview").src = imgSrc;
+            document.getElementById("image-preview-container").style.display = "block";
+            document.getElementById("video-preview").style.display = "none";
+          }
         } else {
           document.getElementById("image-preview-container").style.display = "none";
+          document.getElementById("video-preview").style.display = "none";
         }
         
         window.scrollTo(0, 0);
@@ -742,10 +791,24 @@
 
       document.getElementById("art-image-file").addEventListener("change", (e) => {
         if (e.target.files && e.target.files[0]) {
-          document.getElementById("image-preview").src = URL.createObjectURL(e.target.files[0]);
-          document.getElementById("image-preview-container").style.display = "block";
+          const file = e.target.files[0];
+          const isVideo = file.type.startsWith('video/');
+          const url = URL.createObjectURL(file);
+          
+          if (isVideo) {
+            document.getElementById("image-preview-container").style.display = "none";
+            const vidPreview = document.getElementById("video-preview");
+            vidPreview.src = url;
+            vidPreview.style.display = "block";
+          } else {
+            document.getElementById("video-preview").style.display = "none";
+            const imgPreview = document.getElementById("image-preview");
+            imgPreview.src = url;
+            document.getElementById("image-preview-container").style.display = "block";
+          }
         } else if (!document.getElementById("art-existing-image").value) {
           document.getElementById("image-preview-container").style.display = "none";
+          document.getElementById("video-preview").style.display = "none";
         }
       });
 
@@ -775,8 +838,14 @@
         const fileInput = document.getElementById("art-image-file");
         if (fileInput.files.length > 0) {
           const formData = new FormData();
-          formData.append("image", fileInput.files[0]);
-          const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+          formData.append("media", fileInput.files[0]); // changed from image to media
+          const uploadRes = await fetch("/api/upload", { 
+            method: "POST", 
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('echopress_token') || ''}`
+            },
+            body: formData 
+          });
           if(uploadRes.ok) {
             const data = await uploadRes.json();
             imageUrl = data.url;
@@ -795,7 +864,7 @@
           sub_category: document.getElementById("art-sub-category").value,
           image: imageUrl,
           image_credit: document.getElementById("art-image-credit").value,
-          summary: quill.root.innerHTML,
+          summary: document.getElementById("art-category").value === 'videos' ? document.getElementById("art-video-desc").value : quill.root.innerHTML,
           published_time: editingId ? editingOriginalPublishedTime : getFormattedTimestamp()
         };
 
