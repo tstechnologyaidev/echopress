@@ -320,6 +320,60 @@ ul {
   background-color: var(--lp-gray-light);
 }
 
+/* Video Thumbnail Styling */
+.hero-image-container, .card-image-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  border-radius: 0 0 0 0; /* Match parent hero or card */
+}
+
+.hero-image-container .hero-image, 
+.card-image-container .card-image {
+  margin-bottom: 0;
+  border-radius: 0;
+}
+
+.play-overlay, .play-overlay-small {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 81, 47, 0.9);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.play-overlay {
+  width: 70px;
+  height: 70px;
+  font-size: 32px;
+  padding-left: 5px; /* Offset to center the triangle */
+}
+
+.play-overlay-small {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  padding-left: 3px;
+}
+
+.card-article:hover .play-overlay-small {
+  background: var(--lp-red);
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.hero-article:hover .play-overlay {
+  background: var(--lp-red);
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
 .card-title {
   font-family: var(--font-serif);
   font-size: 24px;

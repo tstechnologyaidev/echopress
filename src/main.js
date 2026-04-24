@@ -70,13 +70,37 @@ const initMain = async () => {
         displayArticles = articles.filter(a => a.category === filterCat);
     }
 
+    // YouTube ID Extractor Helper
+    function extractYouTubeId(url) {
+        if (!url) return null;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
+
     // 2. Render Hero Article
     const heroContainer = document.getElementById('hero-article');
     if (heroContainer && displayArticles.length > 0) {
         const heroData = displayArticles[0];
+        let mediaHtml = '';
+        
+        if (heroData.image) {
+            if (heroData.category === 'videos') {
+                const ytId = extractYouTubeId(heroData.image);
+                if (ytId) {
+                    mediaHtml = `<div class="hero-image-container"><img src="https://img.youtube.com/vi/${ytId}/maxresdefault.jpg" alt="Hero Image" class="hero-image"><div class="play-overlay">▶</div></div>`;
+                } else {
+                    // Fallback to video tag if not a YT URL (for legacy)
+                    mediaHtml = `<video src="${heroData.image.startsWith('http') ? heroData.image : '/' + heroData.image}" class="hero-image" style="object-fit: cover;" loop onmouseover="this.play()" onmouseout="this.pause()"></video>`;
+                }
+            } else {
+                mediaHtml = `<img src="${heroData.image.startsWith('http') ? heroData.image : '/' + heroData.image}" alt="Hero Image" class="hero-image">`;
+            }
+        }
+
         heroContainer.innerHTML = `
             <a href="article.html?id=${heroData.id}" style="display:block;">
-            ${heroData.image ? (heroData.category === 'videos' ? `<video src="${heroData.image.startsWith('http') ? heroData.image : '/' + heroData.image}" class="hero-image" style="object-fit: cover;" loop onmouseover="this.play()" onmouseout="this.pause()"></video>` : `<img src="${heroData.image.startsWith('http') ? heroData.image : '/' + heroData.image}" alt="Hero Image" class="hero-image">`) : ''}
+                ${mediaHtml}
                 <div class="hero-content">
                     <span class="surtitle">${heroData.surtitle}</span>
                     <h2 class="hero-title">${heroData.title}</h2>
@@ -95,8 +119,25 @@ const initMain = async () => {
             const card = document.createElement('a');
             card.href = `article.html?id=${art.id}`;
             card.className = 'card-article';
+            
+            let mediaHtml = '';
+            if (art.image) {
+                if (art.category === 'videos') {
+                    const ytId = extractYouTubeId(art.image);
+                    if (ytId) {
+                        mediaHtml = `<div class="card-image-container"><img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg" alt="${art.title}" class="card-image"><div class="play-overlay-small">▶</div></div>`;
+                    } else {
+                        mediaHtml = `<video src="${art.image.startsWith('http') ? art.image : '/' + art.image}" class="card-image" style="object-fit: cover;" loop onmouseover="this.play()" onmouseout="this.pause()"></video>`;
+                    }
+                } else {
+                    mediaHtml = `<img src="${art.image.startsWith('http') ? art.image : '/' + art.image}" alt="${art.title}" class="card-image">`;
+                }
+            } else {
+                mediaHtml = `<div class="card-image" style="display:flex;align-items:center;justify-content:center;">Pas d'image</div>`;
+            }
+
             card.innerHTML = `
-                ${art.image ? (art.category === 'videos' ? `<video src="${art.image.startsWith('http') ? art.image : '/' + art.image}" class="card-image" style="object-fit: cover;" loop onmouseover="this.play()" onmouseout="this.pause()"></video>` : `<img src="${art.image.startsWith('http') ? art.image : '/' + art.image}" alt="${art.title}" class="card-image">`) : `<div class="card-image" style="display:flex;align-items:center;justify-content:center;">Pas d'image</div>`}
+                ${mediaHtml}
                 <span class="surtitle">${art.surtitle}</span>
                 <h3 class="card-title">${art.title}</h3>
                 <span class="published-time">${art.published_time}</span>
