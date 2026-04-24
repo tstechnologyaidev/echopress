@@ -19,8 +19,17 @@ async function initOwnerNotifications() {
   }
   container.style.display = 'flex';
 
-  // Initialize to 24h ago to show recent unread alerts on load
-  let lastCheckTime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  // Use sessionStorage to ensure past 24h alerts only show once per session.
+  // On subsequent page loads, only fetch real-time alerts.
+  let lastCheckTime;
+  const isFirstSessionLoad = !sessionStorage.getItem('owner_live_notifs_init');
+  
+  if (isFirstSessionLoad) {
+    lastCheckTime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    sessionStorage.setItem('owner_live_notifs_init', 'true');
+  } else {
+    lastCheckTime = new Date().toISOString();
+  }
   
   async function fetchNewAlerts() {
     try {
@@ -65,9 +74,14 @@ async function initOwnerNotifications() {
     }, 8000);
   }
 
-  // Poll every 5 seconds
-  setInterval(fetchNewAlerts, 5000);
-  fetchNewAlerts(); // Initial check
+  // Delay the initial check if it's the first load to allow the cinematic intro to finish
+  const initialDelay = isFirstSessionLoad ? 5000 : 0;
+  
+  setTimeout(() => {
+    fetchNewAlerts(); // Initial check
+    // Poll every 5 seconds
+    setInterval(fetchNewAlerts, 5000);
+  }, initialDelay);
 }
 
 // Initialize on load
