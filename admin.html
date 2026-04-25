@@ -677,9 +677,12 @@
           <div class="user-tab" onclick="switchUserTab('corrector')">Correcteurs</div>
           <div class="user-tab" onclick="switchUserTab('supervisor')">Superviseurs</div>
           <div class="user-tab" onclick="switchUserTab('user')">Public</div>
+          <div class="user-tab" onclick="switchUserTab('banned_ips')" style="color: var(--lp-red);">Bannis (IP)</div>
+        </div>
         </div>
 
         <div id="users-list" class="user-list-grid"></div>
+        <div id="banned-ips-list" class="user-list-grid" style="display: none;"></div>
 
         <div id="edit-requests-section"
           style="margin-top: 40px; border-top: 2px solid var(--glass-border); padding-top: 20px; display: block;">
@@ -1540,12 +1543,81 @@
     window.switchUserTab = (role) => {
       currentUserTab = role;
       document.querySelectorAll('.user-tab').forEach(t => t.classList.remove('active'));
-      // Find the tab that was clicked based on its onclick or more reliably:
       event.currentTarget.classList.add('active');
-      document.getElementById('mass-action-bar').style.display = role === 'user' ? 'flex' : 'none';
-      document.getElementById('btn-purge-massive').style.display = role === 'user' ? 'inline-flex' : 'none';
-      renderUsers();
-      if (role === 'user') document.getElementById('select-all-users').checked = false;
+      
+      const isPublicTab = role === 'user';
+      const isBannedTab = role === 'banned_ips';
+      
+      document.getElementById('mass-action-bar').style.display = isPublicTab ? 'flex' : 'none';
+      document.getElementById('btn-purge-massive').style.display = isPublicTab ? 'inline-flex' : 'none';
+      if (isPublicTab) document.getElementById('select-all-users').checked = false;
+
+      if (isBannedTab) {
+        document.getElementById('users-list').style.display = 'none';
+        document.getElementById('banned-ips-list').style.display = 'grid';
+        fetchBannedIPs();
+      } else {
+        document.getElementById('users-list').style.display = 'grid';
+        document.getElementById('banned-ips-list').style.display = 'none';
+        renderUsers();
+      }
+    };
+
+    async function fetchBannedIPs() {
+      const list = document.getElementById('banned-ips-list');
+      list.innerHTML = '<p style="color:var(--text-dim);">Récupération de la liste noire...</p>';
+      try {
+        const res = await fetch('/api/admin/banned-ips', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('echopress_token')}` }
+        });
+        const ips = await res.json();
+        list.innerHTML = '';
+        if (!ips || ips.length === 0) {
+          list.innerHTML = '<p style="color:var(--lp-gray-dark);">Aucune IP bannie actuellement.</p>';
+          return;
+        }
+        ips.forEach(ip => {
+          const div = document.createElement('div');
+          div.className = 'user-card';
+          div.style.borderLeft = '4px solid var(--lp-red)';
+          div.innerHTML = `
+            <div class="user-header">
+              <div class="user-info">
+                <h5>🚫 ${ip}</h5>
+                <p>IP BANNIE DÉFINITIVEMENT</p>
+              </div>
+              <div class="user-actions">
+                <button class="btn" style="background:#28a745; color:white; padding:6px 12px; font-size:12px;" onclick="handleUnbanIP('${ip}')">DÉBANNIR</button>
+              </div>
+            </div>
+          `;
+          list.appendChild(div);
+        });
+      } catch (e) {
+        list.innerHTML = `<p style="color:var(--lp-red);">Erreur: ${e.message}</p>`;
+      }
+    }
+
+    window.handleUnbanIP = async (ip) => {
+      if (!confirm(`Voulez-vous vraiment autoriser à nouveau l'IP ${ip} ?`)) return;
+      try {
+        const res = await fetch('/api/admin/unban-ip', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('echopress_token')}` 
+          },
+          body: JSON.stringify({ ip })
+        });
+        if (res.ok) {
+          alert("IP débannie avec succès.");
+          fetchBannedIPs();
+        } else {
+          alert("Erreur lors du débannissement.");
+        }
+      } catch (e) {
+        alert("Erreur technique: " + e.message);
+      }
     };
 
     async function fetchUsers() {

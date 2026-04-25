@@ -156,6 +156,54 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
+// IP BANNING SYSTEM
+let bannedIPs = new Set();
+
+async function loadBannedIPs() {
+  try {
+    const setting = await getSetting('banned_ips');
+    if (setting && setting.value) {
+      const ips = JSON.parse(setting.value);
+      bannedIPs = new Set(ips);
+      console.log(`[SECURITY] Loaded ${bannedIPs.size} banned IPs.`);
+    }
+  } catch (e) { console.error("Failed to load banned IPs:", e); }
+}
+loadBannedIPs();
+
+async function banIP(req, ip, reason = "Flood d'inscription détecté") {
+  if (!ip || bannedIPs.has(ip)) return;
+  bannedIPs.add(ip);
+  await upsertSetting('banned_ips', JSON.stringify(Array.from(bannedIPs)));
+  await logSecurityAlert(req, 'ip_ban', `ALERTE ROUGE : IP ${ip} bannie définitivement. Raison : ${reason}`, 'critical');
+  
+  // Suspend all accounts created by this IP recently (best effort via audit logs)
+  try {
+    const auditLogs = await getNotifications(100);
+    const accountsToSuspend = auditLogs
+      .filter(n => n.type === 'registration_audit' && n.metadata && n.metadata.IP_ADDRESS === ip)
+      .map(n => n.metadata.USERNAME);
+    
+    for (const username of accountsToSuspend) {
+      const user = await getUserByUsername(username);
+      if (user && user.role === 'user') {
+        await updateUserStatus(user.id, 'suspended', `Banni via IP ${ip} (${reason})`);
+      }
+    }
+  } catch (e) { console.error("Failed to suspend accounts during IP ban:", e); }
+}
+
+const checkIPBan = (req, res, next) => {
+  const forwarded = req.headers['x-forwarded-for'];
+  const ip = forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress;
+  if (bannedIPs.has(ip)) {
+    return res.status(403).json({ error: "Votre adresse IP a été bannie définitivement de cette plateforme pour violation des protocoles de sécurité." });
+  }
+  next();
+};
+
+app.use(checkIPBan);
+
 // Heartbeat check for immediate kickout
 app.get('/api/auth/check', authenticateToken, (req, res) => {
   res.json({ status: 'active', user: req.user });
@@ -414,6 +462,20 @@ app.put('/api/users/:id/notes', authenticateToken, requireOwner, async (req, res
   }
 });
 
+app.get('/api/admin/banned-ips', authenticateToken, requireOwner, (req, res) => {
+  res.json(Array.from(bannedIPs));
+});
+
+app.post('/api/admin/unban-ip', authenticateToken, requireOwner, async (req, res) => {
+  const { ip } = req.body;
+  if (bannedIPs.has(ip)) {
+    bannedIPs.delete(ip);
+    await upsertSetting('banned_ips', JSON.stringify(Array.from(bannedIPs)));
+    await logSecurityAlert(req, 'ip_unban', `IP ${ip} débannie par le propriétaire.`, 'high');
+  }
+  res.json({ success: true });
+});
+
 app.put('/api/users/:id/role', authenticateToken, requireOwner, async (req, res) => {
   const { role } = req.body;
   try {
@@ -424,7 +486,24 @@ app.put('/api/users/:id/role', authenticateToken, requireOwner, async (req, res)
   }
 });
 
+const regFloodTracker = new Map();
+
 app.post('/api/register', authLimiter, async (req, res) => {
+  const forwarded = req.headers['x-forwarded-for'];
+  const ip = forwarded ? forwarded.split(',')[0] : req.socket.remoteAddress;
+
+  // Flood protection: max 5 registrations per hour per IP
+  const now = Date.now();
+  const track = regFloodTracker.get(ip) || [];
+  const recent = track.filter(ts => now - ts < 3600000); // 1 hour
+  
+  if (recent.length >= 5) {
+    await banIP(req, ip, "Tentative de flood d'inscription (Max 5/heure)");
+    return res.status(403).json({ error: "Activité suspecte détectée. Votre IP est bannie." });
+  }
+  recent.push(now);
+  regFloodTracker.set(ip, recent);
+
   // Security Hardening: Require client signature for registration
   if (req.headers['x-echo-client'] !== 'EchoPress2026') {
     await logSecurityAlert(req, 'illegal_registration', 'Tentative d\'inscription sans signature client valide (Bot détecté).', 'critical');
@@ -446,8 +525,15 @@ app.post('/api/register', authLimiter, async (req, res) => {
     // Hashing disabled at user request for visibility in admin panel
     await createUser(username, password, role);
 
+    // Audit Log for registration (needed for IP-account mapping)
+    await createNotification('registration_audit', `Nouvel utilisateur : ${username}`, 'low', null, {
+      USERNAME: username,
+      IP_ADDRESS: ip,
+      TIMESTAMP: new Date().toISOString()
+    });
+
     const userPayload = { username, role, token_version: 1 };
-    const token = jwt.sign(userPayload, JWT_SECRET);
+    const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({ token, user: userPayload });
   } catch (err) {
     res.status(500).json({ error: err.message });

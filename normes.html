@@ -34,17 +34,20 @@
         
         .btn-admin:hover { transform: translateY(-2px); filter: brightness(1.1); }
 
-        /* Quill overrides for this page */
-        #quill-container {
-            display: none;
-            background: rgba(255, 255, 255, 0.05);
+        /* Edit Mode Styles */
+        .edit-active {
+            outline: 2px dashed var(--accent);
+            outline-offset: 10px;
+            cursor: text;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 20px;
             border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            margin-top: 20px;
         }
-        .ql-toolbar.ql-snow { background: #1a1a1a; border-radius: 20px 20px 0 0; border: 1px solid rgba(255,255,255,0.1); }
-        .ql-container.ql-snow { border-radius: 0 0 20px 20px; border: 1px solid rgba(255,255,255,0.1); font-family: 'PT Serif', serif; font-size: 1.15rem; }
+        .edit-active [contenteditable="true"]:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
@@ -108,11 +111,8 @@
                 <p style="font-size: 0.7rem; margin-top: 10px;">Le non-respect de ce code par un membre du personnel rédactionnel peut entraîner des mesures disciplinaires allant jusqu'au licenciement immédiat.</p>
             </footer>
         </div>
-
-        <div id="quill-container" style="height: 600px;"></div>
     </div>
 
-    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script type="module">
         import { initWidgets } from '/src/widgets.js';
 
@@ -125,9 +125,8 @@
         const btnSave = document.getElementById('btn-save-normes');
         const btnCancel = document.getElementById('btn-cancel-normes');
         const displayContent = document.getElementById('normes-dynamic-content');
-        const editorContainer = document.getElementById('quill-container');
 
-        let quill = null;
+        let originalHTML = '';
 
         if (isOwner) {
             controls.style.display = 'flex';
@@ -162,39 +161,28 @@
         }
 
         btnEdit.onclick = () => {
-            if (!quill) {
-                quill = new Quill('#quill-container', {
-                    theme: 'snow',
-                    modules: {
-                        toolbar: [
-                            [{ 'header': [1, 2, 3, false] }],
-                            ['bold', 'italic', 'underline', 'strike'],
-                            ['blockquote', 'code-block'],
-                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                            [{ 'color': [] }, { 'background': [] }],
-                            ['clean']
-                        ]
-                    }
-                });
-            }
-            quill.root.innerHTML = displayContent.innerHTML;
-            displayContent.style.display = 'none';
-            editorContainer.style.display = 'block';
+            originalHTML = displayContent.innerHTML;
+            displayContent.contentEditable = "true";
+            displayContent.classList.add('edit-active');
+            displayContent.focus();
+            
             btnEdit.style.display = 'none';
             btnSave.style.display = 'block';
             btnCancel.style.display = 'block';
         };
 
         btnCancel.onclick = () => {
-            displayContent.style.display = 'block';
-            editorContainer.style.display = 'none';
+            displayContent.innerHTML = originalHTML;
+            displayContent.contentEditable = "false";
+            displayContent.classList.remove('edit-active');
+            
             btnEdit.style.display = 'block';
             btnSave.style.display = 'none';
             btnCancel.style.display = 'none';
         };
 
         btnSave.onclick = async () => {
-            const content = quill.root.innerHTML;
+            const content = displayContent.innerHTML;
             const token = localStorage.getItem('echopress_token');
             
             btnSave.disabled = true;
@@ -211,8 +199,11 @@
                 });
 
                 if (res.ok) {
-                    displayContent.innerHTML = content;
-                    btnCancel.click();
+                    displayContent.contentEditable = "false";
+                    displayContent.classList.remove('edit-active');
+                    btnEdit.style.display = 'block';
+                    btnSave.style.display = 'none';
+                    btnCancel.style.display = 'none';
                     alert("Normes sauvegardées avec succès !");
                 } else {
                     alert("Erreur lors de la sauvegarde.");
