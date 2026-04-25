@@ -1,38 +1,64 @@
 /**
  * EchoPress Security Guard - Anti-Inspection & Hardening
- * Note: Real security is server-side. This script provides layers of obscurity 
- * to deter casual inspection and reverse engineering.
+ * Note: Real security is server-side. This script provides layers of obscurity.
  */
 (function() {
-    // Self-detect owner role to allow legitimate debugging
     const userStr = localStorage.getItem('echopress_user');
     const user = userStr ? JSON.parse(userStr) : null;
     const isOwner = user && user.role === 'owner';
 
-    // 1. Disable Right Click
+    // Maintenance mode flag
+    let maintenanceMode = false;
+    (async () => {
+        try {
+            const res = await fetch('/api/settings/maintenance_mode');
+            if (res.ok) {
+                const data = await res.json();
+                maintenanceMode = data.value === 'true';
+            }
+        } catch (e) {
+            console.error('Failed to fetch maintenance mode', e);
+        }
+    })();
+
+    // Right click disable when maintenance mode is on (or for non-owner when not in maintenance)
     document.addEventListener('contextmenu', (e) => {
-        if (isOwner) return; 
-        e.preventDefault();
+        if (maintenanceMode) {
+            e.preventDefault();
+            return;
+        }
+        if (!isOwner) {
+            e.preventDefault();
+        }
     }, false);
 
-    // 2. Disable DevTools Shortcuts
+    // DevTools shortcuts block when maintenance mode is on (or for non-owner when not in maintenance)
     document.addEventListener('keydown', (e) => {
+        // Block when maintenance mode active
+        if (maintenanceMode) {
+            const forbiddenKeys = ['F12', 'I', 'J', 'U', 'S'];
+            const isForbidden = (e.ctrlKey && e.shiftKey && forbiddenKeys.includes(e.key.toUpperCase())) ||
+                                 (e.ctrlKey && forbiddenKeys.includes(e.key.toUpperCase())) ||
+                                 (e.key === 'F12');
+            if (isForbidden) {
+                e.preventDefault();
+                return false;
+            }
+            return;
+        }
+        // Normal operation: owner can use shortcuts, others blocked
         if (isOwner) return;
-
-        // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Ctrl+S
         const forbiddenKeys = ['F12', 'I', 'J', 'U', 'S'];
         const isForbidden = (e.ctrlKey && e.shiftKey && forbiddenKeys.includes(e.key.toUpperCase())) ||
-                           (e.ctrlKey && forbiddenKeys.includes(e.key.toUpperCase())) ||
-                           (e.key === 'F12');
-
+                             (e.ctrlKey && forbiddenKeys.includes(e.key.toUpperCase())) ||
+                             (e.key === 'F12');
         if (isForbidden) {
             e.preventDefault();
             return false;
         }
     });
 
-    // 3. Debugger Trap (Infinite loop if devtools is open)
-    // This makes the browser hang/pause if they try to use the inspector
+    // Debugger trap (Infinite loop if devtools is open)
     const trap = function() {
         if (isOwner) return;
         try {
@@ -45,47 +71,42 @@
         } catch (e) {}
     };
 
-    // 4. Console Purge
+    // Console Purge
     const clearConsole = () => {
         if (isOwner) return;
         console.clear();
         console.log('%c EchoPress Security Protocol Active ', 'background: #222; color: #c5a059; font-size: 20px; font-weight: bold; padding: 10px; border-radius: 5px;');
     };
-    
-    // Clear console and start trap
+
+    // Clear console and start trap for non-owners
     if (!isOwner) {
         setInterval(clearConsole, 1000);
-        // Start the trap - this will only pause the execution IF devtools is open
         setInterval(trap, 2000);
     }
 
-    // 5. Detect DevTools Opening (Menu Bypass Detection)
+    // Detect DevTools Opening (Menu Bypass Detection)
     let devtoolsOpen = false;
     const checkDevTools = () => {
         if (isOwner) return;
-        
-        // Detection via window size difference
         const threshold = 160;
         const widthThreshold = window.outerWidth - window.innerWidth > threshold;
         const heightThreshold = window.outerHeight - window.innerHeight > threshold;
-        
-        // Detection via 'debugger' timing (it runs much slower when devtools is open)
         const start = new Date();
         debugger;
         const end = new Date();
         const isDebugging = (end - start) > 100;
-
         if (widthThreshold || heightThreshold || isDebugging) {
             if (!devtoolsOpen) {
-                fetch('/api/test-security-alert', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('echopress_token')}` },
+                fetch('/api/test-security-alert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('echopress_token')}`
+                    },
                     body: JSON.stringify({ reason: 'DevTools Detection (Menu or Shortcut)' })
                 }).catch(() => {});
-                
-                // If they are not staff, we can even redirect them to the home page or a warning page
+                // optional redirect for non-staff:
                 // window.location.href = "/?security_alert=devtools_detected";
-                
                 devtoolsOpen = true;
             }
         } else {
