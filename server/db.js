@@ -236,7 +236,11 @@ export const getSetting = async (key) => {
 };
 
 export const upsertSetting = async (key, value) => {
-  const { error } = await supabase.from('settings').upsert({ key, value });
+  const { error } = await supabase.from('settings').upsert({ 
+    key, 
+    value, 
+    updated_at: new Date().toISOString() 
+  });
   if (error) throw error;
 };
 

@@ -172,12 +172,11 @@
             controls.style.display = 'flex';
         }
 
-        function updateNormesDate() {
+        function updateNormesDate(dateObj = new Date()) {
             const updateElem = document.getElementById('normes-update-date');
             if (updateElem) {
-                const now = new Date();
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-                const formatted = now.toLocaleString('fr-FR', options);
+                const formatted = dateObj.toLocaleString('fr-FR', options);
                 updateElem.textContent = `Dernière mise à jour : ${formatted}`;
             }
         }
@@ -205,6 +204,14 @@
                     const data = await res.json();
                     if (data.value && data.value.trim() !== '') {
                         displayContent.innerHTML = data.value;
+                    }
+                    
+                    // Always try to show the actual last update time from the server
+                    if (data.updated_at) {
+                        updateNormesDate(new Date(data.updated_at));
+                    } else if (!data.value) {
+                        // If no data yet, show current time as placeholder
+                        updateNormesDate();
                     }
                 }
             } catch (e) { console.error("Load error:", e); }
