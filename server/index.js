@@ -8,7 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import {
   supabase,
-  getUsers, getUserByUsername, createUser, deleteUser, deleteMultipleUsers, deleteUsersByPassword, updateUserStatus, resetUserPassword, updateUserNotes,
+  getUsers, getUserByUsername, createUser, deleteUser, deleteMultipleUsers, deleteUsersByPassword, updateUserStatus, resetUserPassword, updateUserNotes, updateUserRole,
   getArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus,
   incrementArticleViews, getPopularArticles,
   getSetting, upsertSetting,
@@ -88,24 +88,20 @@ const authenticateToken = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
-    // If no token or explicitly null/undefined, we assign a temporary public role for non-sensitive GET requests
+    // EVERY request MUST have a valid token (Public or Staff)
     if (!token || token === 'null' || token === 'undefined') {
-      const isSensitive = req.path.includes('/admin') || req.path.includes('/users') || req.path.includes('/notifications') || req.path.includes('/settings');
-      if (req.method === 'GET' && !isSensitive) {
-        req.user = { role: 'public' };
-        return next();
-      }
       return res.status(401).json({ error: 'Accès refusé. Token manquant.' });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET, { ignoreExpiration: true });
+    // Security Hardening: Token MUST be valid and NOT expired
+    const decoded = jwt.verify(token, JWT_SECRET);
 
     // Security check: staff roles
     const staffRoles = ['owner', 'supervisor', 'journalist', 'corrector'];
 
-    // Check for Maintenance Mode
+    // Check for Maintenance Mode - Only Owners can bypass
     const maintenanceMode = await getSetting('maintenance_mode');
-    if (maintenanceMode && maintenanceMode.value === 'true' && !staffRoles.includes(decoded.role)) {
+    if (maintenanceMode && maintenanceMode.value === 'true' && decoded.role !== 'owner') {
       const reason = await getSetting('maintenance_reason');
       return res.status(503).json({
         error: 'Maintenance en cours',
@@ -300,8 +296,9 @@ app.post('/api/login', authLimiter, async (req, res) => {
     if (user.status === 'suspended') {
       return res.status(403).json({ error: `Votre compte est suspendu. Raison : ${user.punishment_reason || 'Aucune raison spécifiée.'}` });
     }
+    // Staff tokens expire in 7 days to require periodic re-authentication
     const userPayload = { username: user.username, role: user.role, token_version: user.token_version || 1 };
-    const token = jwt.sign(userPayload, JWT_SECRET);
+    const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: userPayload });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -417,6 +414,16 @@ app.put('/api/users/:id/notes', authenticateToken, requireOwner, async (req, res
   }
 });
 
+app.put('/api/users/:id/role', authenticateToken, requireOwner, async (req, res) => {
+  const { role } = req.body;
+  try {
+    await updateUserRole(req.params.id, role);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/register', authLimiter, async (req, res) => {
   // Security Hardening: Require client signature for registration
   if (req.headers['x-echo-client'] !== 'EchoPress2026') {
@@ -433,9 +440,8 @@ app.post('/api/register', authLimiter, async (req, res) => {
     if (existingUser) return res.status(400).json({ error: 'Username already exists' });
 
     let role = 'user';
-    if (password === 'EchoPressJournalist!') role = 'journalist';
-    else if (password === 'EchoPressCorrect!') role = 'corrector';
-    else if (password === 'EchoPressSupervisor!') role = 'supervisor';
+    // Staff roles MUST be assigned manually by the owner in the admin panel.
+    // Magic passwords have been removed to prevent unauthorized staff access.
 
     // Hashing disabled at user request for visibility in admin panel
     await createUser(username, password, role);
@@ -463,7 +469,8 @@ app.get('/api/public/token', apiLimiter, async (req, res) => {
   if (req.headers['x-echo-client'] !== 'EchoPress2026') {
     return res.status(403).json({ error: 'Client non autorisé' });
   }
-  const token = jwt.sign({ role: 'public' }, JWT_SECRET);
+  // Public tokens now expire in 24 hours to prevent long-term harvesting
+  const token = jwt.sign({ role: 'public' }, JWT_SECRET, { expiresIn: '24h' });
   res.json({ token });
 });
 

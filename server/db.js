@@ -107,6 +107,16 @@ export const updateUserNotes = async (id, notes) => {
   if (error) throw error;
 };
 
+export const updateUserRole = async (id, role) => {
+  const { data: user } = await supabase.from('users').select('token_version').eq('id', id).single();
+  const nextVersion = (user?.token_version || 1) + 1;
+  const { error } = await supabase.from('users').update({ 
+    role, 
+    token_version: nextVersion 
+  }).eq('id', id);
+  if (error) throw error;
+};
+
 // Articles API
 export const getArticles = async (includePaused = true) => {
   try {

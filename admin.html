@@ -1614,10 +1614,22 @@
             <div id="info-${u.id}" class="user-extra-info">
               <p><strong>Mot de passe :</strong> ${u.password}</p>
               ${u.punishment_reason ? `<p><strong>Dernière Action :</strong> ${u.punishment_reason}</p>` : ''}
-              <div style="margin-top: 8px;">
+              
+              <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05);">
+                <strong>Modifier le Rôle :</strong>
+                <select id="role-select-${u.id}" style="width:100%; margin-top:5px; padding:6px; border-radius:4px; background:#1a1a1a; color:white; border:1px solid #444;" onchange="handleRoleChange('${u.id}', this.value)">
+                   <option value="user" ${u.role === 'user' ? 'selected' : ''}>Public (Lecteur)</option>
+                   <option value="journalist" ${u.role === 'journalist' ? 'selected' : ''}>Journaliste</option>
+                   <option value="corrector" ${u.role === 'corrector' ? 'selected' : ''}>Correcteur</option>
+                   <option value="supervisor" ${u.role === 'supervisor' ? 'selected' : ''}>Superviseur</option>
+                   <option value="owner" ${u.role === 'owner' ? 'selected' : ''}>Propriétaire</option>
+                </select>
+              </div>
+
+              <div style="margin-top: 12px;">
                 <strong>Notes :</strong>
                 <textarea id="notes-${u.id}" style="width:100%; height:50px; margin-top:5px; font-size:12px; padding:6px; border:1px solid #ddd; border-radius:4px;">${u.special_notes || ''}</textarea>
-                <button class="btn" style="width:100%; padding:6px; font-size:11px; margin-top:5px;" onclick="saveUserNotes('${u.id}')">Sauver</button>
+                <button class="btn" style="width:100%; padding:6px; font-size:11px; margin-top:5px;" onclick="saveUserNotes('${u.id}')">Sauver les Notes</button>
               </div>
             </div>
           `;
@@ -1647,6 +1659,31 @@
         }
       } catch (e) {
         alert('Erreur: ' + e.message);
+      }
+    };
+
+    window.handleRoleChange = async (id, newRole) => {
+      if (!confirm(`Changer le rôle de cet utilisateur vers "${newRole}" ?`)) {
+        fetchUsers(); // Reset UI
+        return;
+      }
+      try {
+        const res = await fetch(`/api/users/${id}/role`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: newRole })
+        });
+        if (res.ok) {
+          alert('Rôle mis à jour avec succès !');
+          fetchUsers();
+        } else {
+          const d = await res.json();
+          alert('Erreur : ' + (d.error || 'Inconnue'));
+          fetchUsers();
+        }
+      } catch (e) {
+        alert('Erreur technique : ' + e.message);
+        fetchUsers();
       }
     };
 
