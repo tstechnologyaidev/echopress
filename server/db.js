@@ -236,12 +236,15 @@ export const getSetting = async (key) => {
 };
 
 export const upsertSetting = async (key, value) => {
-  const { error } = await supabase.from('settings').upsert({ 
-    key, 
-    value, 
-    updated_at: new Date().toISOString() 
-  });
+  // Save the main value
+  const { error } = await supabase.from('settings').upsert({ key, value });
   if (error) throw error;
+  
+  // Save a companion timestamp
+  await supabase.from('settings').upsert({ 
+    key: `${key}_updated_at`, 
+    value: new Date().toISOString() 
+  });
 };
 
 // Edit Requests API

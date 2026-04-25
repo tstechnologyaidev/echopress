@@ -149,6 +149,8 @@
                 <p>&copy; 2026 EchoLight Innovations. Tous droits réservés.</p>
                 <p style="font-size: 0.7rem; margin-top: 10px;">Le non-respect de ce code par un membre du personnel
                     rédactionnel peut entraîner des mesures disciplinaires allant jusqu'au licenciement immédiat.</p>
+                <p style="font-size: 0.7rem; margin-top: 10px">Pour les utilisateurs standards, vous pouvez signaler un
+                    journaliste qui ne respecte pas le code à ce courriel: supportecholightinnovations@gmail.com</p>
             </footer>
         </div>
     </div>
@@ -205,7 +207,7 @@
                     if (data.value && data.value.trim() !== '') {
                         displayContent.innerHTML = data.value;
                     }
-                    
+
                     // Always try to show the actual last update time from the server
                     if (data.updated_at) {
                         updateNormesDate(new Date(data.updated_at));

@@ -780,7 +780,12 @@ app.get('/api/settings/:key', authenticateToken, async (req, res) => {
 
   try {
     const row = await getSetting(key);
-    res.json(row || { key, value: '' });
+    const tsRow = await getSetting(`${key}_updated_at`);
+    res.json({ 
+      key, 
+      value: row ? row.value : '',
+      updated_at: tsRow ? tsRow.value : null
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
