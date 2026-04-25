@@ -179,11 +179,27 @@
         }
 
         function updateNormesDate(dateObj = new Date()) {
-            const updateElem = document.getElementById('normes-update-date');
+            let updateElem = document.getElementById('normes-update-date');
+            
+            // Self-healing: if the element was deleted during an edit, re-create it
+            if (!updateElem) {
+                const header = document.querySelector('.legal-header');
+                if (header) {
+                    updateElem = document.createElement('p');
+                    updateElem.id = 'normes-update-date';
+                    updateElem.style.color = 'var(--legal-gray)';
+                    updateElem.style.fontSize = '0.9rem';
+                    header.appendChild(updateElem);
+                }
+            }
+
             if (updateElem) {
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
                 const formatted = dateObj.toLocaleString('fr-FR', options);
                 updateElem.textContent = `Dernière mise à jour : ${formatted}`;
+                console.log("Update date set to:", formatted);
+            } else {
+                console.warn("Could not find or create normes-update-date element.");
             }
         }
 
