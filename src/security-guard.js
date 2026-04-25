@@ -32,55 +32,65 @@
     });
 
     // 3. Debugger Trap (Infinite loop if devtools is open)
-    // This makes the browser hang if they try to use the debugger
+    // This makes the browser hang/pause if they try to use the inspector
     const trap = function() {
         if (isOwner) return;
         try {
-            (function(a) {
-                return (function(a) {
-                    return Function('Function("debugger;")()')();
-                })(a);
-            })(0);
+            (function() {
+                (function a() {
+                    debugger;
+                    setTimeout(a, 50);
+                }());
+            }());
         } catch (e) {}
-        setTimeout(trap, 100);
     };
-    // trap(); // Disabled by default as it can be annoying, but can be enabled for ultra-hard mode
 
     // 4. Console Purge
     const clearConsole = () => {
         if (isOwner) return;
         console.clear();
         console.log('%c EchoPress Security Protocol Active ', 'background: #222; color: #c5a059; font-size: 20px; font-weight: bold; padding: 10px; border-radius: 5px;');
-        console.log('%c STOP! %c Toute tentative d\'accès non-autorisé est enregistrée.', 'color: red; font-size: 30px; font-weight: bold;', 'color: gray; font-size: 14px;');
     };
     
-    // Clear console periodically
+    // Clear console and start trap
     if (!isOwner) {
-        setInterval(clearConsole, 2000);
+        setInterval(clearConsole, 1000);
+        // Start the trap - this will only pause the execution IF devtools is open
+        setInterval(trap, 2000);
     }
 
-    // 5. Detect DevTools Opening
+    // 5. Detect DevTools Opening (Menu Bypass Detection)
     let devtoolsOpen = false;
-    const threshold = 160;
     const checkDevTools = () => {
         if (isOwner) return;
+        
+        // Detection via window size difference
+        const threshold = 160;
         const widthThreshold = window.outerWidth - window.innerWidth > threshold;
         const heightThreshold = window.outerHeight - window.innerHeight > threshold;
         
-        if (widthThreshold || heightThreshold) {
+        // Detection via 'debugger' timing (it runs much slower when devtools is open)
+        const start = new Date();
+        debugger;
+        const end = new Date();
+        const isDebugging = (end - start) > 100;
+
+        if (widthThreshold || heightThreshold || isDebugging) {
             if (!devtoolsOpen) {
-                // Log security alert via API if possible
                 fetch('/api/test-security-alert', { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('echopress_token')}` },
-                    body: JSON.stringify({ reason: 'DevTools Detection' })
+                    body: JSON.stringify({ reason: 'DevTools Detection (Menu or Shortcut)' })
                 }).catch(() => {});
+                
+                // If they are not staff, we can even redirect them to the home page or a warning page
+                // window.location.href = "/?security_alert=devtools_detected";
+                
                 devtoolsOpen = true;
             }
         } else {
             devtoolsOpen = false;
         }
     };
-    setInterval(checkDevTools, 1000);
-
+    setInterval(checkDevTools, 2000);
 })();
