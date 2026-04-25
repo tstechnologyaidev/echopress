@@ -944,7 +944,7 @@ app.post('/api/test-security-alert', authenticateToken, requireOwner, async (req
 let cachedWeather = null;
 let lastWeatherFetch = 0;
 
-app.get('/api/weather', authenticateToken, async (req, res) => {
+app.get('/api/weather', async (req, res) => {
   try {
     const now = Date.now();
     if (cachedWeather && (now - lastWeatherFetch < 10 * 60 * 1000)) {

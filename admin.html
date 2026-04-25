@@ -2208,8 +2208,11 @@
 
     async function loadMaintenanceStatus() {
       try {
-        const mode = await fetch('/api/settings/maintenance_mode').then(r => r.json());
-        const reason = await fetch('/api/settings/maintenance_reason').then(r => r.json());
+        const token = localStorage.getItem('echopress_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        
+        const mode = await fetch('/api/settings/maintenance_mode', { headers }).then(r => r.json());
+        const reason = await fetch('/api/settings/maintenance_reason', { headers }).then(r => r.json());
         const isEnabled = mode.value === 'true';
         const statusEl = document.getElementById('maintenance-status');
         const btn = document.getElementById('toggle-maintenance-btn');
@@ -2233,20 +2236,29 @@
         const newStatus = !currentStatus;
         if (newStatus && !reason) { alert("Veuillez entrer un motif de maintenance avant d'activer."); return; }
         try {
+          const token = localStorage.getItem('echopress_token');
           maintenanceBtn.disabled = true;
           maintenanceBtn.textContent = "Mise à jour...";
+          
           await fetch('/api/settings', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({ key: 'maintenance_reason', value: reason })
           });
           const res = await fetch('/api/settings', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({ key: 'maintenance_mode', value: newStatus.toString() })
           });
           maintenanceBtn.disabled = false;
           if (res.ok) { alert(`Mode Maintenance ${newStatus ? 'ACTIVÉ' : 'DÉSACTIVÉ'}.`); loadMaintenanceStatus(); }
+          else { alert("Erreur lors de la mise à jour (Code " + res.status + ")"); loadMaintenanceStatus(); }
         } catch (e) { alert("Erreur : " + e.message); maintenanceBtn.disabled = false; }
       });
     }
