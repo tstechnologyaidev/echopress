@@ -11,7 +11,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;800;900&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="/src/normes.css">
-    <script src="/src/security-guard.js"></script>
+    <script src="/security-guard.js"></script>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <style>
         #owner-controls {
@@ -218,7 +218,12 @@
 
         async function loadNormes() {
             try {
-                const token = await getPublicToken();
+                // Try staff token first, fallback to public token
+                let token = localStorage.getItem('echopress_token');
+                if (!token || token === 'null' || token === 'undefined') {
+                    token = await getPublicToken();
+                }
+
                 const res = await fetch('/api/settings/normes_content', {
                     headers: token ? { 'Authorization': `Bearer ${token}` } : {}
                 });
