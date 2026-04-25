@@ -130,14 +130,22 @@ export async function initOwnerNotifications() {
   }
   container.style.display = 'flex';
 
+  // Track the last time we showed a notification to avoid duplicates across logins
+  const lastKnownTime = localStorage.getItem('owner_last_notif_time');
   let lastCheckTime;
-  const isFirstSessionLoad = !sessionStorage.getItem('owner_live_notifs_init');
   
-  if (isFirstSessionLoad) {
+  if (!lastKnownTime) {
+    // First time ever on this device: show last 24h
     lastCheckTime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    sessionStorage.setItem('owner_live_notifs_init', 'true');
+    localStorage.setItem('owner_last_notif_time', lastCheckTime);
   } else {
-    lastCheckTime = new Date().toISOString();
+    // Use the stored timestamp
+    lastCheckTime = lastKnownTime;
+  }
+
+  const isFirstSessionLoad = !sessionStorage.getItem('owner_live_notifs_session_init');
+  if (isFirstSessionLoad) {
+    sessionStorage.setItem('owner_live_notifs_session_init', 'true');
   }
   
   async function fetchNewAlerts() {
@@ -150,10 +158,17 @@ export async function initOwnerNotifications() {
       const notifications = await res.json();
       
       if (notifications.length > 0) {
+        // Find the most recent notification time
+        const latestTime = notifications.reduce((latest, n) => {
+          return n.created_at > latest ? n.created_at : latest;
+        }, lastCheckTime);
+
         notifications.forEach(notif => {
           showToast(notif);
         });
-        lastCheckTime = new Date().toISOString();
+
+        lastCheckTime = latestTime;
+        localStorage.setItem('owner_last_notif_time', lastCheckTime);
       }
     } catch (e) {
       console.error('Notification error:', e);

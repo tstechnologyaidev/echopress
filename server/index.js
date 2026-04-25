@@ -607,7 +607,6 @@ app.put('/api/articles/:id', authenticateToken, requireStaff, async (req, res) =
 
 app.delete('/api/articles/:id', authenticateToken, requireStaff, async (req, res) => {
   try {
-    console.log(`[DELETE ATTEMPT] Article ID: ${req.params.id} by ${req.user.username}`);
     const article = await getArticleById(req.params.id);
     const title = article ? article.title : 'Inconnu';
     

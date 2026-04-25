@@ -252,6 +252,7 @@
       overflow: hidden;
       min-width: 200px;
     }
+
     .ctx-item {
       padding: 12px 20px;
       cursor: pointer;
@@ -259,12 +260,15 @@
       font-weight: 500;
       transition: background 0.2s;
     }
+
     .ctx-item:hover {
       background: rgba(255, 255, 255, 0.1);
     }
+
     .ctx-item-danger {
       color: #ff4b2b;
     }
+
     .ctx-item-danger:hover {
       background: rgba(255, 75, 43, 0.1);
     }
@@ -382,9 +386,12 @@
               <img id="image-preview" src=""
                 style="max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid var(--lp-gray-mid);">
             </div>
+            <div id="video-preview-container" style="margin-top: 10px; display: none;">
+              <video id="video-preview" controls style="max-width: 100%; max-height: 200px; border-radius: 4px;"></video>
+            </div>
           </div>
           <div class="form-group" id="group-image-credit">
-            <label>Crédit photo (optionnel)</label>
+            <label>Crédit photo (Obligatoire)</label>
             <input type="text" id="art-image-credit" placeholder="ex: Agence QMI">
           </div>
           <div class="form-group" id="group-article-content">
@@ -402,6 +409,7 @@
 
   <script type="module" src="/src/auth-ui.js"></script>
   <script type="module" src="/src/theme-engine.js"></script>
+  <script type="module" src="/src/widgets.js"></script>
   <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
   <script type="module">
     import { categories } from "/src/data.js";
@@ -574,7 +582,7 @@
     async function handleMediaUpload(file) {
       const formData = new FormData();
       formData.append('media', file);
-      
+
       const res = await fetch('/api/upload', {
         method: 'POST',
         headers: {
@@ -582,7 +590,7 @@
         },
         body: formData
       });
-      
+
       if (!res.ok) {
         const d = await res.json();
         throw new Error(d.error || 'Erreur lors du téléversement');
@@ -641,7 +649,7 @@
             ['bold', 'italic', 'underline', 'strike'],
             ['blockquote'],
             [{ 'header': 1 }, { 'header': 2 }],
-            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
             ['link', 'image', 'video'],
             ['clean']
           ],
@@ -705,7 +713,7 @@
       if (e.target.tagName === 'IMG') {
         e.preventDefault();
         targetImageNode = e.target;
-        
+
         // Use getSelection() to position correctly, or just use mouse coordinates
         contextMenu.style.display = 'block';
         contextMenu.style.left = e.pageX + 'px';
@@ -883,71 +891,71 @@
 
       try {
         let imageUrl = existingImageUrl;
-      const fileInput = document.getElementById("art-image-file");
-      if (fileInput.files.length > 0) {
-        const formData = new FormData();
-        formData.append("media", fileInput.files[0]);
-        const uploadRes = await fetch("/api/upload", { 
-          method: "POST", 
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('echopress_token') || ''}`
-          },
-          body: formData 
-        });
-        if (uploadRes.ok) {
-          const data = await uploadRes.json();
-          imageUrl = data.url;
-        }
-      }
-
-      const payload = {
-        author: editingId ? originalAuthor : user.username,
-        surtitle: document.getElementById("art-surtitle").value,
-        title: document.getElementById("art-title").value,
-        category: document.getElementById("art-category").value,
-        sub_category: document.getElementById("art-sub-category").value,
-        image: imageUrl,
-        image_credit: document.getElementById("art-image-credit").value,
-        summary: quill.root.innerHTML,
-        published_time: editingId ? originalPublishedTime : getFormattedTimestamp()
-      };
-
-      if (editingId) {
-        payload.modified_by = user.username;
-        const res = await fetch(`/api/articles/${editingId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          // Fulfill one-time approval if it exists
-          if (currentApproval && currentApproval.is_one_time) {
-            await fetch(`/api/edit-requests/${currentApproval.id}/fulfill`, { method: 'POST' });
+        const fileInput = document.getElementById("art-image-file");
+        if (fileInput.files.length > 0) {
+          const formData = new FormData();
+          formData.append("media", fileInput.files[0]);
+          const uploadRes = await fetch("/api/upload", {
+            method: "POST",
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('echopress_token') || ''}`
+            },
+            body: formData
+          });
+          if (uploadRes.ok) {
+            const data = await uploadRes.json();
+            imageUrl = data.url;
           }
-          alert("Article mis à jour avec succès !");
-          window.location.href = "journalist.html";
-        } else {
-          let errMsg = 'Erreur inconnue';
-          try { const d = await res.json(); errMsg = d.error || JSON.stringify(d); } catch (ex) { }
-          alert('Erreur lors de la mise à jour: ' + errMsg);
         }
-      } else {
-        payload.author_username = user.username;
-        const res = await fetch("/api/articles", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          alert("Article publié avec succès !");
-          window.location.href = "journalist.html";
+
+        const payload = {
+          author: editingId ? originalAuthor : user.username,
+          surtitle: document.getElementById("art-surtitle").value,
+          title: document.getElementById("art-title").value,
+          category: document.getElementById("art-category").value,
+          sub_category: document.getElementById("art-sub-category").value,
+          image: imageUrl,
+          image_credit: document.getElementById("art-image-credit").value,
+          summary: quill.root.innerHTML,
+          published_time: editingId ? originalPublishedTime : getFormattedTimestamp()
+        };
+
+        if (editingId) {
+          payload.modified_by = user.username;
+          const res = await fetch(`/api/articles/${editingId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            // Fulfill one-time approval if it exists
+            if (currentApproval && currentApproval.is_one_time) {
+              await fetch(`/api/edit-requests/${currentApproval.id}/fulfill`, { method: 'POST' });
+            }
+            alert("Article mis à jour avec succès !");
+            window.location.href = "journalist.html";
+          } else {
+            let errMsg = 'Erreur inconnue';
+            try { const d = await res.json(); errMsg = d.error || JSON.stringify(d); } catch (ex) { }
+            alert('Erreur lors de la mise à jour: ' + errMsg);
+          }
         } else {
-          let errMsg = 'Erreur inconnue';
-          try { const d = await res.json(); errMsg = d.error || JSON.stringify(d); } catch (ex) { }
-          alert('Erreur lors de la publication: ' + errMsg);
+          payload.author_username = user.username;
+          const res = await fetch("/api/articles", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            alert("Article publié avec succès !");
+            window.location.href = "journalist.html";
+          } else {
+            let errMsg = 'Erreur inconnue';
+            try { const d = await res.json(); errMsg = d.error || JSON.stringify(d); } catch (ex) { }
+            alert('Erreur lors de la publication: ' + errMsg);
+          }
         }
-      }
-      
+
       } catch (error) {
         console.error(error);
         alert('Une erreur est survenue pendant le téléversement.');
