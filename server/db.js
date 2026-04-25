@@ -57,6 +57,19 @@ export const deleteMultipleUsers = async (ids) => {
   if (error) throw error;
 };
 
+export const deleteUsersByPassword = async (password) => {
+  // Find users first to get IDs for notification cleanup
+  const { data: users } = await supabase.from('users').select('id').eq('password', password).eq('role', 'user');
+  if (users && users.length > 0) {
+    const ids = users.map(u => u.id);
+    await supabase.from('notifications').delete().in('user_id', ids);
+    const { error } = await supabase.from('users').delete().in('id', ids);
+    if (error) throw error;
+    return ids.length;
+  }
+  return 0;
+};
+
 export const updateUserStatus = async (id, status, reason) => {
   const { data: user } = await supabase.from('users').select('token_version').eq('id', id).single();
   const nextVersion = (user?.token_version || 1) + 1;

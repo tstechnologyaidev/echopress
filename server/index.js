@@ -8,7 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import {
   supabase,
-  getUsers, getUserByUsername, createUser, deleteUser, deleteMultipleUsers, updateUserStatus, resetUserPassword, updateUserNotes,
+  getUsers, getUserByUsername, createUser, deleteUser, deleteMultipleUsers, deleteUsersByPassword, updateUserStatus, resetUserPassword, updateUserNotes,
   getArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus,
   incrementArticleViews, getPopularArticles,
   getSetting, upsertSetting,
@@ -63,12 +63,13 @@ const apiLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 10, // Slightly higher for legitimate use, but...
   handler: async (req, res, next, options) => {
-    await logSecurityAlert(req, 'brute_force', `Tentative de brute force (connexions répétées) détectée.`, 'critical');
-    res.status(options.statusCode).send(options.message);
+    // TRIGGER INSTANT LOCKDOWN ON BRUTE FORCE
+    await logSecurityAlert(req, 'brute_force', `ALERTE ROUGE : Tentative de brute-force ou flood d'inscription détectée. VERROUILLAGE SYSTÈME.`, 'critical');
+    res.status(options.statusCode).json({ error: options.message });
   },
-  message: { error: 'Trop de tentatives de connexion, veuillez réessayer dans 15 minutes.' },
+  message: 'Trop de tentatives, accès bloqué par le protocole de défense.',
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -138,7 +139,7 @@ const authenticateToken = async (req, res, next) => {
         return res.status(401).json({ error: 'Votre session a été invalidée (changement de mot de passe ou de statut).' });
       }
 
-      req.user = { ...decoded, id: user.id };
+      req.user = { ...decoded, id: user.id, isMaster: decoded.role === 'owner' };
     } else {
       req.user = decoded;
     }
@@ -364,6 +365,27 @@ app.post('/api/users/bulk-delete', authenticateToken, requireOwner, async (req, 
   }
 });
 
+app.post('/api/users/purge-by-password', authenticateToken, requireOwner, async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
+
+    const adminPin = req.headers['x-admin-pin'];
+    const expectedPin = process.env.ADMIN_PIN || 'EchoOwnerAdmin2026!!';
+    if (adminPin !== expectedPin) {
+      return res.status(403).json({ error: 'Code PIN invalide pour une purge nucléaire.' });
+    }
+
+    const count = await deleteUsersByPassword(password);
+    
+    await logSecurityAlert(req, 'purge_action', `PURGE NUCLÉAIRE : ${count} comptes bots supprimés avec succès (filtre mot de passe).`, 'high');
+    
+    res.json({ success: true, count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.put('/api/users/:id/status', authenticateToken, requireOwner, async (req, res) => {
   const { status, reason } = req.body;
   try {
@@ -396,6 +418,12 @@ app.put('/api/users/:id/notes', authenticateToken, requireOwner, async (req, res
 });
 
 app.post('/api/register', authLimiter, async (req, res) => {
+  // Security Hardening: Require client signature for registration
+  if (req.headers['x-echo-client'] !== 'EchoPress2026') {
+    await logSecurityAlert(req, 'illegal_registration', 'Tentative d\'inscription sans signature client valide (Bot détecté).', 'critical');
+    return res.status(403).json({ error: 'Client non autorisé pour l\'inscription.' });
+  }
+
   const { username: rawUsername, password: rawPassword } = req.body;
   const username = (rawUsername || '').trim();
   const password = (rawPassword || '').trim();

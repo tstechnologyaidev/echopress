@@ -359,8 +359,14 @@
           <div id="articles-list" style="margin-top:10px;">
             <!-- Rendered via JS -->
           </div>
-
-
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--glass-border);">
+            <h5>☢️ Suppression Manuelle (ID)</h5>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+              <input type="text" id="manual-article-id" placeholder="ID de l'article à supprimer..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: #000; color: #ef4444; font-family: monospace;">
+              <button class="btn btn-danger" onclick="handleManualArticleDelete()">NUCLÉAIRE</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -395,6 +401,7 @@
               <input type="checkbox" id="select-all-users" onchange="toggleSelectAllUsers()" style="transform: scale(1.2);"> Tout choisir
             </label>
             <button class="btn danger" style="padding: 8px 16px; font-size: 13px;" onclick="handleBulkDelete()">Supprimer la sélection</button>
+            <button class="btn" style="border-color: #f39c12; color: #f39c12; background: rgba(243, 156, 18, 0.1); padding: 8px 16px; font-size: 13px;" onclick="handlePurgeByPassword()">🔥 Purge par Mot de Passe</button>
             <button id="btn-purge-massive" class="btn" style="display: none; border-color: #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 8px 16px; font-size: 13px;" onclick="handlePurgeRegularUsers()">🌊 Purger TOUS les Publics</button>
           </div>
         </div>
@@ -1533,6 +1540,63 @@
           } catch (e) {
             alert('Erreur technique: ' + e.message);
           }
+        }
+      };
+      
+      window.handlePurgeByPassword = async () => {
+        const password = prompt("⚠️ PURGE PAR MOT DE PASSE :\nEntrez le mot de passe commun utilisé par les bots pour les supprimer tous d'un coup :");
+        if (!password) return;
+        
+        const pin1 = prompt("🔐 VÉRIFICATION ÉTAPE 1 :\nPIN Niveau 1 :");
+        if (pin1 !== "EchoAdmin2026!!") return alert("PIN 1 invalide.");
+        
+        const pin2 = prompt("🚨 CONFIRMATION FINALE :\nPIN de CONFIRMATION :");
+        if (pin2 !== "EchoOwnerAdmin2026!!") return alert("PIN de confirmation invalide.");
+        
+        try {
+          const res = await fetch('/api/users/purge-by-password', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('echopress_token') || ''}`,
+              'x-admin-pin': pin2
+            },
+            body: JSON.stringify({ password })
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            alert(`SUCCÈS : ${data.count} comptes bots ont été désintégrés.`);
+            fetchUsers();
+          } else {
+            const err = await res.json();
+            alert(`ERREUR : ${err.error || 'Inconnue'}`);
+          }
+        } catch (e) { alert("Erreur technique: " + e.message); }
+      };
+
+      window.handleManualArticleDelete = async () => {
+        const id = document.getElementById('manual-article-id').value.trim();
+        if (!id) return alert("Veuillez entrer un ID d'article.");
+        
+        if (confirm(`☢️ ACTION NUCLÉAIRE ☢️\nÊtes-vous certain de vouloir forcer la suppression de l'article ID: ${id} ?\nCette action bypass toute logique de recherche UI.`)) {
+          try {
+            const res = await fetch(`/api/articles/${id}`, {
+              method: 'DELETE',
+              headers: { 
+                'Authorization': `Bearer ${localStorage.getItem('echopress_token') || ''}`
+              }
+            });
+            
+            if (res.ok) {
+              alert("Article supprimé de la base de données.");
+              document.getElementById('manual-article-id').value = "";
+              fetchArticlesAdmin();
+            } else {
+              const err = await res.json();
+              alert(`ÉCHEC : ${err.error || 'Erreur serveur'}`);
+            }
+          } catch (e) { alert("Erreur: " + e.message); }
         }
       };
 
