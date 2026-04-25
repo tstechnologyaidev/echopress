@@ -99,9 +99,12 @@ const authenticateToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET, { ignoreExpiration: true });
 
+    // Security check: staff roles
+    const staffRoles = ['owner', 'supervisor', 'journalist', 'corrector'];
+
     // Check for Maintenance Mode
     const maintenanceMode = await getSetting('maintenance_mode');
-    if (maintenanceMode && maintenanceMode.value === 'true' && decoded.role !== 'owner') {
+    if (maintenanceMode && maintenanceMode.value === 'true' && !staffRoles.includes(decoded.role)) {
       const reason = await getSetting('maintenance_reason');
       return res.status(503).json({
         error: 'Maintenance en cours',
@@ -142,8 +145,16 @@ const authenticateToken = async (req, res, next) => {
 
     next();
   } catch (err) {
-    // We are being "less severe": only log the error, don't kickout unless absolutely necessary
-    console.log('[AUTH ADVISORY]', err.message);
+    // If we have a token but it's invalid, we should reject unless it's a non-sensitive GET request
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (token && token !== 'null' && token !== 'undefined') {
+      console.log('[AUTH FAILURE]', err.message);
+      return res.status(401).json({ error: 'Session invalide ou expirée. Veuillez vous reconnecter.' });
+    }
+    
+    // For completely missing tokens, the first check already handled it or allowed public GET
     next();
   }
 };
@@ -155,12 +166,12 @@ app.get('/api/auth/check', authenticateToken, (req, res) => {
 
 const requireOwner = async (req, res, next) => {
   if (req.user && req.user.role === 'owner') {
-    next();
-  } else {
-    const userDisplay = req.user ? `${req.user.username} (${req.user.role})` : 'Utilisateur non-authentifié';
-    await logSecurityAlert(req, 'unauthorized_access', `Tentative d'accès ADMIN refusée pour ${userDisplay}`, 'critical');
-    res.status(403).json({ error: 'Accès refusé. Propriétaire requis.' });
+    return next();
   }
+  const userDisplay = req.user ? `${req.user.username} (${req.user.role})` : 'Utilisateur non-authentifié';
+  const severity = ['POST', 'PUT', 'DELETE'].includes(req.method) ? 'critical' : 'high';
+  await logSecurityAlert(req, 'unauthorized_access', `Tentative d'accès PROPRIÉTAIRE (${req.method}) refusée pour ${userDisplay}`, severity);
+  res.status(403).json({ error: 'Accès refusé. Propriétaire requis.' });
 };
 
 const requireStaff = async (req, res, next) => {
@@ -169,20 +180,23 @@ const requireStaff = async (req, res, next) => {
     next();
   } else {
     const userDisplay = req.user ? `${req.user.username} (${req.user.role})` : 'Utilisateur non-authentifié';
-    await logSecurityAlert(req, 'unauthorized_access', `Tentative d'accès STAFF refusée pour ${userDisplay}`, 'high');
+    // If it's a mutation (POST, PUT, DELETE), it's CRITICAL
+    const isMutation = ['POST', 'PUT', 'DELETE'].includes(req.method);
+    const severity = isMutation ? 'critical' : 'high';
+    
+    await logSecurityAlert(req, 'unauthorized_access', `Tentative d'accès STAFF (${req.method}) refusée pour ${userDisplay}`, severity);
     res.status(403).json({ error: 'Accès refusé. Privilèges rédactionnels requis.' });
   }
 };
 
 const requireOwnerOrSupervisor = async (req, res, next) => {
-  const allowed = ['owner', 'supervisor'];
-  if (req.user && allowed.includes(req.user.role)) {
-    next();
-  } else {
-    const userDisplay = req.user ? `${req.user.username} (${req.user.role})` : 'Utilisateur non-authentifié';
-    await logSecurityAlert(req, 'unauthorized_access', `Tentative d'accès SUPERVISEUR refusée pour ${userDisplay}`, 'high');
-    res.status(403).json({ error: 'Accès refusé. Propriétaire ou Superviseur requis.' });
+  if (req.user && (req.user.role === 'owner' || req.user.role === 'supervisor')) {
+    return next();
   }
+  const userDisplay = req.user ? `${req.user.username} (${req.user.role})` : 'Utilisateur non-authentifié';
+  const severity = ['POST', 'PUT', 'DELETE'].includes(req.method) ? 'critical' : 'high';
+  await logSecurityAlert(req, 'unauthorized_access', `Tentative d'accès SUPERVISEUR (${req.method}) refusée pour ${userDisplay}`, severity);
+  res.status(403).json({ error: 'Accès refusé. Propriétaire ou Superviseur requis.' });
 };
 
 let attackCounter = 0;
@@ -225,6 +239,10 @@ const logSecurityAlert = async (req, type, message, severity = 'high') => {
       PATH_ATTEMPTED: req.path,
       HTTP_METHOD: req.method,
       USER_ROLE: req.user ? req.user.role : 'unauthenticated',
+      USER_AGENT: req.headers['user-agent'] || 'Inconnu',
+      REFERER: req.headers['referer'] || 'Direct',
+      X_ECHO_CLIENT: req.headers['x-echo-client'] || 'Absent',
+      PAYLOAD_SAMPLE: req.body ? JSON.stringify(req.body).substring(0, 500) : 'Aucun',
       TIMESTAMP: new Date().toISOString()
     };
 
@@ -234,7 +252,12 @@ const logSecurityAlert = async (req, type, message, severity = 'high') => {
       await updateUserStatus(userId, 'suspended', 'DÉFENSE ACTIVE : Violation critique des protocoles de sécurité.');
     }
 
-    if (severity === 'critical' || severity === 'high') {
+    if (severity === 'critical') {
+      // INSTANT LOCKDOWN for critical alerts
+      await upsertSetting('maintenance_mode', 'true');
+      await upsertSetting('maintenance_reason', `VERROUILLAGE D'URGENCE : ${message}`);
+      attackCounter = 0; // Reset counter since we already locked
+    } else if (severity === 'high') {
       attackCounter++;
       if (attackCounter >= 2) {
         await upsertSetting('maintenance_mode', 'true');
@@ -501,6 +524,13 @@ app.post('/api/upload', authenticateToken, requireStaff, upload.single('media'),
 app.post('/api/articles', authenticateToken, requireStaff, async (req, res) => {
   const { title, summary, category, sub_category, author, surtitle, image, image_credit, published_time, author_username } = req.body;
 
+  // Extra security: even with requireStaff, ensure role is truly allowed for publishing
+  const allowedRoles = ['owner', 'supervisor', 'journalist'];
+  if (!allowedRoles.includes(req.user.role)) {
+    await logSecurityAlert(req, 'illegal_publishing', `TENTATIVE DE PUBLICATION PAR UN RÔLE NON-AUTORISÉ : ${req.user.role}`, 'critical');
+    return res.status(403).json({ error: 'Votre rôle ne permet pas la publication directe.' });
+  }
+
   if (category === 'videos' && req.user.role !== 'owner') {
     return res.status(403).json({ error: 'Seuls les propriétaires peuvent publier dans la catégorie Vidéos.' });
   }
@@ -549,7 +579,19 @@ app.put('/api/articles/:id', authenticateToken, requireStaff, async (req, res) =
 
 app.delete('/api/articles/:id', authenticateToken, requireStaff, async (req, res) => {
   try {
+    const article = await getArticleById(req.params.id);
+    const title = article ? article.title : 'Inconnu';
+    
     await deleteArticle(req.params.id);
+    
+    // Audit log
+    await createNotification('content_update', `[SUPPRESSION] ${req.user.username} a supprimé l'article: "${title}"`, 'high', req.user.id, {
+      article_id: req.params.id,
+      article_title: title,
+      deleted_by: req.user.username,
+      deleted_at: new Date().toISOString()
+    });
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

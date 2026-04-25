@@ -114,7 +114,7 @@ export const getArticles = async (includePaused = true) => {
 
 export const getArticleById = async (id) => {
   const { data, error } = await supabase.from('articles').select('*').eq('id', id).single();
-  if (error) throw error;
+  if (error && error.code !== 'PGRST116') throw error;
   return data;
 };
 
