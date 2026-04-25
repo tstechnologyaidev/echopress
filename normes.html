@@ -158,7 +158,7 @@
 
         const userStr = localStorage.getItem('echopress_user');
         const user = userStr ? JSON.parse(userStr) : null;
-        const isOwner = user && user.role === 'owner';
+        const isAllowed = user && (user.role === 'owner' || user.role === 'supervisor');
 
         const controls = document.getElementById('owner-controls');
         const btnEdit = document.getElementById('btn-edit-normes');
@@ -168,8 +168,18 @@
 
         let originalHTML = '';
 
-        if (isOwner) {
+        if (isAllowed) {
             controls.style.display = 'flex';
+        }
+
+        function updateNormesDate() {
+            const updateElem = document.getElementById('normes-update-date');
+            if (updateElem) {
+                const now = new Date();
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+                const formatted = now.toLocaleString('fr-FR', options);
+                updateElem.textContent = `Dernière mise à jour : ${formatted}`;
+            }
         }
 
         async function getPublicToken() {
@@ -222,6 +232,7 @@
         };
 
         btnSave.onclick = async () => {
+            updateNormesDate();
             const content = displayContent.innerHTML;
             const token = localStorage.getItem('echopress_token');
 
@@ -256,14 +267,6 @@
         };
 
         loadNormes();
-        // Set full date and time for update info
-        const updateElem = document.getElementById('normes-update-date');
-        if (updateElem) {
-            const now = new Date();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-            const formatted = now.toLocaleString('fr-FR', options);
-            updateElem.textContent = `Dernière mise à jour : ${formatted}`;
-        }
         initWidgets();
     </script>
 </body>

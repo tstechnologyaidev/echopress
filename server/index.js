@@ -786,7 +786,7 @@ app.get('/api/settings/:key', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/settings', authenticateToken, requireOwner, async (req, res) => {
+app.post('/api/settings', authenticateToken, requireOwnerOrSupervisor, async (req, res) => {
   const { key, value } = req.body;
   try {
     // Reset attack counter if owner manually disables maintenance
