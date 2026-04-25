@@ -71,7 +71,7 @@
             <header class="legal-header">
                 <div class="copyright-badge">Document Officiel</div>
                 <h1>Normes Journalistiques</h1>
-                <p id="normes-update-date" style="color: var(--legal-gray); font-size: 0.9rem;">Dernière mise à jour : 24 Avril 2026</p>
+                <p id="normes-update-date" style="color: var(--legal-gray); font-size: 0.9rem;">Dernière mise à jour : </p>
             </header>
 
             <section class="standards-section">
@@ -217,6 +217,15 @@
         };
 
         loadNormes();
+        // Set full date and time for update info
+        const updateElem = document.getElementById('normes-update-date');
+        if (updateElem) {
+          const now = new Date();
+          // Options for full date and time in French locale
+          const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+          const formatted = now.toLocaleDateString('fr-FR', options) + ' ' + now.toLocaleTimeString('fr-FR');
+          updateElem.textContent = `Dernière mise à jour : ${formatted}`;
+        }
         initWidgets();
     </script>
 </body>
