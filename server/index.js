@@ -99,9 +99,10 @@ const authenticateToken = async (req, res, next) => {
     // Security check: staff roles
     const staffRoles = ['owner', 'supervisor', 'journalist', 'corrector'];
 
-    // Check for Maintenance Mode - Only Owners can bypass
+    // Check for Maintenance Mode - Staff can bypass
     const maintenanceMode = await getSetting('maintenance_mode');
-    if (maintenanceMode && maintenanceMode.value === 'true' && decoded.role !== 'owner') {
+    const isStaff = staffRoles.includes(decoded.role);
+    if (maintenanceMode && maintenanceMode.value === 'true' && !isStaff) {
       const reason = await getSetting('maintenance_reason');
       return res.status(503).json({
         error: 'Maintenance en cours',
