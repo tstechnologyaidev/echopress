@@ -32,11 +32,11 @@
         }
     }, false);
 
-    // DevTools shortcuts block when maintenance mode is on (or for non-owner when not in maintenance)
+    // DevTools & Sensitive shortcuts block
     document.addEventListener('keydown', (e) => {
-        // Block when maintenance mode active
+        // 1. Maintenance Mode: TOTAL LOCKDOWN (No bypass for anyone)
         if (maintenanceMode) {
-            const forbiddenKeys = ['F12', 'I', 'J', 'U', 'S'];
+            const forbiddenKeys = ['F12', 'I', 'J', 'U', 'S', 'C', 'V', 'P', 'A'];
             const isForbidden = (e.ctrlKey && e.shiftKey && forbiddenKeys.includes(e.key.toUpperCase())) ||
                                  (e.ctrlKey && forbiddenKeys.includes(e.key.toUpperCase())) ||
                                  (e.key === 'F12');
@@ -46,12 +46,16 @@
             }
             return;
         }
-        // Normal operation: owner can use shortcuts, others blocked
+
+        // 2. Normal Operation: Owner has bypass, everyone else is restricted
         if (isOwner) return;
-        const forbiddenKeys = ['F12', 'I', 'J', 'U', 'S'];
+
+        // Broad block for all staff/users to prevent inspection
+        const forbiddenKeys = ['F12', 'I', 'J', 'U', 'S', 'P', 'C'];
         const isForbidden = (e.ctrlKey && e.shiftKey && forbiddenKeys.includes(e.key.toUpperCase())) ||
                              (e.ctrlKey && forbiddenKeys.includes(e.key.toUpperCase())) ||
                              (e.key === 'F12');
+        
         if (isForbidden) {
             e.preventDefault();
             return false;
