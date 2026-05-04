@@ -85,12 +85,16 @@ const initMain = async () => {
         let mediaHtml = '';
         
         if (heroData.image) {
-            if (heroData.category === 'videos') {
-                const ytId = extractYouTubeId(heroData.image);
+            const ytId = extractYouTubeId(heroData.image);
+            const isDirectVideo = heroData.image.match(/\.(mp4|webm|ogg)$/i) || heroData.image.includes('/uploads/') && !heroData.image.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+            const isVideoCategory = heroData.category === 'videos';
+            const isPubliciteVideo = heroData.category === 'publicitees' && (ytId || isDirectVideo);
+
+            if (isVideoCategory || isPubliciteVideo) {
                 if (ytId) {
                     mediaHtml = `<div class="hero-image-container"><img src="https://img.youtube.com/vi/${ytId}/maxresdefault.jpg" alt="Hero Image" class="hero-image"><div class="play-overlay">▶</div></div>`;
                 } else {
-                    // Fallback to video tag if not a YT URL (for legacy)
+                    // Fallback to video tag if not a YT URL (for legacy or direct uploads)
                     mediaHtml = `<video src="${heroData.image.startsWith('http') ? heroData.image : '/' + heroData.image}" class="hero-image" style="object-fit: cover;" loop onmouseover="this.play()" onmouseout="this.pause()"></video>`;
                 }
             } else {
@@ -122,8 +126,12 @@ const initMain = async () => {
             
             let mediaHtml = '';
             if (art.image) {
-                if (art.category === 'videos') {
-                    const ytId = extractYouTubeId(art.image);
+                const ytId = extractYouTubeId(art.image);
+                const isDirectVideo = art.image.match(/\.(mp4|webm|ogg)$/i) || art.image.includes('/uploads/') && !art.image.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                const isVideoCategory = art.category === 'videos';
+                const isPubliciteVideo = art.category === 'publicitees' && (ytId || isDirectVideo);
+
+                if (isVideoCategory || isPubliciteVideo) {
                     if (ytId) {
                         mediaHtml = `<div class="card-image-container"><img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg" alt="${art.title}" class="card-image"><div class="play-overlay-small">▶</div></div>`;
                     } else {

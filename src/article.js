@@ -59,8 +59,12 @@ const initArticle = async () => {
     if (contentContainer && articleData) {
         let mediaHtml = '';
         if (articleData.image) {
-            if (articleData.category === 'videos') {
-                const ytId = extractYouTubeId(articleData.image);
+            const ytId = extractYouTubeId(articleData.image);
+            const isDirectVideo = articleData.image.match(/\.(mp4|webm|ogg)$/i) || articleData.image.includes('/uploads/') && !articleData.image.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+            const isVideoCategory = articleData.category === 'videos';
+            const isPubliciteVideo = articleData.category === 'publicitees' && (ytId || isDirectVideo);
+
+            if (isVideoCategory || isPubliciteVideo) {
                 if (ytId) {
                     mediaHtml = `
                         <div style="margin: 20px 0; text-align: center;">

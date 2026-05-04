@@ -547,6 +547,7 @@
                 <option value="arts">Arts</option>
                 <option value="cinema">Cinéma</option>
                 <option value="societe">Société</option>
+                <option value="publicitees">Publicitées</option>
                 <option value="videos" id="cat-videos">Vidéos</option>
               </select>
             </div>
@@ -903,6 +904,16 @@
         if (quillContainer) quillContainer.style.display = 'block';
         document.getElementById('quill-editor').style.display = 'block';
         document.getElementById('image-preview-container').style.display = 'none';
+      } else if (catVal === 'publicitees') {
+        imgLabel.textContent = 'Image (fichier) ou Lien Vidéo (YouTube)';
+        fileInput.style.display = 'block';
+        videoUrlInput.style.display = 'block';
+        creditGroup.style.display = 'block';
+
+        // Show Quill
+        if (quillContainer) quillContainer.style.display = 'block';
+        document.getElementById('quill-editor').style.display = 'block';
+        // Note: Preview logic will handle showing either image or video preview based on what was loaded
       } else {
         imgLabel.textContent = 'Image (fichier uploader)';
         fileInput.style.display = 'block';
@@ -1134,10 +1145,13 @@
       // Dispatch change event to toggle video form layout
       categorySelect.dispatchEvent(new Event('change'));
 
-      if (art.category === 'videos') {
-        document.getElementById('art-video-url').value = art.image || '';
-        // Trigger input event to show YouTube preview
-        document.getElementById('art-video-url').dispatchEvent(new Event('input'));
+      if (art.category === 'videos' || art.category === 'publicitees') {
+        const ytId = extractYouTubeId(art.image);
+        if (ytId) {
+          document.getElementById('art-video-url').value = art.image || '';
+          // Trigger input event to show YouTube preview
+          document.getElementById('art-video-url').dispatchEvent(new Event('input'));
+        }
       }
 
       quill.root.innerHTML = art.summary || '';
@@ -1145,12 +1159,24 @@
       document.getElementById("submit-btn-form").textContent = "Mettre à jour l'article";
       document.getElementById("form-title-display").textContent = "Éditer l'article";
 
-      if (art.image && art.category !== 'videos') {
-        const imgSrc = art.image.startsWith("http") ? art.image : "/" + art.image;
-        document.getElementById("image-preview").src = imgSrc;
-        document.getElementById("image-preview-container").style.display = "block";
+      const isVideo = art.image && (art.image.match(/\.(mp4|webm|ogg)$/i) || (art.image.includes('/uploads/') && !art.image.match(/\.(jpg|jpeg|png|gif|webp)$/i)));
+      const ytId = extractYouTubeId(art.image);
+
+      if (art.image && !ytId) {
+        const mediaSrc = art.image.startsWith("http") ? art.image : "/" + art.image;
+        if (isVideo) {
+          document.getElementById("image-preview-container").style.display = "none";
+          const vidPreview = document.getElementById("video-preview");
+          vidPreview.src = mediaSrc;
+          vidPreview.style.display = "block";
+        } else {
+          document.getElementById("video-preview").style.display = "none";
+          document.getElementById("image-preview").src = mediaSrc;
+          document.getElementById("image-preview-container").style.display = "block";
+        }
       } else {
         document.getElementById("image-preview-container").style.display = "none";
+        document.getElementById("video-preview").style.display = "none";
       }
 
       window.scrollTo(0, 0);
@@ -1268,13 +1294,18 @@
       try {
         let imageUrl = document.getElementById("art-existing-image").value;
         const fileInput = document.getElementById("art-image-file");
+        const category = document.getElementById('art-category').value;
 
-        if (fileInput.files.length > 0 && document.getElementById('art-category').value !== 'videos') {
+        if (fileInput.files.length > 0) {
+          // If a file is uploaded, use it regardless of category (except maybe 'videos' if you want to enforce YT there)
           const file = fileInput.files[0];
           imageUrl = await uploadMediaWithProgress(file);
-        } else if (document.getElementById('art-category').value === 'videos') {
-          // For videos, the "image" field actually stores the YouTube URL
-          imageUrl = document.getElementById('art-video-url').value;
+        } else if (category === 'videos' || category === 'publicitees') {
+          // If no file, check if there's a video URL (for videos or publicitees)
+          const videoUrl = document.getElementById('art-video-url').value;
+          if (videoUrl) {
+            imageUrl = videoUrl;
+          }
         }
 
         const editingId = document.getElementById("art-id").value;

@@ -43,6 +43,11 @@ export const categories = [
         id: 'videos',
         label: 'Vidéos',
         subCategories: ['Reportages', 'Entrevues', 'En direct', 'Documentaires']
+    },
+    {
+        id: 'publicitees',
+        label: 'Publicitées',
+        subCategories: ['Promotions', 'Partenaires', 'Publi-reportages']
     }
 ];
 
