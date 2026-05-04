@@ -372,7 +372,6 @@
               <option value="arts">Arts</option>
               <option value="cinema">Cinéma</option>
               <option value="societe">Société</option>
-              <option value="publicitees">Publicitées</option>
             </select>
           </div>
           <div class="form-group">
@@ -389,7 +388,8 @@
                 style="max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid var(--lp-gray-mid);">
             </div>
             <div id="video-preview-container" style="margin-top: 10px; display: none;">
-              <video id="video-preview" controls style="max-width: 100%; max-height: 200px; border-radius: 4px;"></video>
+              <video id="video-preview" controls
+                style="max-width: 100%; max-height: 200px; border-radius: 4px;"></video>
             </div>
           </div>
           <div class="form-group" id="group-image-credit">
@@ -779,7 +779,7 @@
         const file = e.target.files[0];
         const isVideo = file.type.startsWith('video/');
         const url = URL.createObjectURL(file);
-        
+
         if (isVideo) {
           document.getElementById("image-preview-container").style.display = "none";
           const vidPreview = document.getElementById("video-preview");
@@ -860,7 +860,7 @@
         if (art.image) {
           const mediaSrc = art.image.startsWith('http') ? art.image : '/' + art.image;
           const isVideo = art.image.match(/\.(mp4|webm|ogg)$/i) || art.image.includes('/uploads/') && !art.image.match(/\.(jpg|jpeg|png|gif|webp)$/i);
-          
+
           if (isVideo) {
             document.getElementById('image-preview-container').style.display = 'none';
             const vidPreview = document.getElementById('video-preview');

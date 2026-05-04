@@ -547,7 +547,7 @@
                 <option value="arts">Arts</option>
                 <option value="cinema">Cinéma</option>
                 <option value="societe">Société</option>
-                <option value="publicitees">Publicitées</option>
+                <option value="publicitees">Publicités</option>
                 <option value="videos" id="cat-videos">Vidéos</option>
               </select>
             </div>
@@ -681,69 +681,69 @@
           <div class="user-tab" onclick="switchUserTab('user')">Public</div>
           <div class="user-tab" onclick="switchUserTab('banned_ips')" style="color: var(--lp-red);">Bannis (IP)</div>
         </div>
+      </div>
+
+      <div id="users-list" class="user-list-grid"></div>
+      <div id="banned-ips-list" class="user-list-grid" style="display: none;"></div>
+
+      <div id="edit-requests-section"
+        style="margin-top: 40px; border-top: 2px solid var(--glass-border); padding-top: 20px; display: block;">
+        <h3>📥 Demandes de modification (En attente)</h3>
+        <div id="edit-requests-list" style="margin-top: 20px;"></div>
+      </div>
+
+      <div id="content-updates-section"
+        style="margin-top: 40px; border-top: 2px solid #28a74533; padding-top: 20px; display: block;">
+        <h3 style="color: #2ecc71;">🟢 Modifications Récentes (Code Vert)</h3>
+        <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Historique des articles créés ou
+          modifiés par les journalistes en temps réel.</p>
+        <div id="content-updates-list"
+          style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+          <!-- Rendered via JS -->
+          <p style="color: var(--text-dim); font-size: 12px;">Aucune modification récente détectée.</p>
         </div>
+      </div>
 
-        <div id="users-list" class="user-list-grid"></div>
-        <div id="banned-ips-list" class="user-list-grid" style="display: none;"></div>
+      <div id="active-approvals-section"
+        style="margin-top: 40px; border-top: 2px solid var(--glass-border); padding-top: 20px; display: block;">
+        <h3>✅ Permissions Actives</h3>
+        <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Révoquez les permissions ici pour
+          forcer le journaliste à redemander l'accès.</p>
+        <div id="active-approvals-list"></div>
+      </div>
 
-        <div id="edit-requests-section"
-          style="margin-top: 40px; border-top: 2px solid var(--glass-border); padding-top: 20px; display: block;">
-          <h3>📥 Demandes de modification (En attente)</h3>
-          <div id="edit-requests-list" style="margin-top: 20px;"></div>
+      <div id="about-edit-section"
+        style="margin-top: 40px; border-top: 2px solid var(--glass-border); padding-top: 20px; display: block;">
+        <h3>Modifier la page "À Propos"</h3>
+        <div id="quill-about-editor"
+          style="height: 200px; background-color: #121212; color: white; margin-top: 15px; border-radius: 12px; border: 1px solid var(--glass-border);">
         </div>
+        <button id="save-about-btn" class="btn" style="margin-top: 15px; background-color: var(--lp-red);">Sauvegarder
+          À Propos</button>
+      </div>
 
-        <div id="content-updates-section"
-          style="margin-top: 40px; border-top: 2px solid #28a74533; padding-top: 20px; display: block;">
-          <h3 style="color: #2ecc71;">🟢 Modifications Récentes (Code Vert)</h3>
-          <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Historique des articles créés ou
-            modifiés par les journalistes en temps réel.</p>
-          <div id="content-updates-list"
-            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
-            <!-- Rendered via JS -->
-            <p style="color: var(--text-dim); font-size: 12px;">Aucune modification récente détectée.</p>
+      <div id="maintenance-section"
+        style="margin-top: 40px; border-top: 2px solid var(--glass-border); padding-top: 20px; display: block;">
+        <h3>🚧 Mode Maintenance</h3>
+        <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Activez la maintenance pour bloquer
+          l'accès au site pour tous les utilisateurs sauf vous.</p>
+        <div
+          style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid var(--glass-border);">
+          <div class="form-group">
+            <label>Motif de la maintenance (MANDATOIRE)</label>
+            <textarea id="maintenance-reason-input"
+              placeholder="Ex: Mise à jour du système, déploiement de nouvelles fonctionnalités..."
+              style="width: 100%; height: 80px; background: #121212; color: white; border: 1px solid var(--glass-border); padding: 10px; border-radius: 8px; font-family: inherit;"></textarea>
           </div>
-        </div>
-
-        <div id="active-approvals-section"
-          style="margin-top: 40px; border-top: 2px solid var(--glass-border); padding-top: 20px; display: block;">
-          <h3>✅ Permissions Actives</h3>
-          <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Révoquez les permissions ici pour
-            forcer le journaliste à redemander l'accès.</p>
-          <div id="active-approvals-list"></div>
-        </div>
-
-        <div id="about-edit-section"
-          style="margin-top: 40px; border-top: 2px solid var(--glass-border); padding-top: 20px; display: block;">
-          <h3>Modifier la page "À Propos"</h3>
-          <div id="quill-about-editor"
-            style="height: 200px; background-color: #121212; color: white; margin-top: 15px; border-radius: 12px; border: 1px solid var(--glass-border);">
-          </div>
-          <button id="save-about-btn" class="btn" style="margin-top: 15px; background-color: var(--lp-red);">Sauvegarder
-            À Propos</button>
-        </div>
-
-        <div id="maintenance-section"
-          style="margin-top: 40px; border-top: 2px solid var(--glass-border); padding-top: 20px; display: block;">
-          <h3>🚧 Mode Maintenance</h3>
-          <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Activez la maintenance pour bloquer
-            l'accès au site pour tous les utilisateurs sauf vous.</p>
-          <div
-            style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid var(--glass-border);">
-            <div class="form-group">
-              <label>Motif de la maintenance (MANDATOIRE)</label>
-              <textarea id="maintenance-reason-input"
-                placeholder="Ex: Mise à jour du système, déploiement de nouvelles fonctionnalités..."
-                style="width: 100%; height: 80px; background: #121212; color: white; border: 1px solid var(--glass-border); padding: 10px; border-radius: 8px; font-family: inherit;"></textarea>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 15px;">
-              <div id="maintenance-status" style="font-size: 14px; font-weight: 600;">Statut : <span
-                  style="color: #28a745;">OFF</span></div>
-              <button id="toggle-maintenance-btn" class="btn" style="background: #333;">Activer la Maintenance</button>
-            </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 15px;">
+            <div id="maintenance-status" style="font-size: 14px; font-weight: 600;">Statut : <span
+                style="color: #28a745;">OFF</span></div>
+            <button id="toggle-maintenance-btn" class="btn" style="background: #333;">Activer la Maintenance</button>
           </div>
         </div>
       </div>
-    </main>
+  </div>
+  </main>
   </div>
 
   <div id="punishment-modal">
@@ -1576,10 +1576,10 @@
       currentUserTab = role;
       document.querySelectorAll('.user-tab').forEach(t => t.classList.remove('active'));
       event.currentTarget.classList.add('active');
-      
+
       const isPublicTab = role === 'user';
       const isBannedTab = role === 'banned_ips';
-      
+
       document.getElementById('mass-action-bar').style.display = isPublicTab ? 'flex' : 'none';
       document.getElementById('btn-purge-massive').style.display = isPublicTab ? 'inline-flex' : 'none';
       if (isPublicTab) document.getElementById('select-all-users').checked = false;
@@ -1635,9 +1635,9 @@
       try {
         const res = await fetch('/api/admin/unban-ip', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('echopress_token')}` 
+            'Authorization': `Bearer ${localStorage.getItem('echopress_token')}`
           },
           body: JSON.stringify({ ip })
         });
@@ -2241,7 +2241,7 @@
       try {
         const token = localStorage.getItem('echopress_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-        
+
         const mode = await fetch('/api/settings/maintenance_mode', { headers }).then(r => r.json());
         const reason = await fetch('/api/settings/maintenance_reason', { headers }).then(r => r.json());
         const isEnabled = mode.value === 'true';
@@ -2270,10 +2270,10 @@
           const token = localStorage.getItem('echopress_token');
           maintenanceBtn.disabled = true;
           maintenanceBtn.textContent = "Mise à jour...";
-          
+
           await fetch('/api/settings', {
             method: 'POST',
-            headers: { 
+            headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             },
@@ -2281,7 +2281,7 @@
           });
           const res = await fetch('/api/settings', {
             method: 'POST',
-            headers: { 
+            headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             },
